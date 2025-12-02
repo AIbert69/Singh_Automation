@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Singh Automation - Capability Statement</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fafaf5;
+      color: #2d2d28;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 60px 20px;
+      background: linear-gradient(135deg, #fafaf5 0%, #f0f0e0 100%);
+      border-bottom: 4px solid #6b6b5a;
+    }
+
+    .logo { height: 80px; margin-bottom: 20px; }
+
+    .doc-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      color: #8b8b78;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 42px;
+      font-weight: 800;
+      color: #2d2d28;
+      margin-bottom: 10px;
+    }
+
+    h1 span { color: #6b6b5a; }
+
+    .tagline {
+      font-size: 18px;
+      color: #5c5c4e;
+      margin-bottom: 30px;
+    }
+
+    /* Badges */
+    .badges {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+
+    .badge {
+      padding: 10px 20px;
+      background: white;
+      border: 1px solid #c9c9a8;
+      border-radius: 30px;
+      font-size: 12px;
+    }
+
+    .badge-label {
+      font-weight: 700;
+      color: #8b8b78;
+      margin-right: 8px;
+    }
+
+    .badge-value {
+      font-weight: 700;
+      color: #2d2d28;
+      font-family: monospace;
+    }
+
+    .badge-green {
+      background: #4d4d42;
+      color: white;
+      border-color: #4d4d42;
+    }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      padding: 30px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+      margin-bottom: 60px;
+    }
+
+    .stat {
+      text-align: center;
+      padding: 15px;
+    }
+
+    .stat-number {
+      font-size: 36px;
+      font-weight: 800;
+      color: #4d4d42;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #8b8b78;
+      margin-top: 5px;
+    }
+
+    /* Sections */
+    section {
+      padding: 50px 0;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: #8b8b78;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #2d2d28;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid #a3a385;
+      display: inline-block;
+    }
+
+    /* Overview */
+    .overview p {
+      font-size: 16px;
+      color: #4d4d42;
+      line-height: 1.8;
+      margin-bottom: 15px;
+    }
+
+    /* Cards Grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .cards-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #e8e8d0;
+      border-radius: 12px;
+      padding: 25px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .card-icon {
+      font-size: 32px;
+      margin-bottom: 15px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2d2d28;
+      margin-bottom: 10px;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: #6b6b5a;
+      line-height: 1.6;
+    }
+
+    /* Tech Bar */
+    .tech-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      padding: 25px;
+      background: white;
+      border-radius: 12px;
+      margin-top: 40px;
+      border: 1px solid #e8e8d0;
+    }
+
+    .tech-item {
+      padding: 8px 16px;
+      background: #f5f5eb;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .tech-label {
+      font-weight: 700;
+      color: #5c5c4e;
+    }
+
+    .tech-value {
+      color: #6b6b5a;
+    }
+
+    /* Differentiators */
+    .diff-section {
+      background: #f5f5eb;
+      padding: 50px 0;
+      margin: 0 -20px;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .diff-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 25px;
+    }
+
+    .diff-card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      display: flex;
+      gap: 20px;
+    }
+
+    .diff-number {
+      width: 45px;
+      height: 45px;
+      background: #4d4d42;
+      color: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .diff-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #2d2d28;
+      margin-bottom: 8px;
+    }
+
+    .diff-desc {
+      font-size: 14px;
+      color: #6b6b5a;
+      line-height: 1.6;
+    }
+
+    /* Performance */
+    .perf-box {
+      background: #3d3d35;
+      color: white;
+      border-radius: 16px;
+      padding: 40px;
+    }
+
+    .perf-intro {
+      color: #c9c9a8;
+      margin-bottom: 25px;
+    }
+
+    .perf-list {
+      list-style: none;
+      margin-bottom: 30px;
+    }
+
+    .perf-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+      padding: 15px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .perf-list li:last-child {
+      border-bottom: none;
+    }
+
+    .perf-check {
+      width: 22px;
+      height: 22px;
+      background: #6b6b5a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: white;
+      font-size: 12px;
+    }
+
+    .perf-text {
+      color: #e8e8d0;
+      font-size: 14px;
+    }
+
+    .perf-range {
+      display: inline-block;
+      padding: 15px 25px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+    }
+
+    .perf-range-label {
+      color: #c9c9a8;
+      font-size: 14px;
+    }
+
+    .perf-range-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+      margin-left: 10px;
+    }
+
+    /* Info Grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px;
+    }
+
+    .info-box {
+      background: white;
+      border: 1px solid #e8e8d0;
+      border-radius: 12px;
+      padding: 30px;
+    }
+
+    .info-box h4 {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #8b8b78;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e8e8d0;
+    }
+
+    .naics-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+    }
+
+    .naics-code {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: #5c5c4e;
+      background: #f5f5eb;
+      padding: 4px 10px;
+      border-radius: 5px;
+    }
+
+    .naics-desc {
+      font-size: 13px;
+      color: #6b6b5a;
+    }
+
+    .cert-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #f5f5eb;
+    }
+
+    .cert-item:last-child {
+      border-bottom: none;
+    }
+
+    .cert-label {
+      color: #8b8b78;
+      font-size: 13px;
+    }
+
+    .cert-value {
+      font-weight: 700;
+      color: #2d2d28;
+      font-family: monospace;
+    }
+
+    /* CTA */
+    .cta {
+      text-align: center;
+      padding: 80px 20px;
+      background: linear-gradient(180deg, #fafaf5 0%, #f0f0e0 100%);
+    }
+
+    .cta-title {
+      font-size: 36px;
+      font-weight: 300;
+      color: #3d3d35;
+      margin-bottom: 15px;
+    }
+
+    .cta-title strong {
+      font-weight: 700;
+      color: #5c5c4e;
+    }
+
+    .cta-subtitle {
+      font-size: 18px;
+      color: #6b6b5a;
+      margin-bottom: 35px;
+    }
+
+    .cta-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 40px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 15px 30px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: transform 0.3s;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+    }
+
+    .btn-primary {
+      background: #4d4d42;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #4d4d42;
+      border: 2px solid #c9c9a8;
+    }
+
+    .contact-box {
+      display: flex;
+      justify-content: center;
+      gap: 50px;
+      padding: 30px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .contact-item {
+      text-align: left;
+    }
+
+    .contact-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #8b8b78;
+      margin-bottom: 4px;
+    }
+
+    .contact-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: #2d2d28;
+    }
+
+    .contact-value a {
+      color: #5c5c4e;
+      text-decoration: none;
+    }
+
+    .contact-value a:hover {
+      text-decoration: underline;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 30px;
+      border-top: 1px solid #e8e8d0;
+    }
+
+    .social-links {
+      margin-bottom: 15px;
+    }
+
+    .social-links a {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      background: #f5f5eb;
+      border-radius: 50%;
+      margin: 0 8px;
+      line-height: 40px;
+      color: #5c5c4e;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    .social-links a:hover {
+      background: #5c5c4e;
+      color: white;
+    }
+
+    .copyright {
+      font-size: 12px;
+      color: #8b8b78;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1 { font-size: 28px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .cards-grid, .cards-grid-2, .diff-grid, .info-grid { grid-template-columns: 1fr; }
+      .contact-box { flex-direction: column; gap: 20px; }
+      .cta-buttons { flex-direction: column; align-items: center; }
+      .video-grid { grid-template-columns: 1fr !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <img src="singh_logo.jpg" alt="Singh Automation" class="logo" onerror="this.style.display='none'">
+    <div class="doc-label">CAPABILITY STATEMENT</div>
+    <h1>SINGH <span>AUTOMATION</span>, LLC</h1>
+    <p class="tagline">Advanced Robotics, AI Integration & Industrial Modernization</p>
+    
+    <div class="badges">
+      <div class="badge">
+        <span class="badge-label">UEI</span>
+        <span class="badge-value">GJ1DPYQ3X8K5</span>
+      </div>
+      <div class="badge">
+        <span class="badge-label">CAGE</span>
+        <span class="badge-value">86VF7</span>
+      </div>
+      <div class="badge badge-green">✓ Small Business</div>
+      <div class="badge">
+        <span class="badge-label">FANUC</span>
+        <span class="badge-value">Authorized Integrator</span>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-number">50+</div>
+          <div class="stat-label">Projects Delivered</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">100+</div>
+          <div class="stat-label">Units/Hour Throughput</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">$2M+</div>
+          <div class="stat-label">Project Value</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">10+</div>
+          <div class="stat-label">Years Experience</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Overview -->
+  <section class="container">
+    <div class="section-label">ABOUT US</div>
+    <h2 class="section-title">Company Overview</h2>
+    <div class="overview">
+      <p>Singh Automation, LLC delivers turnkey industrial automation and AI-powered systems for manufacturing, logistics, and mission-critical infrastructure. We engineer, integrate, and commission advanced robotic cells, intelligent material-handling systems, and high-performance computing environments that modernize operations for government and commercial clients.</p>
+      <p>From initial design through installation and ongoing support, we provide end-to-end solutions that bridge physical automation and digital intelligence. Based in Kalamazoo, MI with a sales branch in Irvine, CA, we're authorized system integrators for FANUC and Universal Robots.</p>
+    </div>
+  </section>
+
+  <!-- Videos -->
+  <section style="background: #2d2d28; padding: 60px 0;">
+    <div class="container">
+      <div class="section-label" style="color: #a3a385;">SEE US IN ACTION</div>
+      <h2 class="section-title" style="color: #e8e8d0; border-color: #6b6b5a;">Our Work</h2>
+      
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 30px;">
+        <!-- Main Video -->
+        <div style="position: relative; padding-bottom: 56.25%; height: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+          <iframe 
+            src="https://www.youtube.com/embed/c3nZrO3QK_8?rel=0" 
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen>
+          </iframe>
+        </div>
+        
+        <!-- Sidebar Videos -->
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <div style="position: relative; padding-bottom: 56.25%; height: 0; border-radius: 10px; overflow: hidden;">
+            <iframe 
+              src="https://www.youtube.com/embed/c4P0D1BVpeQ?rel=0" 
+              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowfullscreen>
+            </iframe>
+          </div>
+          <div style="position: relative; padding-bottom: 56.25%; height: 0; border-radius: 10px; overflow: hidden;">
+            <iframe 
+              src="https://www.youtube.com/embed/qOFhtX0T2co?rel=0" 
+              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+      </div>
+      
+      <div style="text-align: center; margin-top: 30px;">
+        <a href="https://www.youtube.com/@gurdeepsingh2366" target="_blank" 
+           style="display: inline-flex; align-items: center; gap: 10px; padding: 12px 25px; background: #5c5c4e; color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 14px; transition: background 0.3s;">
+          ▶ View All Videos on YouTube
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Competencies -->
+  <section class="container">
+    <div class="section-label">WHAT WE DO</div>
+    <h2 class="section-title">Core Competencies</h2>
+    
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-icon">⚙️</div>
+        <h3 class="card-title">Industrial Robotics & Automation</h3>
+        <p class="card-desc">Turnkey robotic cells for welding, assembly, palletizing, and material handling. Full system integration including end-effectors, safety systems, and process optimization.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📦</div>
+        <h3 class="card-title">Intelligent Logistics & Material Handling</h3>
+        <p class="card-desc">Custom conveyor systems, automated packaging lines, and transport solutions engineered for high-volume distribution and manufacturing environments.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">👁️</div>
+        <h3 class="card-title">AI-Powered Vision & Inspection</h3>
+        <p class="card-desc">Machine vision systems with artificial intelligence for real-time quality control, defect detection, and automated sorting applications.</p>
+      </div>
+    </div>
+    
+    <div class="cards-grid-2">
+      <div class="card">
+        <div class="card-icon">🖥️</div>
+        <h3 class="card-title">Controls & Systems Integration</h3>
+        <p class="card-desc">PLC programming, HMI development, and enterprise system integration (SCADA, MES, ERP connectivity).</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔲</div>
+        <h3 class="card-title">Data Center & HPC Infrastructure</h3>
+        <p class="card-desc">Design and fabrication of high-density server racks and AI computing infrastructure for edge and enterprise deployments.</p>
+      </div>
+    </div>
+
+    <div class="tech-bar">
+      <span style="font-size: 24px;">🔧</span>
+      <div class="tech-item">
+        <span class="tech-label">Robotics:</span>
+        <span class="tech-value">FANUC, ABB, KUKA, UR</span>
+      </div>
+      <div class="tech-item">
+        <span class="tech-label">Controls:</span>
+        <span class="tech-value">Allen-Bradley, Siemens</span>
+      </div>
+      <div class="tech-item">
+        <span class="tech-label">AI/Vision:</span>
+        <span class="tech-value">NVIDIA, TensorRT, OpenCV</span>
+      </div>
+      <div class="tech-item">
+        <span class="tech-label">Integration:</span>
+        <span class="tech-value">SCADA, MES, ERP</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Differentiators -->
+  <section class="diff-section">
+    <div class="container">
+      <div class="section-label">WHY CHOOSE US</div>
+      <h2 class="section-title">Differentiators</h2>
+      
+      <div class="diff-grid">
+        <div class="diff-card">
+          <div class="diff-number">1</div>
+          <div>
+            <h4 class="diff-title">Full Lifecycle Execution</h4>
+            <p class="diff-desc">We own every phase: engineering, fabrication, programming, installation, commissioning, and support. Single point of accountability eliminates integration gaps.</p>
+          </div>
+        </div>
+        <div class="diff-card">
+          <div class="diff-number">2</div>
+          <div>
+            <h4 class="diff-title">Deep Technical Integration</h4>
+            <p class="diff-desc">Our team combines robotics expertise with AI and vision technology, delivering intelligent automation that adapts and improves over time.</p>
+          </div>
+        </div>
+        <div class="diff-card">
+          <div class="diff-number">3</div>
+          <div>
+            <h4 class="diff-title">Rapid Deployment</h4>
+            <p class="diff-desc">As an agile small business, we mobilize quickly and adapt to evolving requirements without layers of bureaucracy.</p>
+          </div>
+        </div>
+        <div class="diff-card">
+          <div class="diff-number">4</div>
+          <div>
+            <h4 class="diff-title">Proven Engineering Team</h4>
+            <p class="diff-desc">Founded by automation engineers with direct experience delivering complex projects across aerospace, automotive, logistics, and heavy manufacturing sectors.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Past Performance -->
+  <section class="container">
+    <div class="section-label">TRACK RECORD</div>
+    <h2 class="section-title">Past Performance</h2>
+    
+    <div class="perf-box">
+      <p class="perf-intro">Singh Automation's leadership team brings proven experience from major automation projects including:</p>
+      <ul class="perf-list">
+        <li>
+          <div class="perf-check">✓</div>
+          <span class="perf-text">Robotic welding and assembly cells for aerospace and automotive components</span>
+        </li>
+        <li>
+          <div class="perf-check">✓</div>
+          <span class="perf-text">Vision-guided packaging systems processing 100+ units per hour with improved defect detection</span>
+        </li>
+        <li>
+          <div class="perf-check">✓</div>
+          <span class="perf-text">Conveyor and sortation systems for high-volume distribution facilities, increasing throughput efficiency</span>
+        </li>
+        <li>
+          <div class="perf-check">✓</div>
+          <span class="perf-text">Factory modernization initiatives integrating legacy equipment with modern controls</span>
+        </li>
+      </ul>
+      <div class="perf-range">
+        <span class="perf-range-label">Project Range:</span>
+        <span class="perf-range-value">$200K – $2M+</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- NAICS & Certs -->
+  <section class="container">
+    <div class="info-grid">
+      <div class="info-box">
+        <h4>NAICS CODES</h4>
+        <div class="naics-item">
+          <span class="naics-code">333249</span>
+          <span class="naics-desc">Other Industrial Machinery Manufacturing</span>
+        </div>
+        <div class="naics-item">
+          <span class="naics-code">333922</span>
+          <span class="naics-desc">Conveyor and Conveying Equipment Mfg</span>
+        </div>
+        <div class="naics-item">
+          <span class="naics-code">541330</span>
+          <span class="naics-desc">Engineering Services</span>
+        </div>
+        <div class="naics-item">
+          <span class="naics-code">541512</span>
+          <span class="naics-desc">Computer Systems Design Services</span>
+        </div>
+        <div class="naics-item">
+          <span class="naics-code">541715</span>
+          <span class="naics-desc">R&D in Physical, Engineering, Life Sciences</span>
+        </div>
+        <div class="naics-item">
+          <span class="naics-code">238210</span>
+          <span class="naics-desc">Electrical Contractors and Wiring</span>
+        </div>
+      </div>
+      <div class="info-box">
+        <h4>CERTIFICATIONS & REGISTRATIONS</h4>
+        <div class="cert-item">
+          <span class="cert-label">UEI</span>
+          <span class="cert-value">GJ1DPYQ3X8K5</span>
+        </div>
+        <div class="cert-item">
+          <span class="cert-label">CAGE Code</span>
+          <span class="cert-value">86VF7</span>
+        </div>
+        <div class="cert-item">
+          <span class="cert-label">Classification</span>
+          <span class="cert-value">Small Business</span>
+        </div>
+        <div class="cert-item">
+          <span class="cert-label">Location</span>
+          <span class="cert-value">Irvine, California</span>
+        </div>
+        <div class="cert-item">
+          <span class="cert-label">Partners</span>
+          <span class="cert-value">FANUC, Universal Robots</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2 class="cta-title">Ready to <strong>modernize</strong> your operations?</h2>
+    <p class="cta-subtitle">Let's discuss your next project.</p>
+    
+    <div class="cta-buttons">
+      <a href="/cdn-cgi/l/email-protection#c1a0ada3a4b3b581b2a8afa6a9a0b4b5aeaca0b5a8aeafefa2aeac" class="btn btn-primary">✉️ Send Email</a>
+      <a href="https://singhautomation.com" target="_blank" class="btn btn-secondary">🌐 Visit Website</a>
+    </div>
+
+    <div class="contact-box">
+      <div class="contact-item">
+        <div class="contact-label">CONTACT</div>
+        <div class="contact-value">Albert Mizuno</div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-label">EMAIL</div>
+        <div class="contact-value"><a href="/cdn-cgi/l/email-protection#c4a5a8a6a1b6b084b7adaaa3aca5b1b0aba9a5b0adabaaeaa7aba9"><span class="__cf_email__" data-cfemail="61000d030413152112080f06090014150e0c0015080e0f4f020e0c">[email&#160;protected]</span></a></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-label">WEB</div>
+        <div class="contact-value"><a href="https://singhautomation.com">singhautomation.com</a></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="social-links">
+      <a href="https://www.linkedin.com/company/singh-automation-llc" target="_blank">in</a>
+     

@@ -1,1 +1,22 @@
+{
+     "name": "singh-automation-api",
+     "version": "1.0.0",
+     "type": "module",
+     "dependencies": {
+       "docx": "^8.5.0"
+     }
+   }
+```
+   - Commit
 
+---
+
+Your final structure should look like:
+```
+Singh_Automation/
+├── api/
+│   ├── sam.js        ✅
+│   └── generate.js   ✅
+├── package.json      ← Move here (root)
+├── vercel.json
+└── Capability_statement/

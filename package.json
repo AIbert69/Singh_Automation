@@ -1,1 +1,10 @@
 
+{
+  "name": "singh-automation-api",
+  "version": "1.0.0",
+  "description": "Singh Automation SAM.gov Scanner API",
+  "type": "module",
+  "dependencies": {
+    "docx": "^8.5.0"
+  }
+}

@@ -53,10 +53,12 @@ export default async function handler(req, res) {
     }
 
     const stateOpps = [
+        // California opportunities
         { id: 'ca-1', title: 'Warehouse Automation System - CA State', agency: 'CA DGS', solicitation: 'DGS-2025-AUTO-001', value: 450000, closeDate: '2025-01-30', description: 'Automated material handling systems including conveyors and AMRs for state facility.', link: 'https://caleprocure.ca.gov/', setAside: 'Small Business' },
         { id: 'ca-2', title: 'SCADA Modernization - CA Water', agency: 'CA DWR', solicitation: 'DWR-2025-SCADA', value: 380000, closeDate: '2025-02-15', description: 'SCADA and PLC upgrades for water treatment facility automation.', link: 'https://caleprocure.ca.gov/', setAside: 'Small Business' },
-        { id: 'mi-1', title: 'Robotic Welding Cell - Michigan', agency: 'Michigan DTMB', solicitation: 'DTMB-2025-WELD', value: 275000, closeDate: '2025-02-01', description: 'Automated robotic welding system for state vehicle maintenance facility.', link: 'https://sigma.michigan.gov/', setAside: 'Small Business' },
-        { id: 'mi-2', title: 'Vision Inspection System - Michigan', agency: 'Michigan EGLE', solicitation: 'EGLE-2025-VIS', value: 185000, closeDate: '2025-01-25', description: 'Machine vision quality inspection system for environmental testing laboratory.', link: 'https://sigma.michigan.gov/', setAside: 'Small Business' },
+        // Michigan opportunities - FIXED URL (was sigma.michigan.gov, now michigan.gov/Sigmavss)
+        { id: 'mi-1', title: 'Robotic Welding Cell - Michigan', agency: 'Michigan DTMB', solicitation: 'DTMB-2025-WELD', value: 275000, closeDate: '2025-02-01', description: 'Automated robotic welding system for state vehicle maintenance facility.', link: 'https://www.michigan.gov/Sigmavss', setAside: 'Small Business' },
+        { id: 'mi-2', title: 'Vision Inspection System - Michigan', agency: 'Michigan EGLE', solicitation: 'EGLE-2025-VIS', value: 185000, closeDate: '2025-01-25', description: 'Machine vision quality inspection system for environmental testing laboratory.', link: 'https://www.michigan.gov/Sigmavss', setAside: 'Small Business' },
     ];
     for (const s of stateOpps) {
         allOpps.push({ ...s, noticeId: s.id, postedDate: '2024-12-15', naicsCode: '333249', isLive: true, source: s.id.startsWith('ca') ? 'Cal eProcure' : 'Michigan SIGMA', type: 'state' });

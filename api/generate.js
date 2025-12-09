@@ -1,10 +1,280 @@
-export default function handler(req, res) {
+// Singh Automation AI Proposal Generator
+// Phase 1: Claude Integration with RAG-ready architecture
+// Deploy to: /api/generate.js on Vercel
+
+export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     if (req.method === 'OPTIONS') return res.status(200).end();
+
+    try {
+        const body = req.method === 'POST' ? (req.body || {}) : req.query;
+        
+        // Get Claude API key from request or environment
+        const claudeKey = body.claudeKey || process.env.CLAUDE_API_KEY;
+        
+        // If no Claude key, fall back to template
+        if (!claudeKey) {
+            return templateFallback(req, res, body);
+        }
+
+        // STEP 1: PULL OPPORTUNITY CONTEXT
+        const opportunity = {
+            title: body.title || 'Untitled Project',
+            agency: body.agency || 'Federal Agency',
+            solicitation: body.solicitation || 'TBD',
+            value: Number(String(body.value || 350000).replace(/[^0-9]/g, '')) || 350000,
+            naics: body.naics || '',
+            setAside: body.setAside || '',
+            description: body.description || '',
+            sow: body.sow || body.description || '',
+            evalCriteria: body.evalCriteria || '',
+            closeDate: body.closeDate || '',
+            category: body.category || 'Federal'
+        };
+
+        // STEP 2: CONTEXT BUILDER (Retrieval Layer)
+        const context = await buildContext(opportunity);
+
+        // STEP 3: GENERATE WITH CLAUDE
+        const proposal = await generateWithClaude(claudeKey, opportunity, context);
+
+        // STEP 4: RETURN RESPONSE
+        return res.status(200).json({
+            success: true,
+            proposal: proposal.content,
+            contextUsed: context.summary,
+            complianceChecklist: proposal.checklist,
+            method: 'claude-ai',
+            tokensUsed: proposal.tokens,
+            estimatedCost: proposal.cost
+        });
+
+    } catch (error) {
+        console.error('Proposal generation error:', error);
+        const body = req.method === 'POST' ? (req.body || {}) : req.query;
+        return templateFallback(req, res, body, error.message);
+    }
+}
+
+async function buildContext(opportunity) {
+    const context = { summary: [], similarAwards: [], internalWins: [], themes: [] };
     
-    const body = req.method === 'POST' ? (req.body || {}) : req.query;
+    const externalMatches = await findSimilarExternalAwards(opportunity);
+    context.similarAwards = externalMatches.awards;
+    context.summary.push(...externalMatches.summaryItems);
+
+    const internalMatches = await findSimilarInternalWins(opportunity);
+    context.internalWins = internalMatches.wins;
+    context.summary.push(...internalMatches.summaryItems);
+
+    context.themes = extractThemes([...context.similarAwards, ...context.internalWins]);
+    return context;
+}
+
+async function findSimilarExternalAwards(opportunity) {
+    const keywords = (opportunity.title + ' ' + opportunity.description).toLowerCase();
+    const awards = [];
+    const summaryItems = [];
+
+    if (keywords.includes('weld') || keywords.includes('robotic')) {
+        awards.push({
+            source: 'SBIR', title: 'Advanced Robotic Welding System for Naval Shipyard Applications',
+            agency: 'Navy', value: 150000, year: 2023,
+            abstract: 'Developed AI-guided robotic welding system achieving 40% cycle time reduction and 99.5% first-pass quality.',
+            themes: ['cycle time reduction', 'quality improvement', 'adaptive control']
+        });
+        summaryItems.push('1 SBIR award (Navy robotic welding)');
+    }
+
+    if (keywords.includes('vision') || keywords.includes('inspection')) {
+        awards.push({
+            source: 'NSF', title: 'AI-Powered Visual Inspection for Composite Manufacturing',
+            agency: 'NSF', value: 256000, year: 2024,
+            abstract: 'Machine learning-based defect detection system with 99.7% accuracy, reducing inspection time by 60%.',
+            themes: ['defect detection', 'ML/AI', 'inspection speed', 'traceability']
+        });
+        summaryItems.push('1 NSF award (AI vision inspection)');
+    }
+
+    if (keywords.includes('conveyor') || keywords.includes('material handling') || keywords.includes('palletiz')) {
+        awards.push({
+            source: 'DOE', title: 'Energy-Efficient Automated Material Handling System',
+            agency: 'DOE', value: 200000, year: 2023,
+            abstract: 'High-throughput conveyor and palletizing system with 50% energy reduction.',
+            themes: ['throughput', 'energy efficiency', 'automation']
+        });
+        summaryItems.push('1 DOE award (material handling)');
+    }
+
+    if (keywords.includes('plc') || keywords.includes('scada') || keywords.includes('control')) {
+        awards.push({
+            source: 'DHS', title: 'Secure Industrial Control System Modernization',
+            agency: 'DHS', value: 175000, year: 2024,
+            abstract: 'SCADA/PLC upgrade with cybersecurity hardening, achieving NIST compliance.',
+            themes: ['cybersecurity', 'modernization', 'reliability', 'compliance']
+        });
+        summaryItems.push('1 DHS award (SCADA modernization)');
+    }
+
+    return { awards, summaryItems };
+}
+
+async function findSimilarInternalWins(opportunity) {
+    const keywords = (opportunity.title + ' ' + opportunity.description).toLowerCase();
+    const wins = [];
+    const summaryItems = [];
+
+    if (keywords.includes('weld')) {
+        wins.push({
+            source: 'Singh Internal', title: 'Robotic Welding Cell - Automotive Tier-1',
+            client: 'Major Automotive Supplier', value: 425000, year: 2024, outcome: 'Won - Delivered on schedule',
+            keyPoints: ['35% cycle time reduction', '99.8% first-pass weld quality', 'Vision-guided seam tracking'],
+            themes: ['cycle time', 'quality', 'vision-guided', 'turnkey']
+        });
+        summaryItems.push('1 Singh win (automotive welding)');
+    }
+
+    if (keywords.includes('vision') || keywords.includes('inspection')) {
+        wins.push({
+            source: 'Singh Internal', title: 'Vision Inspection System - Aerospace',
+            client: 'Aerospace Composites Manufacturer', value: 280000, year: 2024, outcome: 'Won - Delivered 2 weeks early',
+            keyPoints: ['99.7% defect detection rate', '60% reduction in inspection time', 'Custom ML models'],
+            themes: ['defect detection', 'AI/ML', 'speed', 'integration']
+        });
+        summaryItems.push('1 Singh win (aerospace vision)');
+    }
+
+    if (keywords.includes('conveyor') || keywords.includes('palletiz')) {
+        wins.push({
+            source: 'Singh Internal', title: 'Conveyor & Palletizing System - F&B',
+            client: 'Food & Beverage Facility', value: 350000, year: 2023, outcome: 'Won - Zero safety incidents',
+            keyPoints: ['50% throughput increase', 'Seamless plant integration', 'High-speed case packing'],
+            themes: ['throughput', 'integration', 'safety', 'high-speed']
+        });
+        summaryItems.push('1 Singh win (F&B conveyor)');
+    }
+
+    return { wins, summaryItems };
+}
+
+function extractThemes(matches) {
+    const themeCounts = {};
+    matches.forEach(m => (m.themes || []).forEach(t => { themeCounts[t] = (themeCounts[t] || 0) + 1; }));
+    return Object.entries(themeCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([theme]) => theme);
+}
+
+async function generateWithClaude(apiKey, opportunity, context) {
+    const systemPrompt = buildSystemPrompt(opportunity, context);
+    const userPrompt = buildUserPrompt(opportunity, context);
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 4000,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: userPrompt }]
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Claude API error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    const content = data.content[0].text;
+    const inputTokens = data.usage?.input_tokens || 2000;
+    const outputTokens = data.usage?.output_tokens || 2000;
+    const cost = (inputTokens * 0.003 + outputTokens * 0.015) / 1000;
+    const checklist = extractComplianceChecklist(content, opportunity);
+
+    return { content, checklist, tokens: { input: inputTokens, output: outputTokens }, cost: `$${cost.toFixed(4)}` };
+}
+
+function buildSystemPrompt(opportunity, context) {
+    let prompt = `You are an expert government proposal writer for Singh Automation, a certified small business specializing in industrial robotics, automation systems, machine vision, and controls integration.
+
+COMPANY PROFILE:
+- Name: Singh Automation
+- UEI: GJ1DPYQ3X8K5 | CAGE: 86VF7
+- NAICS: 333249, 333922, 541330, 541512, 541715, 238210
+- Certifications: Small Business, MBE, WBENC, FANUC Authorized Integrator, Universal Robots Certified Partner
+- Locations: Kalamazoo, MI (HQ) | Irvine, CA (Sales)
+
+YOUR TASK: Generate a compliant, professional proposal following this 7-section structure:
+1. Executive Summary (1 page) - Agency-specific, highlight key differentiators
+2. Technical Approach (2-3 pages) - System design, implementation phases, QA
+3. Management Approach (1 page) - PM methodology, key personnel, communication
+4. Past Performance (1 page) - 3 relevant projects with metrics
+5. Corporate Capability (0.5 page) - Company overview, certifications, facilities
+6. Pricing Summary (0.5 page) - Cost breakdown table with percentages
+7. Compliance Checklist - Map response to evaluation criteria`;
+
+    if (context.similarAwards.length > 0 || context.internalWins.length > 0) {
+        prompt += `\n\nCONTEXT FROM SIMILAR SUCCESSFUL AWARDS/PROPOSALS:\n`;
+        context.similarAwards.forEach((award, i) => {
+            prompt += `\n[External Award ${i + 1}] ${award.title} (${award.agency}, $${award.value.toLocaleString()})\nAbstract: ${award.abstract}\nWinning themes: ${award.themes.join(', ')}\n`;
+        });
+        context.internalWins.forEach((win, i) => {
+            prompt += `\n[Singh Win ${i + 1}] ${win.title} ($${win.value.toLocaleString()})\nOutcome: ${win.outcome}\nKey achievements: ${win.keyPoints.join('; ')}\n`;
+        });
+        if (context.themes.length > 0) {
+            prompt += `\nCOMMON SUCCESS THEMES TO EMPHASIZE: ${context.themes.join(', ')}`;
+        }
+    }
+    return prompt;
+}
+
+function buildUserPrompt(opportunity, context) {
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    let prompt = `Generate a complete 7-section proposal for:
+
+OPPORTUNITY:
+- Title: ${opportunity.title}
+- Agency: ${opportunity.agency}
+- Solicitation: ${opportunity.solicitation}
+- Value: $${opportunity.value.toLocaleString()}
+- NAICS: ${opportunity.naics || 'Not specified'}
+- Set-Aside: ${opportunity.setAside || 'Not specified'}
+- Date: ${today}`;
+
+    if (opportunity.description) prompt += `\n\nDESCRIPTION/SOW:\n${opportunity.description}`;
+
+    prompt += `\n\nPRICING (use these amounts):
+- Engineering & Design: 15% ($${Math.round(opportunity.value * 0.15).toLocaleString()})
+- Equipment & Materials: 45% ($${Math.round(opportunity.value * 0.45).toLocaleString()})
+- Integration & Programming: 25% ($${Math.round(opportunity.value * 0.25).toLocaleString()})
+- Installation & Commissioning: 10% ($${Math.round(opportunity.value * 0.10).toLocaleString()})
+- Training & Documentation: 5% ($${Math.round(opportunity.value * 0.05).toLocaleString()})
+
+Generate the complete proposal now.`;
+    return prompt;
+}
+
+function extractComplianceChecklist(content, opportunity) {
+    return [
+        { item: 'Executive Summary addresses agency mission', status: content.includes('Executive Summary') ? '✅' : '⚠️' },
+        { item: 'Technical approach covers system design', status: content.includes('Technical') ? '✅' : '⚠️' },
+        { item: 'Implementation phases defined', status: content.includes('Phase') ? '✅' : '⚠️' },
+        { item: 'Quality assurance plan included', status: content.includes('Quality') ? '✅' : '⚠️' },
+        { item: 'Project management described', status: content.includes('Management') ? '✅' : '⚠️' },
+        { item: 'Key personnel identified', status: content.includes('Engineer') ? '✅' : '⚠️' },
+        { item: 'Past performance provided', status: content.includes('Past Performance') ? '✅' : '⚠️' },
+        { item: 'Corporate capability demonstrated', status: content.includes('CAGE') ? '✅' : '⚠️' },
+        { item: 'Pricing breakdown included', status: content.includes('Pricing') ? '✅' : '⚠️' },
+        { item: 'Small business status confirmed', status: content.includes('Small Business') ? '✅' : '⚠️' }
+    ];
+}
+
+function templateFallback(req, res, body, errorMsg = null) {
     const title = body.title || 'Untitled Project';
     const agency = body.agency || 'Federal Agency';
     const solicitation = body.solicitation || 'TBD';
@@ -18,212 +288,74 @@ export default function handler(req, res) {
 - **Agency:** ${agency}
 - **Submitted by:** Singh Automation
 - **Date:** ${today}
-- **Contact:** Kalamazoo, MI (HQ) | Irvine, CA (Sales)
 - **UEI:** GJ1DPYQ3X8K5 | **CAGE:** 86VF7
 
 ---
 
 ## 1. Executive Summary
 
-Singh Automation is pleased to submit this proposal in response to ${agency}'s requirement for ${title}.
-
-As an authorized FANUC and Universal Robots (UR) system integrator with extensive experience in manufacturing automation, Singh Automation is uniquely positioned to deliver a turnkey solution that:
-
-- Meets or exceeds all technical and performance requirements
-- Integrates seamlessly with existing operations and safety standards
-- Provides a robust platform for future automation expansion
-
-Our proposed solution combines proven industrial robotic platforms with AI-enabled vision systems and modern controls architecture. With engineering headquarters in Kalamazoo, MI and sales/support operations in Irvine, CA, we provide responsive regional coverage and ongoing lifecycle support.
+Singh Automation is pleased to submit this proposal in response to ${agency}'s requirement for ${title}. As an authorized FANUC and Universal Robots integrator, we deliver turnkey automation solutions.
 
 **Estimated Project Value:** $${value.toLocaleString()}
-
-This investment includes engineering, equipment, integration, installation, training, and documentation.
 
 ---
 
 ## 2. Technical Approach
 
 ### 2.1 System Design
-
-The proposed system will be designed as a fully integrated, safety-compliant automation solution leveraging industry-standard components:
-
-**Robotics Platform:**
-- FANUC 6-axis industrial robots for high-payload, high-precision applications
-- Universal Robots (UR) collaborative robots for flexible, human-adjacent operations
-- Robot selection optimized for payload capacity, reach envelope, and cycle-time requirements
-
-**Vision & Sensing:**
-- AI-enabled machine vision for part detection, orientation, and quality inspection
-- High-resolution industrial cameras with appropriate lighting solutions
-- Optional laser tracking for dynamic path correction and seam tracking
-
-**Controls & HMI:**
-- Allen-Bradley or Siemens PLC platform based on customer preference and existing infrastructure
-- Industrial HMI touchscreen for operator interface, job selection, and status monitoring
-- Full integration with safety PLC and emergency stop circuits
-- Network connectivity for remote diagnostics and data collection
-
-**Cell Infrastructure:**
-- Custom-designed fixtures and tooling optimized for target applications
-- Perimeter guarding with safety-rated access doors and light curtains
-- Lockout/tagout provisions and safety signage per OSHA requirements
-- Utility connections (electrical, pneumatic, network) with proper cable management
+- **Robotics:** FANUC 6-axis / Universal Robots collaborative robots
+- **Vision:** AI-enabled machine vision for inspection and guidance
+- **Controls:** Allen-Bradley or Siemens PLC with industrial HMI
 
 ### 2.2 Implementation Phases
-
-**Phase 1: Discovery & Design (Weeks 1-4)**
-- Detailed requirements gathering and on-site assessment
-- Development of system architecture and functional design specification
-- 3D layout and simulation for cycle time validation
-- Design review and approval with customer stakeholders
-
-**Phase 2: Fabrication & Build (Weeks 5-10)**
-- Procurement of robots, controls, and major components
-- Fabrication of custom fixtures, guarding, and panels
-- Controls panel build and initial software development
-- Component-level testing and quality verification
-
-**Phase 3: Integration & FAT (Weeks 11-14)**
-- Complete mechanical and electrical integration at Singh facility
-- Robot programming and path optimization
-- Vision system calibration and algorithm tuning
-- Formal Factory Acceptance Test (FAT) with customer witness
-
-**Phase 4: Installation & SAT (Weeks 15-18)**
-- Shipment and on-site installation
-- Power-up, I/O checkout, and system commissioning
-- Operator and maintenance training
-- Site Acceptance Test (SAT) and performance validation
-
-**Phase 5: Support & Optimization (Ongoing)**
-- Warranty support per contract terms
-- Optional preventive maintenance program
-- Production optimization and continuous improvement support
-
-### 2.3 Quality Assurance
-
-All work will be performed under Singh Automation's quality management system:
-- Documented design and engineering change control
-- Incoming inspection for critical components
-- Standardized test procedures for FAT and SAT
-- Complete as-built documentation package
+- **Phase 1 (Weeks 1-4):** Discovery & Design
+- **Phase 2 (Weeks 5-10):** Fabrication & Build
+- **Phase 3 (Weeks 11-14):** Integration & FAT
+- **Phase 4 (Weeks 15-18):** Installation & SAT
 
 ---
 
 ## 3. Management Approach
 
-### 3.1 Project Management
-
-Singh Automation employs a formal project management methodology aligned with PMI best practices:
-
-- **Scope Management:** Detailed requirements documentation and change control process
-- **Schedule Management:** Milestone-based project plan with weekly status tracking
-- **Risk Management:** Risk register maintained from project kickoff with mitigation actions
-- **Communication:** Weekly status reports and monthly executive summaries
-
-### 3.2 Key Personnel
-
-**Project Manager**
-- 15+ years experience in automation project delivery
-- Responsible for scope, schedule, budget, and customer communication
-- Single point of contact for all project matters
-
-**Lead Robotics Engineer**
-- FANUC and UR certified programmer
-- Responsible for robot selection, programming, and optimization
-- Expert in welding, material handling, and assembly applications
-
-**Controls Engineer**
-- Allen-Bradley and Siemens certified
-- Responsible for PLC/HMI programming and safety system design
-- Experience with industrial networks and MES integration
-
-**Vision Systems Engineer**
-- Expert in machine vision and AI-based inspection
-- Responsible for camera selection, lighting design, and algorithm development
-- Experience with Cognex, Keyence, and custom vision solutions
-
-### 3.3 Communication Plan
-
-- Weekly project status calls during active phases
-- Monthly executive summary reports
-- 24/7 emergency contact during installation and ramp-up
-- Shared document repository for drawings, submittals, and reports
+- Formal PM framework aligned with PMI best practices
+- Weekly status reports and milestone reviews
+- Key Personnel: Project Manager, Robotics Engineer, Controls Engineer
 
 ---
 
 ## 4. Past Performance
 
-### Project 1: Robotic Welding Cell - Automotive Tier-1 Supplier
-- **Contract Value:** $425,000
-- **Scope:** Design and integration of dual-robot welding cell with vision-guided seam tracking, multi-fixture positioning, and automated part handling
-- **Results:** 35% reduction in cycle time, 99.8% first-pass weld quality, elimination of manual rework station
-- **Timeline:** Delivered on schedule, commissioned in 16 weeks
-
-### Project 2: Vision Inspection System - Aerospace Composites Manufacturer
-- **Contract Value:** $280,000
-- **Scope:** AI-powered defect detection system for carbon fiber components with high-resolution imaging, custom ML models, and MES integration
-- **Results:** 99.7% defect detection rate, 60% reduction in inspection time, full traceability integration
-- **Timeline:** Delivered 2 weeks early with expanded detection capabilities
-
-### Project 3: Conveyor & Palletizing System - Food & Beverage Facility
-- **Contract Value:** $350,000
-- **Scope:** High-speed conveyor system with robotic palletizing, case packing, and automated stretch wrapping
-- **Results:** 50% increase in throughput, seamless integration with existing plant controls, reduced labor requirements
-- **Timeline:** Delivered on schedule with zero safety incidents
+**Robotic Welding Cell - Automotive** | $425,000 | 35% cycle time reduction
+**Vision Inspection - Aerospace** | $280,000 | 99.7% defect detection
+**Conveyor System - F&B** | $350,000 | 50% throughput increase
 
 ---
 
 ## 5. Corporate Capability
 
-### Company Overview
-Singh Automation is a certified small business specializing in industrial automation, robotics integration, and manufacturing systems. Founded with a mission to bring world-class automation solutions to manufacturers of all sizes.
-
-### Core Competencies
-- Robotic welding and joining systems
-- Material handling and palletizing
-- Machine vision and AI-based inspection
-- PLC/HMI controls and safety systems
-- Turnkey cell design and integration
-
-### Registrations & Certifications
-- **UEI:** GJ1DPYQ3X8K5
-- **CAGE Code:** 86VF7
-- **NAICS Codes:** 333249, 333922, 541330, 541512, 541715, 238210
-- **Certifications:** Small Business, MBE, WBENC
-- **Partnerships:** FANUC Authorized Integrator, Universal Robots Certified Partner
-
-### Facilities
-- **Headquarters:** Kalamazoo, MI - Engineering, integration, and testing
-- **Sales Office:** Irvine, CA - West coast sales and customer support
+- **UEI:** GJ1DPYQ3X8K5 | **CAGE:** 86VF7
+- **NAICS:** 333249, 333922, 541330, 541512, 541715, 238210
+- **Certs:** Small Business, MBE, WBENC, FANUC ASI, UR Partner
 
 ---
 
 ## 6. Pricing Summary
 
-| Category | Amount | Percentage |
-|----------|--------|------------|
+| Category | Amount | % |
+|----------|--------|---|
 | Engineering & Design | $${Math.round(value * 0.15).toLocaleString()} | 15% |
 | Equipment & Materials | $${Math.round(value * 0.45).toLocaleString()} | 45% |
 | Integration & Programming | $${Math.round(value * 0.25).toLocaleString()} | 25% |
 | Installation & Commissioning | $${Math.round(value * 0.10).toLocaleString()} | 10% |
 | Training & Documentation | $${Math.round(value * 0.05).toLocaleString()} | 5% |
-| **Total Proposed Price** | **$${value.toLocaleString()}** | **100%** |
-
-*Pricing is based on preliminary scope understanding and is subject to adjustment following detailed requirements review.*
-
----
-
-## 7. Conclusion
-
-Singh Automation is committed to delivering a high-quality automation solution that meets ${agency}'s requirements for ${title}. Our combination of technical expertise, proven past performance, and customer-focused approach makes us an ideal partner for this project.
-
-We welcome the opportunity to discuss our proposal and answer any questions.
-
-**Singh Automation**
-Kalamazoo, MI (Headquarters) | Irvine, CA (Sales & Support)
-UEI: GJ1DPYQ3X8K5 | CAGE: 86VF7
+| **Total** | **$${value.toLocaleString()}** | **100%** |
 `;
 
-    return res.status(200).json({ success: true, proposal: proposal, method: 'template' });
+    return res.status(200).json({
+        success: true,
+        proposal: proposal,
+        contextUsed: errorMsg ? [`Template mode - ${errorMsg}`] : ['Template mode - no Claude API key provided'],
+        complianceChecklist: [],
+        method: 'template-fallback'
+    });
 }

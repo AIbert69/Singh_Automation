@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Singh Automation - Federal Contract Intelligence</title>
+    <style>
+        :root {
+            --primary: #00ff88;
+            --bg: #0a0a0a;
+            --card: #141414;
+            --border: #2a2a2a;
+            --text: #ffffff;
+            --muted: #888;
+            --hot: #ff4757;
+            --warm: #ffa502;
+            --cold: #3742fa;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        /* Navigation */
+        .nav {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-link {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: var(--primary);
+            color: var(--bg);
+            border-color: var(--primary);
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+        
+        .page-header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .page-header p {
+            color: var(--muted);
+        }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-top: 0.25rem;
+        }
+        
+        /* Opportunity Cards */
+        .opportunities {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .opp-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: border-color 0.2s;
+        }
+        
+        .opp-card:hover {
+            border-color: var(--primary);
+        }
+        
+        .opp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .opp-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .opp-agency {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        
+        .tier-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .tier-hot { background: var(--hot); }
+        .tier-warm { background: var(--warm); color: #000; }
+        .tier-cold { background: var(--cold); }
+        
+        .opp-description {
+            color: var(--muted);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        
+        .opp-signals {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .signal {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--primary);
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+        
+        .opp-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .meta-item span:first-child {
+            color: var(--muted);
+        }
+        
+        .meta-value {
+            font-weight: 600;
+        }
+        
+        .amount {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+        
+        /* Contact Section */
+        .contact-section {
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .contact-header {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+        
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+        
+        .contact-item {
+            font-size: 0.85rem;
+        }
+        
+        .contact-item strong {
+            color: var(--muted);
+            font-weight: 500;
+        }
+        
+        .contact-item a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .contact-item a:hover {
+            text-decoration: underline;
+        }
+        
+        .contact-notes {
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--muted);
+            font-style: italic;
+        }
+        
+        /* Action Buttons */
+        .opp-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: var(--bg);
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: var(--bg);
+        }
+        
+        .btn-portal {
+            background: rgba(55, 66, 250, 0.2);
+            color: #5d68ff;
+            border: 1px solid #5d68ff;
+        }
+        
+        .btn-portal:hover {
+            background: #5d68ff;
+            color: white;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 650px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .modal-close:hover {
+            color: var(--text);
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        
+        .form-textarea {
+            min-height: 280px;
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.6;
+        }
+        
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        
+        /* Demo Badge */
+        .demo-badge {
+            background: #ff6b00;
+            color: white;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            margin-left: 0.5rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        /* Loading & Error States */
+        .loading, .error {
+            text-align: center;
+            padding: 3rem;
+            color: var(--muted);
+        }
+        
+        .error {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid var(--hot);
+            border-radius: 8px;
+            color: var(--hot);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .nav { padding: 1rem; }
+            .opp-header { flex-direction: column; }
+            .opp-actions { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+            .modal-footer { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <div class="logo">⚡ Singh Automation</div>
+            <div class="nav-links">
+                <a href="#" class="nav-link active">Subcontracting</a>
+                <a href="/api/sam" class="nav-link">SAM.gov</a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>🎯 Subcontracting Opportunities</h1>
+            <p>Prime contractors with federal awards matching your automation capabilities</p>
+        </div>
+        
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-value" id="statTotal">-</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statHot">-</div>
+                <div class="stat-label">🔥 Hot</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statWarm">-</div>
+                <div class="stat-label">🌡️ Warm</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statCold">-</div>
+                <div class="stat-label">❄️ Cold</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statValue">-</div>
+                <div class="stat-label">Total Value</div>
+            </div>
+        </div>
+        
+        <!-- Opportunities List -->
+        <div class="opportunities" id="opportunitiesList">
+            <div class="loading">Loading opportunities from USASpending.gov...</div>
+        </div>
+    </div>
+    
+    <!-- Email Modal -->
+    <div class="modal-overlay" id="emailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">✉️ Draft Outreach Email</div>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">To</label>
+                    <input type="text" class="form-input" id="modalTo" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Subject</label>
+                    <input type="text" class="form-input" id="modalSubject" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Message</label>
+                    <textarea class="form-input form-textarea" id="modalBody" readonly></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="copyEmail()">📋 Copy to Clipboard</button>
+                <a class="btn btn-primary" id="mailtoLink" href="#">✉️ Open Email Client</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let opportunities = [];
+        
+        // Load opportunities on page load
+        async function loadOpportunities() {
+            try {
+                const response = await fetch('/api/subcontracting');
+                const data = await response.json();
+                
+                if (data.success) {
+                    opportunities = data.opportunities;
+                    renderStats(data.stats);
+                    renderOpportunities(opportunities);
+                } else {
+                    throw new Error(data.error || 'Failed to load');
+                }
+            } catch (err) {
+                console.error('Load error:', err);
+                document.getElementById('opportunitiesList').innerHTML = `
+                    <div class="error">
+                        <p><strong>Error loading opportunities</strong></p>
+                        <p>${err.message}</p>
+                        <br>
+                        <button class="btn btn-secondary" onclick="loadOpportunities()">Retry</button>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderStats(stats) {
+            document.getElementById('statTotal').textContent = stats.total;
+            document.getElementById('statHot').textContent = stats.hot;
+            document.getElementById('statWarm').textContent = stats.warm;
+            document.getElementById('statCold').textContent = stats.cold;
+            document.getElementById('statValue').textContent = formatMoney(stats.totalValue);
+        }
+        
+        function formatMoney(amount) {
+            if (amount >= 1e9) return '$' + (amount / 1e9).toFixed(1) + 'B';
+            if (amount >= 1e6) return '$' + (amount / 1e6).toFixed(1) + 'M';
+            if (amount >= 1e3) return '$' + (amount / 1e3).toFixed(0) + 'K';
+            return '$' + amount;
+        }
+        
+        function renderOpportunities(opps) {
+            const container = document.getElementById('opportunitiesList');
+            
+            if (!opps || opps.length === 0) {
+                container.innerHTML = '<div class="loading">No opportunities found.</div>';
+                return;
+            }
+            
+            container.innerHTML = opps.map((opp, i) => `
+                <div class="opp-card">
+                    <div class="opp-header">
+                        <div>
+                            <div class="opp-title">
+                                ${opp.recipientName}
+                                ${opp.isDemoData ? '<span class="demo-badge">Demo</span>' : ''}
+                            </div>
+                            <div class="opp-agency">${opp.agency}${opp.subAgency ? ' • ' + opp.subAgency : ''}</div>
+                        </div>
+                        <span class="tier-badge tier-${opp.tier}">${opp.tier} (${opp.score})</span>
+                    </div>
+                    
+                    <p class="opp-description">${opp.description}</p>
+                    
+                    <div class="opp-signals">
+                        ${opp.signals.map(s => `<span class="signal">✓ ${s}</span>`).join('')}
+                    </div>
+                    
+                    <div class="opp-meta">
+                        <div class="meta-item">
+                            <span>Value: </span>
+                            <span class="amount">${formatMoney(opp.awardAmount)}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>Location: </span>
+                            <span class="meta-value">${opp.location}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>NAICS: </span>
+                            <span class="meta-value">${opp.naicsCode || 'N/A'}</span>
+                        </div>
+                    </div>
+                    
+                    ${renderContactSection(opp)}
+                    
+                    <div class="opp-actions">
+                        <button class="btn btn-primary" onclick="openEmailModal(${i})">✉️ Draft Outreach</button>
+                        ${opp.primeContact?.portalUrl ? `
+                            <a class="btn btn-portal" href="${opp.primeContact.portalUrl}" target="_blank">🏢 Supplier Portal</a>
+                        ` : ''}
+                        ${opp.generatedInternalId ? `
+                            <a class="btn btn-secondary" href="${opp.usaSpendingUrl}" target="_blank">📄 View Contract</a>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderContactSection(opp) {
+            const c = opp.primeContact;
+            if (!c) return '';
+            
+            // Check if we have any real contact info
+            const hasInfo = c.email || c.phone || c.helpDesk || c.supplierDiversity || c.supplierPortal;
+            
+            if (!hasInfo && c.isGenericSearch) {
+                return `
+                    <div class="contact-section">
+                        <div class="contact-header">📇 Prime Contractor Contact</div>
+                        <div class="contact-item">
+                            <a href="${c.portalUrl}" target="_blank">🔍 Search for supplier portal →</a>
+                        </div>
+                        ${c.notes ? `<div class="contact-notes">💡 ${c.notes}</div>` : ''}
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="contact-section">
+                    <div class="contact-header">📇 Prime Contractor Contact</div>
+                    <div class="contact-grid">
+                        ${c.portalUrl && !c.isGenericSearch ? `
+                            <div class="contact-item">
+                                <strong>Portal:</strong><br>
+                                <a href="${c.portalUrl}" target="_blank">Supplier Registration →</a>
+                            </div>
+                        ` : ''}
+                        ${c.supplierPortal ? `
+                            <div class="contact-item">
+                                <strong>Supplier System:</strong><br>
+                                <a href="${c.supplierPortal}" target="_blank">Login/Register →</a>
+                            </div>
+                        ` : ''}
+                        ${c.email ? `
+                            <div class="contact-item">
+                                <strong>Email:</strong><br>
+                                <a href="mailto:${c.email}">${c.email}</a>
+                            </div>
+                        ` : ''}
+                        ${c.helpDesk ? `
+                            <div class="contact-item">
+                                <strong>Help Desk:</strong><br>
+                                <a href="mailto:${c.helpDesk}">${c.helpDesk}</a>
+                            </div>
+                        ` : ''}
+                        ${c.supplierDiversity ? `
+                            <div class="contact-item">
+                                <strong>Supplier Diversity:</strong><br>
+                                <a href="mailto:${c.supplierDiversity}">${c.supplierDiversity}</a>
+                            </div>
+                        ` : ''}
+                        ${c.phone ? `
+                            <div class="contact-item">
+                                <strong>Phone:</strong><br>
+                                <a href="tel:${c.phone.replace(/[^0-9]/g, '')}">${c.phone}</a>
+                            </div>
+                        ` : ''}
+                    </div>
+                    ${c.notes ? `<div class="contact-notes">💡 ${c.notes}</div>` : ''}
+                </div>
+            `;
+        }
+        
+        function openEmailModal(index) {
+            const opp = opportunities[index];
+            const c = opp.primeContact;
+            
+            // Build recipient
+            let email = '';
+            let display = opp.recipientName + ' - Contracts Team';
+            
+            if (c) {
+                if (c.email) {
+                    email = c.email;
+                    display = `${opp.recipientName} <${c.email}>`;
+                } else if (c.helpDesk) {
+                    email = c.helpDesk;
+                    display = `${opp.recipientName} <${c.helpDesk}>`;
+                } else if (c.supplierDiversity) {
+                    email = c.supplierDiversity;
+                    display = `${opp.recipientName} - Supplier Diversity <${c.supplierDiversity}>`;
+                }
+            }
+            
+            document.getElementById('modalTo').value = display;
+            document.getElementById('modalSubject').value = opp.outreachSubject;
+            document.getElementById('modalBody').value = opp.outreachBody;
+            
+            // Mailto link
+            const mailto = `mailto:${email}?subject=${encodeURIComponent(opp.outreachSubject)}&body=${encodeURIComponent(opp.outreachBody)}`;
+            document.getElementById('mailtoLink').href = mailto;
+            
+            document.getElementById('emailModal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('emailModal').classList.remove('active');
+        }
+        
+        function copyEmail() {
+            const subject = document.getElementById('modalSubject').value;
+            const body = document.getElementById('modalBody').value;
+            const text = `Subject: ${subject}\n\n${body}`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Email copied to clipboard!');
+            });
+        }
+        
+        // Close modal on escape or outside click
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeModal();
+        });
+        
+        document.getElementById('emailModal').addEventListener('click', e => {
+            if (e.target.id === 'emailModal') closeModal();
+        });
+        
+        // Init
+        loadOpportunities();
+    </script>
+</body>
+</html>

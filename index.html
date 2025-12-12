@@ -219,6 +219,7 @@
         </div>
         <nav class="nav">
             <button class="nav-btn active" data-page="scanner">📡 Scanner</button>
+            <button class="nav-btn" data-page="purchasing">🛒 Purchasing</button>
             <button class="nav-btn" data-page="subcontracting">🎯 Subcontracting</button>
             <button class="nav-btn" data-page="pipeline">📊 Pipeline</button>
             <button class="nav-btn" data-page="agent">🤖 AI Agent</button>
@@ -320,6 +321,46 @@
 
     <!-- SUBCONTRACTING PAGE -->
     <div class="page" id="page-subcontracting">
+
+    <!-- PURCHASING PAGE -->
+    <div class="page" id="page-purchasing">
+        <div class="stats-bar" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="stat"><div class="stat-value" id="purchTotal">0</div><div class="stat-label">Total Eligible</div></div>
+            <div class="stat"><div class="stat-value" id="purchPLC">0</div><div class="stat-label">PLC/Controls</div></div>
+            <div class="stat"><div class="stat-value" id="purchRobotics">0</div><div class="stat-label">Robotics</div></div>
+            <div class="stat"><div class="stat-value" id="purchVision">0</div><div class="stat-label">Vision/Sensors</div></div>
+            <div class="stat"><div class="stat-value" id="purchMotion">0</div><div class="stat-label">Motion/VFD</div></div>
+        </div>
+        
+        <div class="main main-full" style="max-width: 1200px;">
+            <div class="panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <div class="panel-title" style="margin-bottom: 0;">🛒 Purchasing Eligibility</div>
+                        <p style="font-size: 0.75rem; color: var(--gray); margin-top: 0.25rem;">Opportunities with purchasable automation hardware or standard equipment</p>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="loadPurchasing()">🔄 Analyze</button>
+                </div>
+                
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                    <button class="filter-pill active" data-purchfilter="all" onclick="filterPurchasing('all', this)">All Eligible</button>
+                    <button class="filter-pill" data-purchfilter="PLC/Controls" onclick="filterPurchasing('PLC/Controls', this)">PLC/Controls</button>
+                    <button class="filter-pill" data-purchfilter="Robotics" onclick="filterPurchasing('Robotics', this)">Robotics</button>
+                    <button class="filter-pill" data-purchfilter="Vision/Sensors" onclick="filterPurchasing('Vision/Sensors', this)">Vision/Sensors</button>
+                    <button class="filter-pill" data-purchfilter="Motion/VFD" onclick="filterPurchasing('Motion/VFD', this)">Motion/VFD</button>
+                    <button class="filter-pill" data-purchfilter="Mixed" onclick="filterPurchasing('Mixed', this)">Mixed</button>
+                </div>
+                
+                <div id="purchasingList" class="opp-list" style="max-height: calc(100vh - 350px);">
+                    <div style="text-align: center; padding: 2rem; color: var(--gray);">
+                        <div style="font-size: 2rem; opacity: 0.4;">🛒</div>
+                        <h3 style="margin: 0.5rem 0;">Ready to Analyze</h3>
+                        <p style="font-size: 0.8rem;">Click Analyze to scan opportunities for purchasable equipment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
         <div class="main main-full" style="max-width: 1200px;">
             <div class="panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -705,6 +746,9 @@ function showDetail(id) {
     
     document.getElementById('modalTitle').textContent = o.title;
     
+    // Analyze Purchasing Eligibility
+    const purchasingElig = analyzePurchasingEligibility(o);
+    
     // Determine banner style
     let bannerClass = 'go';
     let bannerIcon = '✅';
@@ -725,6 +769,19 @@ function showDetail(id) {
     }
     
     let body = `
+        <!-- PURCHASING ELIGIBILITY SECTION -->
+        <div style="background: ${purchasingElig.eligible ? 'rgba(59,130,246,0.1)' : 'rgba(100,100,100,0.1)'}; border: 1px solid ${purchasingElig.eligible ? 'var(--blue)' : '#555'}; border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 1rem;">${purchasingElig.eligible ? '🛒' : '📋'}</span>
+                <strong style="color: ${purchasingElig.eligible ? 'var(--blue)' : '#888'}; font-size: 0.9rem;">Purchasing Eligibility</strong>
+            </div>
+            <div style="font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.3rem;">
+                <div><strong>Eligible:</strong> <span style="color: ${purchasingElig.eligible ? 'var(--green)' : 'var(--gray)'}; font-weight: 600;">${purchasingElig.eligible ? 'YES' : 'NO'}</span></div>
+                <div><strong>Category:</strong> <span style="color: var(--blue);">${purchasingElig.category}</span></div>
+                <div><strong>Reason:</strong> <span style="color: var(--gray);">${purchasingElig.reason}</span></div>
+            </div>
+        </div>
+        
         <div class="eligibility-banner ${bannerClass}">
             <div class="icon">${bannerIcon}</div>
             <div class="text">
@@ -1178,6 +1235,105 @@ document.getElementById('searchInput')?.addEventListener('keyup', renderOpps);
 let subOpportunities = [];
 let currentSubFilter = 'all';
 
+// ========== PURCHASING PAGE ==========
+let purchasingOpportunities = [];
+let currentPurchFilter = 'all';
+
+async function loadPurchasing() {
+    const list = document.getElementById('purchasingList');
+    list.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--gray);"><div class="spinner"></div><p>Analyzing opportunities...</p></div>';
+    
+    // If no opportunities loaded, scan first
+    if (opportunities.length === 0) {
+        await scanAll();
+    }
+    
+    // Analyze all opportunities for purchasing eligibility
+    purchasingOpportunities = opportunities.map(o => ({
+        ...o,
+        purchasing: analyzePurchasingEligibility(o)
+    })).filter(o => o.purchasing.eligible);
+    
+    // Sort by match score
+    purchasingOpportunities.sort((a, b) => b.matchScore - a.matchScore);
+    
+    updatePurchasingStats();
+    renderPurchasing();
+}
+
+function updatePurchasingStats() {
+    const total = purchasingOpportunities.length;
+    const plc = purchasingOpportunities.filter(o => o.purchasing.category === 'PLC/Controls').length;
+    const robotics = purchasingOpportunities.filter(o => o.purchasing.category === 'Robotics').length;
+    const vision = purchasingOpportunities.filter(o => o.purchasing.category === 'Vision/Sensors').length;
+    const motion = purchasingOpportunities.filter(o => o.purchasing.category === 'Motion/VFD').length;
+    
+    document.getElementById('purchTotal').textContent = total;
+    document.getElementById('purchPLC').textContent = plc;
+    document.getElementById('purchRobotics').textContent = robotics;
+    document.getElementById('purchVision').textContent = vision;
+    document.getElementById('purchMotion').textContent = motion;
+}
+
+function filterPurchasing(filter, btn) {
+    currentPurchFilter = filter;
+    document.querySelectorAll('[data-purchfilter]').forEach(el => el.classList.remove('active'));
+    btn.classList.add('active');
+    renderPurchasing();
+}
+
+function renderPurchasing() {
+    const list = document.getElementById('purchasingList');
+    
+    let filtered = purchasingOpportunities;
+    if (currentPurchFilter !== 'all') {
+        filtered = purchasingOpportunities.filter(o => o.purchasing.category === currentPurchFilter);
+    }
+    
+    if (filtered.length === 0) {
+        list.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--gray);"><p>No opportunities found for this category</p></div>';
+        return;
+    }
+    
+    list.innerHTML = filtered.map(o => {
+        const catColors = {
+            'PLC/Controls': { bg: 'rgba(59,130,246,0.2)', color: '#60a5fa' },
+            'Robotics': { bg: 'rgba(139,92,246,0.2)', color: '#a78bfa' },
+            'Vision/Sensors': { bg: 'rgba(16,185,129,0.2)', color: '#34d399' },
+            'Motion/VFD': { bg: 'rgba(245,158,11,0.2)', color: '#fbbf24' },
+            'Mixed': { bg: 'rgba(154,205,50,0.2)', color: 'var(--green)' },
+            'Unknown': { bg: 'rgba(100,100,100,0.2)', color: '#888' }
+        };
+        const catStyle = catColors[o.purchasing.category] || catColors['Unknown'];
+        const scoreClass = o.matchScore >= 70 ? '' : o.matchScore >= 50 ? 'medium' : 'low';
+        
+        return `
+        <div class="opp-card qualified" data-id="${o.id}">
+            <div class="opp-header">
+                <div class="opp-title">${o.title}</div>
+                <div class="match-score ${scoreClass}">${o.matchScore}%</div>
+            </div>
+            <div class="opp-meta">
+                <span>🏛️ ${(o.agency||'Agency').substring(0,35)}</span>
+                <span>💰 ${fmtCurrency(o.value)}</span>
+                <span>📅 ${fmtDate(o.closeDate)}</span>
+            </div>
+            <div class="opp-desc">${(o.description||'').substring(0,120)}...</div>
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; flex-wrap: wrap;">
+                <span style="background: ${catStyle.bg}; color: ${catStyle.color}; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">
+                    🛒 ${o.purchasing.category}
+                </span>
+                <span style="font-size: 0.7rem; color: var(--gray);">${o.purchasing.reason}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border);">
+                <a href="${o.link}" target="_blank" style="font-size: 0.7rem; color: var(--green);">View Source →</a>
+                ${o.matchScore >= 65 ? `<button class="btn btn-sm btn-quote" onclick="event.stopPropagation(); openQuoteRequest('${o.id}')">📋 Request Quote</button>` : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
 async function loadSubcontracting() {
     const list = document.getElementById('subList');
     list.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--gray);"><div class="loading-spinner"></div><p>Loading opportunities...</p></div>';
@@ -1441,6 +1597,76 @@ const QUOTE_AUTOMATION_KEYWORDS = [
     'universal robot', 'cobot', 'eoat', 'gripper', 'automation', 
     'conveyor', 'actuator', 'encoder', 'motor', 'pneumatic', 'valve'
 ];
+
+// ========== PURCHASING ELIGIBILITY ANALYSIS ==========
+function analyzePurchasingEligibility(o) {
+    const text = ((o.title || '') + ' ' + (o.description || '')).toLowerCase();
+    
+    // Category keywords
+    const categories = {
+        'PLC/Controls': ['plc', 'hmi', 'scada', 'control panel', 'controls', 'controller', 'programmable logic'],
+        'Robotics': ['robot', 'robotic', 'manipulator', 'cobot', 'fanuc', 'universal robot', 'kuka', 'abb robot', 'yaskawa'],
+        'Vision/Sensors': ['vision', 'camera', 'sensor', 'inspection', 'machine vision', 'barcode', 'scanner', 'detection'],
+        'Motion/VFD': ['vfd', 'servo', 'drive', 'motor', 'actuator', 'motion control', 'encoder', 'inverter'],
+        'Safety': ['safety', 'light curtain', 'e-stop', 'safety relay', 'interlock'],
+        'EOAT': ['eoat', 'gripper', 'end effector', 'tooling', 'end-of-arm']
+    };
+    
+    // Services-only indicators
+    const servicesOnly = ['consulting', 'advisory', 'study', 'assessment', 'audit', 'training only', 'staffing', 'labor hours', 'professional services'];
+    
+    // Check if services-only
+    const isServicesOnly = servicesOnly.some(s => text.includes(s)) && 
+                          !['equipment', 'hardware', 'system', 'install', 'robot', 'plc', 'sensor'].some(h => text.includes(h));
+    
+    if (isServicesOnly) {
+        return {
+            eligible: false,
+            category: 'Unknown',
+            reason: 'Opportunity appears to be services or consulting only.'
+        };
+    }
+    
+    // Find matching categories
+    const matchedCategories = [];
+    for (const [cat, keywords] of Object.entries(categories)) {
+        if (keywords.some(kw => text.includes(kw))) {
+            matchedCategories.push(cat);
+        }
+    }
+    
+    // Determine category
+    let category = 'Unknown';
+    let reason = '';
+    
+    if (matchedCategories.length === 0) {
+        // Check for general automation/hardware terms
+        const generalHardware = ['equipment', 'hardware', 'system', 'upgrade', 'replacement', 'install', 'automation'];
+        if (generalHardware.some(h => text.includes(h))) {
+            category = 'Mixed';
+            reason = 'Opportunity references automation equipment or hardware.';
+            return { eligible: true, category, reason };
+        }
+        // Default to YES when uncertain per spec
+        return {
+            eligible: true,
+            category: 'Unknown',
+            reason: 'Category unclear but automation context suggests potential hardware.'
+        };
+    } else if (matchedCategories.length === 1) {
+        category = matchedCategories[0];
+        reason = `Opportunity includes ${category.toLowerCase()} hardware or components.`;
+    } else {
+        category = 'Mixed';
+        reason = `Opportunity includes ${matchedCategories.slice(0, 2).join(' and ').toLowerCase()} equipment.`;
+    }
+    
+    return {
+        eligible: true,
+        category,
+        reason
+    };
+}
 
 function checkQuoteEligibility(o) {
     // Check 1: Score >= 65%

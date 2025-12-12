@@ -1,225 +1,276 @@
-// SUBCONTRACTING FIELD MAPPING FIX
-// Replace your existing renderSubOpportunities function with this one
-// This handles all the different field name formats from USASpending.gov API
+// Singh Automation - Subcontracting Opportunities API
+// Deploy to: /api/subcontracting.js on Vercel
+// Fetches federal contracts from USASpending.gov and identifies subcontracting opportunities
 
-function renderSubOpportunities() {
-    const container = document.getElementById('subList');
-    if (!container) return;
+export default async function handler(req, res) {
+    // CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    const filtered = currentSubFilter === 'all' 
-        ? subOpportunities 
-        : subOpportunities.filter(o => {
-            const tier = o.tier || o.priority || (getScore(o) >= 70 ? 'hot' : getScore(o) >= 50 ? 'warm' : 'cold');
-            return tier === currentSubFilter;
-        });
-    
-    if (!filtered.length) {
-        container.innerHTML = `<div style="text-align: center; padding: 3rem; color: var(--gray);">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">📭</div>
-            <p>No ${currentSubFilter === 'all' ? '' : currentSubFilter + ' '}opportunities found</p>
-        </div>`;
-        return;
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
-    
-    container.innerHTML = filtered.map((opp, idx) => {
-        // ========== FIELD NAME NORMALIZATION ==========
-        // Handle ALL possible field name formats from USASpending.gov API
-        
-        // Prime contractor name - try all possible field names
-        const prime = opp.recipientName 
-            || opp.recipient_name 
-            || opp['Recipient Name']
-            || opp.prime 
-            || opp.prime_contractor
-            || opp.primeContractor
-            || opp.contractor_name
-            || opp.vendor_name
-            || opp.awardee
-            || 'Unknown Prime';
-        
-        // Award amount - try all possible field names
-        const amount = opp.awardAmount 
-            || opp.award_amount 
-            || opp['Award Amount']
-            || opp.total_obligation
-            || opp.totalObligation
-            || opp.amount
-            || opp.value
-            || opp.contract_value
-            || 0;
-        
-        // Agency
-        const agency = opp.agency 
-            || opp.awarding_agency
-            || opp.awarding_agency_name
-            || opp['Awarding Agency']
-            || opp.funding_agency
-            || 'Federal Agency';
-        
-        // Location
-        const location = opp.location 
-            || opp.place_of_performance
-            || opp.pop_city_name
-            || opp['Place of Performance']
-            || (opp.pop_city ? `${opp.pop_city}, ${opp.pop_state}` : '')
-            || 'USA';
-        
-        // Description
-        const description = opp.description 
-            || opp.award_description
-            || opp['Description']
-            || opp.contract_description
-            || 'Contract award';
-        
-        // NAICS
-        const naicsCode = opp.naicsCode 
-            || opp.naics_code 
-            || opp.naics
-            || opp['NAICS']
-            || opp.naics_description
-            || '';
-        
-        // Score
-        const score = opp.score 
-            || opp.match_score 
-            || opp.matchScore
-            || opp.relevance_score
-            || 75;
-        
-        // Tier (hot/warm/cold)
-        const tier = opp.tier 
-            || opp.priority 
-            || (score >= 70 ? 'hot' : score >= 50 ? 'warm' : 'cold');
-        
-        // Signals/tags
-        const signals = opp.signals 
-            || opp.keywords 
-            || opp.tags 
-            || [];
-        
-        // USASpending link
-        const usaSpendingUrl = opp.usaSpendingUrl 
-            || opp.usaspending_url
-            || opp.contract_link
-            || opp.award_link
-            || (opp.generated_internal_id ? `https://www.usaspending.gov/award/${opp.generated_internal_id}` : 'https://www.usaspending.gov');
-        
-        // ========== RENDERING ==========
-        const tierClass = tier === 'hot' ? 'hot' : tier === 'warm' ? 'warm' : 'cold';
-        const amountFormatted = formatCurrency(amount);
-        
-        return `
-            <div class="sub-card ${tierClass}">
-                <div class="sub-card-header">
-                    <div>
-                        <div class="sub-prime">${escapeHtml(prime)}</div>
-                        <div class="sub-meta">
-                            <span>🏛️ ${escapeHtml(agency)}</span>
-                            <span>📍 ${escapeHtml(location)}</span>
-                            ${naicsCode ? `<span>📋 ${escapeHtml(naicsCode)}</span>` : ''}
-                        </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <span class="sub-score ${tierClass}">${score}%</span>
-                        <div class="sub-amount">${amountFormatted}</div>
-                    </div>
-                </div>
-                <p class="sub-desc">${escapeHtml(truncateText(description, 200))}</p>
-                <div class="sub-signals">
-                    <span class="sub-signal tier-${tierClass}">${tier.toUpperCase()}</span>
-                    ${Array.isArray(signals) ? signals.slice(0, 4).map(s => `<span class="sub-signal">${escapeHtml(s)}</span>`).join('') : ''}
-                </div>
-                <div class="sub-actions">
-                    <a href="${usaSpendingUrl}" target="_blank" class="btn btn-secondary btn-sm">View on USASpending →</a>
-                    <button class="btn btn-primary btn-sm" onclick="showSubOutreach(${idx})">📧 Draft Outreach</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
 
-// Helper function to get score from various field names
-function getScore(opp) {
-    return opp.score || opp.match_score || opp.matchScore || opp.relevance_score || 75;
-}
+    try {
+        // Singh Automation's target NAICS codes for robotics/automation
+        const targetNaics = [
+            '333249', // Industrial Machinery Manufacturing
+            '333318', // Other Commercial/Service Machinery
+            '541330', // Engineering Services
+            '541512', // Computer Systems Design
+            '333923', // Overhead Cranes/Hoists
+            '332710', // Machine Shops
+            '541714', // R&D in Physical Sciences
+            '541715', // R&D in Engineering
+        ];
 
-// Format currency helper
-function formatCurrency(amount) {
-    if (!amount || amount === 0) return '$0';
-    if (amount >= 1000000) {
-        return '$' + (amount / 1000000).toFixed(1) + 'M';
-    } else if (amount >= 1000) {
-        return '$' + (amount / 1000).toFixed(0) + 'K';
-    }
-    return '$' + amount.toFixed(0);
-}
+        // Keywords that indicate automation/robotics needs
+        const automationKeywords = [
+            'robot', 'robotic', 'automation', 'automated', 'AMR', 'AGV',
+            'conveyor', 'material handling', 'vision system', 'inspection',
+            'welding', 'assembly', 'manufacturing', 'warehouse', 'logistics',
+            'palletizing', 'pick and place', 'FANUC', 'Universal Robot',
+            'cobot', 'collaborative robot', 'machine vision', 'AI inspection',
+            'production line', 'industrial automation', 'PLC', 'SCADA'
+        ];
 
-// Escape HTML helper
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+        // Try to fetch from USASpending.gov API
+        let opportunities = [];
+        let isLive = false;
 
-// Truncate text helper
-function truncateText(text, maxLength) {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-}
+        try {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 90);
+            const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+            const endDate = new Date().toISOString().split('T')[0];
 
-// Also fix the showSubOutreach function
-function showSubOutreach(idx) {
-    const filtered = currentSubFilter === 'all' 
-        ? subOpportunities 
-        : subOpportunities.filter(o => {
-            const score = o.score || o.match_score || o.matchScore || 75;
-            const tier = o.tier || o.priority || (score >= 70 ? 'hot' : score >= 50 ? 'warm' : 'cold');
-            return tier === currentSubFilter;
+            const response = await fetch('https://api.usaspending.gov/api/v2/search/spending_by_award/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filters: {
+                        time_period: [{ start_date: startDate, end_date: endDate }],
+                        award_type_codes: ['A', 'B', 'C', 'D'], // Contracts
+                        award_amounts: [{ lower_bound: 500000, upper_bound: 100000000 }],
+                        naics_codes: targetNaics
+                    },
+                    fields: [
+                        'Award ID',
+                        'Recipient Name',
+                        'Award Amount',
+                        'Description',
+                        'Awarding Agency',
+                        'Awarding Sub Agency',
+                        'Place of Performance City',
+                        'Place of Performance State',
+                        'NAICS Code',
+                        'NAICS Description',
+                        'Start Date',
+                        'generated_internal_id'
+                    ],
+                    limit: 50,
+                    page: 1,
+                    sort: 'Award Amount',
+                    order: 'desc'
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.results && data.results.length > 0) {
+                    isLive = true;
+                    opportunities = data.results.map(award => {
+                        const description = (award['Description'] || '').toLowerCase();
+                        
+                        // Calculate match score based on keywords
+                        let matchScore = 50; // Base score
+                        let signals = [];
+                        
+                        automationKeywords.forEach(keyword => {
+                            if (description.includes(keyword.toLowerCase())) {
+                                matchScore += 5;
+                                if (signals.length < 5) {
+                                    signals.push(keyword);
+                                }
+                            }
+                        });
+                        
+                        // Cap at 98%
+                        matchScore = Math.min(matchScore, 98);
+                        
+                        // Add context signals
+                        if (award['Award Amount'] > 5000000) signals.push('Large contract ($5M+)');
+                        if (award['Award Amount'] > 10000000) signals.push('Major contract ($10M+)');
+                        
+                        // Determine tier
+                        const tier = matchScore >= 75 ? 'hot' : matchScore >= 55 ? 'warm' : 'cold';
+                        
+                        // Check if prime is likely not an automation specialist
+                        const primeName = award['Recipient Name'] || '';
+                        const primeIsGC = /construction|building|civil|architect|engineer(?!ing automation)/i.test(primeName);
+                        if (primeIsGC) {
+                            signals.push('Prime is not automation specialist');
+                            matchScore = Math.min(matchScore + 10, 98);
+                        }
+
+                        return {
+                            // Normalized field names for frontend
+                            recipientName: award['Recipient Name'] || 'Unknown Contractor',
+                            awardAmount: award['Award Amount'] || 0,
+                            agency: award['Awarding Agency'] || award['Awarding Sub Agency'] || 'Federal Agency',
+                            description: award['Description'] || 'Federal contract award',
+                            location: award['Place of Performance State'] 
+                                ? `${award['Place of Performance City'] || ''}, ${award['Place of Performance State']}`
+                                : 'USA',
+                            naicsCode: award['NAICS Code'] || '',
+                            naicsDescription: award['NAICS Description'] || '',
+                            score: matchScore,
+                            tier: tier,
+                            signals: signals.length > 0 ? signals : ['Federal contract', 'Potential subcontracting'],
+                            usaSpendingUrl: award['generated_internal_id'] 
+                                ? `https://www.usaspending.gov/award/${award['generated_internal_id']}`
+                                : 'https://www.usaspending.gov',
+                            awardId: award['Award ID'] || '',
+                            startDate: award['Start Date'] || '',
+                            // Also include snake_case versions for compatibility
+                            recipient_name: award['Recipient Name'] || 'Unknown Contractor',
+                            award_amount: award['Award Amount'] || 0,
+                            match_score: matchScore
+                        };
+                    });
+                    
+                    // Sort by score descending
+                    opportunities.sort((a, b) => b.score - a.score);
+                }
+            }
+        } catch (apiError) {
+            console.error('USASpending API error:', apiError);
+        }
+
+        // If no live data, use demo data
+        if (opportunities.length === 0) {
+            opportunities = getDemoData();
+            isLive = false;
+        }
+
+        return res.status(200).json({
+            success: true,
+            live: isLive,
+            count: opportunities.length,
+            opportunities: opportunities,
+            timestamp: new Date().toISOString()
         });
-    
-    const opp = filtered[idx];
-    if (!opp) return;
-    
-    // Normalize field names
-    const prime = opp.recipientName || opp.recipient_name || opp['Recipient Name'] || opp.prime || 'Prime Contractor';
-    const agency = opp.agency || opp.awarding_agency || opp['Awarding Agency'] || 'Federal Agency';
-    const description = opp.description || opp.award_description || 'contract';
-    
-    // Generate email
-    const email = generateSubOutreachEmail(prime, agency, description);
-    
-    // Fill modal
-    document.getElementById('outreachTo').value = `${prime} - Contracts/Subcontracting Department`;
-    document.getElementById('outreachSubject').value = `Subcontracting Partnership Inquiry – Robotics & Automation Capabilities`;
-    document.getElementById('outreachBody').value = email;
-    
-    // Show modal
-    document.getElementById('outreachModal').classList.add('active');
+
+    } catch (error) {
+        console.error('Subcontracting API error:', error);
+        return res.status(500).json({
+            success: false,
+            error: error.message,
+            opportunities: getDemoData(),
+            live: false
+        });
+    }
 }
 
-function generateSubOutreachEmail(prime, agency, description) {
-    return `Dear ${prime} Team,
-
-I noticed your recent contract award with ${agency} involving ${description.substring(0, 100).toLowerCase()}...
-
-Singh Automation is a FANUC and Universal Robots authorized integrator specializing in industrial robotics, AI vision systems, and warehouse automation. We're based in both Kalamazoo, MI and Irvine, CA.
-
-If your team needs support executing the robotics, automation, or vision inspection portions of this contract, we'd welcome the opportunity to discuss teaming arrangements.
-
-Our certifications include:
-• FANUC Authorized System Integrator (ASI)
-• Universal Robots Certified System Partner (UR CSP)
-• MBE/WBENC certified
-
-Would you have 15 minutes this week for a brief call to explore potential collaboration?
-
-Best regards,
-
-Gurdeep Singh
-Founder/CEO, Singh Automation
-+1 (269) 779-2179
-g@singhus.com
-www.singhautomation.com`;
+// Demo/fallback data with realistic prime contractors
+function getDemoData() {
+    return [
+        {
+            recipientName: 'Turner Construction Company',
+            recipient_name: 'Turner Construction Company',
+            awardAmount: 8200000,
+            award_amount: 8200000,
+            agency: 'U.S. Army Corps of Engineers',
+            description: 'Modernization of manufacturing facility including automated material handling systems and robotic assembly integration',
+            location: 'Huntsville, AL',
+            naicsCode: '333249',
+            score: 86,
+            match_score: 86,
+            tier: 'hot',
+            signals: ['Scope: robot, robotic, automat', 'Prime is not automation specialist', 'General/facilities contractor', 'Large contract ($5M+)'],
+            usaSpendingUrl: 'https://www.usaspending.gov',
+            contact: {
+                portal: 'https://www.turnerconstruction.com/subcontractors',
+                email: 'subcontracting@tcco.com'
+            }
+        },
+        {
+            recipientName: 'Hensel Phelps Construction',
+            recipient_name: 'Hensel Phelps Construction',
+            awardAmount: 12400000,
+            award_amount: 12400000,
+            agency: 'Defense Logistics Agency',
+            description: 'Distribution center automation upgrade including AMR deployment and conveyor system installation',
+            location: 'Tracy, CA',
+            naicsCode: '333923',
+            score: 90,
+            match_score: 90,
+            tier: 'hot',
+            signals: ['Scope: automat, automation, conveyor', 'Prime is not automation specialist', 'Large contract ($10M+)', 'Location: CA'],
+            usaSpendingUrl: 'https://www.usaspending.gov',
+            contact: {
+                portal: 'https://www.henselphelps.com/subcontractors/',
+                email: 'subcontractors@henselphelps.com'
+            }
+        },
+        {
+            recipientName: 'Leidos Holdings Inc',
+            recipient_name: 'Leidos Holdings Inc',
+            awardAmount: 5700000,
+            award_amount: 5700000,
+            agency: 'U.S. Air Force',
+            description: 'Advanced manufacturing technology development for vision-based inspection systems',
+            location: 'Dayton, OH',
+            naicsCode: '541512',
+            score: 63,
+            match_score: 63,
+            tier: 'warm',
+            signals: ['Scope: inspection system', 'Prime is not automation specialist', 'Large contract ($5M+)', 'NAICS: 541512'],
+            usaSpendingUrl: 'https://www.usaspending.gov',
+            contact: {
+                portal: 'https://www.leidos.com/suppliers',
+                email: 'supplier.diversity@leidos.com'
+            }
+        },
+        {
+            recipientName: 'Clark Construction Group',
+            recipient_name: 'Clark Construction Group',
+            awardAmount: 6800000,
+            award_amount: 6800000,
+            agency: 'U.S. Navy',
+            description: 'Shipyard facility upgrades with robotic welding stations and automated inspection equipment',
+            location: 'Norfolk, VA',
+            naicsCode: '333249',
+            score: 88,
+            match_score: 88,
+            tier: 'hot',
+            signals: ['Scope: robotic welding, automated inspection', 'Prime is not automation specialist', 'Large contract ($5M+)'],
+            usaSpendingUrl: 'https://www.usaspending.gov',
+            contact: {
+                portal: 'https://www.clarkconstruction.com/subcontractors',
+                email: null
+            }
+        },
+        {
+            recipientName: 'AECOM',
+            recipient_name: 'AECOM',
+            awardAmount: 4300000,
+            award_amount: 4300000,
+            agency: 'Department of Energy',
+            description: 'Laboratory automation and material handling system design for nuclear facility',
+            location: 'Oak Ridge, TN',
+            naicsCode: '541330',
+            score: 72,
+            match_score: 72,
+            tier: 'warm',
+            signals: ['Scope: automation, material handling', 'Engineering prime', 'DOE facility'],
+            usaSpendingUrl: 'https://www.usaspending.gov',
+            contact: {
+                portal: 'https://aecom.com/about-aecom/suppliers/',
+                email: null
+            }
+        }
+    ];
 }
+

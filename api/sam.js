@@ -1,10 +1,11 @@
 // Singh Automation SAM.gov Scanner API with Smart Qualification Logic
+// OPTIMIZED: Parallel API calls instead of sequential (fixes Vercel timeout)
 // Deploy to: /api/sam.js on Vercel
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
     if (req.method === 'OPTIONS') return res.status(200).end();
     
     // Handle email subscription (POST)
@@ -12,7 +13,10 @@ export default async function handler(req, res) {
         return handleEmailSubscription(req, res);
     }
     
-    const SAM_KEY = 'SAM-747578b6-9d9c-4787-acd6-7e17dae04795';
+    const requestId = req.headers['x-request-id'] || crypto.randomUUID();
+    console.log(`[${requestId}] SAM.gov scan started`);
+    
+    const SAM_KEY = process.env.SAM_API_KEY || 'SAM-747578b6-9d9c-4787-acd6-7e17dae04795';
     const today = new Date();
     const ago = new Date(today); ago.setDate(ago.getDate() - 60);
     const fmt = d => `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;
@@ -24,14 +28,12 @@ export default async function handler(req, res) {
                    'machine vision', 'systems integration', 'FANUC', 'industrial', 'manufacturing',
                    'material handling', 'assembly', 'packaging', 'palletizing', 'AMR', 'AGV'],
         certifications: ['Small Business', 'MBE', 'WBENC'],
-        // Singh does NOT have these:
         notCertified: ['SDVOSB', 'VOSB', '8(a)', 'HUBZone', 'WOSB', 'EDWOSB'],
-        // Singh is NOT on these vehicles:
         noVehicles: ['SeaPort NxG', 'SeaPort-e', 'OASIS', 'OASIS+', 'GSA MAS', 'GSA Schedule', 
                      'SEWP', 'CIO-SP3', 'STARS III', 'Alliant 2', 'ITES-3S', 'T4NG']
     };
     
-    // Singh Automation relevant search keywords
+    // All keywords - but we'll call them in PARALLEL
     const samKeywords = [
         'robotic welding', 'robotics', 'automation', 'conveyor', 
         'warehouse automation', 'PLC', 'SCADA', 'machine vision', 
@@ -39,131 +41,168 @@ export default async function handler(req, res) {
         'manufacturing equipment', 'assembly line', 'material handling'
     ];
     
-    let allOpps = [];
+    const sbirKeywords = ['robot', 'automation', 'manufacturing', 'machine', 'vision'];
     
-    // ========== 1. SAM.GOV FEDERAL CONTRACTS ==========
+    let allOpps = [];
+    const seenIds = new Set();
+    
+    // ========== 1. SAM.GOV FEDERAL CONTRACTS (PARALLEL) ==========
     try {
-        for (const kw of samKeywords) {
-            const url = `https://api.sam.gov/prod/opportunities/v2/search?api_key=${SAM_KEY}&keyword=${encodeURIComponent(kw)}&postedFrom=${encodeURIComponent(fmt(ago))}&postedTo=${encodeURIComponent(fmt(today))}&limit=15`;
-            const r = await fetch(url);
-            if (!r.ok) continue;
-            const data = await r.json();
-            if (data.opportunitiesData) {
-                for (const o of data.opportunitiesData) {
-                    if (allOpps.find(x => x.noticeId === o.noticeId)) continue;
-                    
-                    const opp = {
-                        id: o.noticeId,
-                        noticeId: o.noticeId,
-                        title: o.title || 'Untitled',
-                        solicitation: o.solicitationNumber || o.noticeId,
-                        agency: o.fullParentPathName || o.departmentName || 'Federal Agency',
-                        postedDate: o.postedDate,
-                        closeDate: o.responseDeadLine,
-                        setAside: o.typeOfSetAsideDescription || '',
-                        naicsCode: o.naicsCode || '',
-                        value: o.award?.amount || null,
-                        description: o.description?.substring(0, 1000) || '',
-                        fullDescription: o.description || '',
-                        link: `https://sam.gov/opp/${o.noticeId}/view`,
-                        isLive: true,
-                        source: 'SAM.gov',
-                        type: 'contract',
-                        category: 'Federal'
-                    };
-                    
-                    // Apply qualification logic
-                    const qualification = qualifyOpportunity(opp, singhProfile);
-                    opp.qualification = qualification;
-                    opp.status = qualification.status;
-                    opp.statusReason = qualification.reason;
-                    opp.matchBreakdown = qualification.breakdown;
-                    opp.recommendation = qualification.recommendation;
-                    
-                    allOpps.push(opp);
-                }
+        // Helper to fetch with timeout
+        const fetchWithTimeout = async (url, timeoutMs = 8000) => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const r = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (!r.ok) return null;
+                return await r.json();
+            } catch (e) {
+                clearTimeout(timeoutId);
+                return null;
             }
-            await new Promise(r => setTimeout(r, 200));
-        }
-    } catch (e) { console.error('SAM error:', e); }
-
-    // ========== 2. SBIR/STTR OPPORTUNITIES (Live API) ==========
-    try {
-        const sbirKeywords = ['robot', 'automation', 'manufacturing', 'machine', 'vision'];
+        };
         
-        for (const kw of sbirKeywords) {
-            const sbirUrl = `https://api.www.sbir.gov/public/api/solicitations?keyword=${encodeURIComponent(kw)}&open=1&rows=20`;
-            const sbirRes = await fetch(sbirUrl);
-            
-            if (sbirRes.ok) {
-                const sbirData = await sbirRes.json();
+        // Build all SAM URLs
+        const samUrls = samKeywords.map(kw => 
+            `https://api.sam.gov/prod/opportunities/v2/search?api_key=${SAM_KEY}&keyword=${encodeURIComponent(kw)}&postedFrom=${encodeURIComponent(fmt(ago))}&postedTo=${encodeURIComponent(fmt(today))}&limit=15`
+        );
+        
+        // Fetch ALL in parallel
+        console.log(`[${requestId}] Fetching ${samUrls.length} SAM queries in parallel...`);
+        const samResults = await Promise.all(samUrls.map(url => fetchWithTimeout(url)));
+        
+        // Process results
+        for (const data of samResults) {
+            if (!data?.opportunitiesData) continue;
+            for (const o of data.opportunitiesData) {
+                if (seenIds.has(o.noticeId)) continue;
+                seenIds.add(o.noticeId);
                 
-                if (Array.isArray(sbirData)) {
-                    for (const sol of sbirData) {
-                        const solId = `sbir-${sol.solicitation_number || sol.solicitation_title}`;
-                        if (allOpps.find(x => x.id === solId)) continue;
-                        
-                        let closeDate = null;
-                        if (sol.application_due_date && sol.application_due_date.length > 0) {
-                            closeDate = sol.application_due_date[0];
-                        } else if (sol.close_date) {
-                            closeDate = sol.close_date;
-                        }
-                        
-                        let description = `${sol.program || 'SBIR'} ${sol.phase || 'Phase I'} - ${sol.agency || 'Federal'}`;
-                        if (sol.solicitation_topics && sol.solicitation_topics.length > 0) {
-                            const topic = sol.solicitation_topics[0];
-                            description = topic.topic_description?.substring(0, 500) || description;
-                        }
-                        
-                        const opp = {
-                            id: solId,
-                            noticeId: solId,
-                            title: sol.solicitation_title || 'SBIR/STTR Opportunity',
-                            solicitation: sol.solicitation_number || 'SBIR',
-                            agency: sol.agency || 'Federal Agency',
-                            postedDate: sol.release_date || sol.open_date,
-                            closeDate: closeDate,
-                            setAside: `${sol.program || 'SBIR'} ${sol.phase || ''}`.trim(),
-                            naicsCode: '',
-                            value: sol.phase === 'Phase I' ? 275000 : sol.phase === 'Phase II' ? 1500000 : 250000,
-                            description: description,
-                            link: sol.solicitation_agency_url || 'https://www.sbir.gov/topics',
-                            isLive: sol.current_status === 'Open',
-                            source: 'SBIR.gov',
-                            type: 'sbir',
-                            category: 'SBIR/STTR',
-                            program: sol.program,
-                            phase: sol.phase,
-                            branch: sol.branch
-                        };
-                        
-                        // SBIR/STTR is always eligible for small businesses
-                        opp.qualification = {
-                            status: 'GO',
-                            reason: 'SBIR/STTR program - Singh eligible as small business',
-                            recommendation: 'GO',
-                            breakdown: {
-                                program: `${sol.program || 'SBIR'} ${sol.phase || ''}`,
-                                eligibility: 'Small Business - Eligible',
-                                keywords: 'Automation/Robotics related',
-                                restrictions: 'None - open competition'
-                            }
-                        };
-                        opp.status = 'GO';
-                        opp.statusReason = opp.qualification.reason;
-                        opp.matchBreakdown = opp.qualification.breakdown;
-                        opp.recommendation = 'GO';
-                        
-                        allOpps.push(opp);
-                    }
-                }
+                const opp = {
+                    id: o.noticeId,
+                    noticeId: o.noticeId,
+                    title: o.title || 'Untitled',
+                    solicitation: o.solicitationNumber || o.noticeId,
+                    agency: o.fullParentPathName || o.departmentName || 'Federal Agency',
+                    postedDate: o.postedDate,
+                    closeDate: o.responseDeadLine,
+                    setAside: o.typeOfSetAsideDescription || '',
+                    naicsCode: o.naicsCode || '',
+                    value: o.award?.amount || null,
+                    description: o.description?.substring(0, 1000) || '',
+                    fullDescription: o.description || '',
+                    link: `https://sam.gov/opp/${o.noticeId}/view`,
+                    isLive: true,
+                    source: 'SAM.gov',
+                    type: 'contract',
+                    category: 'Federal'
+                };
+                
+                const qualification = qualifyOpportunity(opp, singhProfile);
+                opp.qualification = qualification;
+                opp.status = qualification.status;
+                opp.statusReason = qualification.reason;
+                opp.matchBreakdown = qualification.breakdown;
+                opp.recommendation = qualification.recommendation;
+                
+                allOpps.push(opp);
             }
-            await new Promise(r => setTimeout(r, 200));
         }
+        console.log(`[${requestId}] SAM.gov returned ${allOpps.length} unique opportunities`);
     } catch (e) { 
-        console.error('SBIR API error:', e);
-        addFallbackSBIR(allOpps, singhProfile);
+        console.error(`[${requestId}] SAM error:`, e.message); 
+    }
+
+    // ========== 2. SBIR/STTR OPPORTUNITIES (PARALLEL) ==========
+    try {
+        const sbirUrls = sbirKeywords.map(kw => 
+            `https://api.www.sbir.gov/public/api/solicitations?keyword=${encodeURIComponent(kw)}&open=1&rows=20`
+        );
+        
+        const fetchSbir = async (url) => {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                const r = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (!r.ok) return [];
+                return await r.json();
+            } catch (e) { return []; }
+        };
+        
+        console.log(`[${requestId}] Fetching ${sbirUrls.length} SBIR queries in parallel...`);
+        const sbirResults = await Promise.all(sbirUrls.map(url => fetchSbir(url)));
+        
+        for (const sbirData of sbirResults) {
+            if (!Array.isArray(sbirData)) continue;
+            for (const sol of sbirData) {
+                const solId = `sbir-${sol.solicitation_number || sol.solicitation_title}`;
+                if (seenIds.has(solId)) continue;
+                seenIds.add(solId);
+                
+                let closeDate = null;
+                if (sol.application_due_date && sol.application_due_date.length > 0) {
+                    closeDate = sol.application_due_date[0];
+                } else if (sol.close_date) {
+                    closeDate = sol.close_date;
+                }
+                
+                let description = `${sol.program || 'SBIR'} ${sol.phase || 'Phase I'} - ${sol.agency || 'Federal'}`;
+                if (sol.solicitation_topics && sol.solicitation_topics.length > 0) {
+                    const topic = sol.solicitation_topics[0];
+                    description = topic.topic_description?.substring(0, 500) || description;
+                }
+                
+                const opp = {
+                    id: solId,
+                    noticeId: solId,
+                    title: sol.solicitation_title || 'SBIR/STTR Opportunity',
+                    solicitation: sol.solicitation_number || 'SBIR',
+                    agency: sol.agency || 'Federal Agency',
+                    postedDate: sol.release_date || sol.open_date,
+                    closeDate: closeDate,
+                    setAside: `${sol.program || 'SBIR'} ${sol.phase || ''}`.trim(),
+                    naicsCode: '',
+                    value: sol.phase === 'Phase I' ? 275000 : sol.phase === 'Phase II' ? 1500000 : 250000,
+                    description: description,
+                    link: sol.solicitation_agency_url || 'https://www.sbir.gov/topics',
+                    isLive: sol.current_status === 'Open',
+                    source: 'SBIR.gov',
+                    type: 'sbir',
+                    category: 'SBIR/STTR',
+                    program: sol.program,
+                    phase: sol.phase,
+                    branch: sol.branch,
+                    qualification: {
+                        status: 'GO',
+                        reason: 'SBIR/STTR program - Singh eligible as small business',
+                        recommendation: 'GO',
+                        breakdown: {
+                            program: `${sol.program || 'SBIR'} ${sol.phase || ''}`,
+                            eligibility: 'Small Business - Eligible',
+                            keywords: 'Automation/Robotics related',
+                            restrictions: 'None - open competition'
+                        }
+                    },
+                    status: 'GO',
+                    statusReason: 'SBIR/STTR program - Singh eligible as small business',
+                    matchBreakdown: {
+                        program: `${sol.program || 'SBIR'} ${sol.phase || ''}`,
+                        eligibility: 'Small Business - Eligible',
+                        keywords: 'Automation/Robotics related',
+                        restrictions: 'None - open competition'
+                    },
+                    recommendation: 'GO'
+                };
+                
+                allOpps.push(opp);
+            }
+        }
+        console.log(`[${requestId}] SBIR returned opportunities`);
+    } catch (e) { 
+        console.error(`[${requestId}] SBIR API error:`, e.message);
+        addFallbackSBIR(allOpps, seenIds);
     }
 
     // ========== 3. STATE & LOCAL OPPORTUNITIES ==========
@@ -180,6 +219,9 @@ export default async function handler(req, res) {
     ];
     
     for (const s of stateOpps) {
+        if (seenIds.has(s.id)) continue;
+        seenIds.add(s.id);
+        
         const opp = { 
             ...s, 
             noticeId: s.id, 
@@ -191,7 +233,6 @@ export default async function handler(req, res) {
             category: 'State & Local'
         };
         
-        // State opps - qualify based on set-aside compatibility
         const qualification = qualifyOpportunity(opp, singhProfile);
         opp.qualification = qualification;
         opp.status = qualification.status;
@@ -209,6 +250,9 @@ export default async function handler(req, res) {
     ];
     
     for (const d of dibbsOpps) {
+        if (seenIds.has(d.id)) continue;
+        seenIds.add(d.id);
+        
         const opp = {
             ...d,
             noticeId: d.id,
@@ -217,25 +261,28 @@ export default async function handler(req, res) {
             isLive: true,
             source: 'DIBBS',
             type: 'dibbs',
-            category: 'DoD Parts'
-        };
-        
-        // DIBBS - typically commodity supply, mark as Review
-        opp.qualification = {
+            category: 'DoD Parts',
+            qualification: {
+                status: 'Review',
+                reason: 'DIBBS commodity supply - confirm sourcing and margins',
+                recommendation: 'Review',
+                breakdown: {
+                    naics: '334419',
+                    setAside: d.setAside || 'Small Business',
+                    keywords: 'Parts/Components',
+                    restrictions: 'None detected'
+                }
+            },
             status: 'Review',
-            reason: 'DIBBS commodity supply - confirm sourcing and margins',
-            recommendation: 'Review',
-            breakdown: {
-                naics: d.naicsCode || '334419',
+            statusReason: 'DIBBS commodity supply - confirm sourcing and margins',
+            matchBreakdown: {
+                naics: '334419',
                 setAside: d.setAside || 'Small Business',
                 keywords: 'Parts/Components',
                 restrictions: 'None detected'
-            }
+            },
+            recommendation: 'Review'
         };
-        opp.status = 'Review';
-        opp.statusReason = opp.qualification.reason;
-        opp.matchBreakdown = opp.qualification.breakdown;
-        opp.recommendation = 'Review';
         
         allOpps.push(opp);
     }
@@ -247,6 +294,9 @@ export default async function handler(req, res) {
     ];
     
     for (const f of forecastOpps) {
+        if (seenIds.has(f.id)) continue;
+        seenIds.add(f.id);
+        
         const opp = {
             ...f,
             noticeId: f.id,
@@ -286,15 +336,19 @@ export default async function handler(req, res) {
         totalValue: allOpps.reduce((sum, o) => sum + (o.value || 0), 0)
     };
     
+    console.log(`[${requestId}] Returning ${allOpps.length} total opportunities`);
+    
     res.status(200).json({ 
         success: true, 
         count: allOpps.length, 
         stats,
-        opportunities: allOpps 
+        opportunities: allOpps,
+        requestId,
+        timestamp: new Date().toISOString()
     });
 }
 
-// ========== QUALIFICATION LOGIC ==========
+// ========== QUALIFICATION LOGIC (UNCHANGED) ==========
 function qualifyOpportunity(opp, profile) {
     const setAside = (opp.setAside || '').toLowerCase();
     const title = (opp.title || '').toLowerCase();
@@ -468,7 +522,7 @@ function getStateSource(state) {
     return sources[state] || 'State Portal';
 }
 
-function addFallbackSBIR(allOpps, profile) {
+function addFallbackSBIR(allOpps, seenIds) {
     const fallbackSbir = [
         { id: 'sbir-1', title: 'Advanced Robotics for Manufacturing', agency: 'DOD', solicitation: 'DOD-SBIR-2025', value: 275000, closeDate: '2025-02-15', description: 'Next-gen robotics systems for defense manufacturing.', program: 'SBIR', phase: 'Phase I' },
         { id: 'sbir-2', title: 'AI-Enabled Machine Vision for QC', agency: 'NSF', solicitation: 'NSF-SBIR-2025', value: 256000, closeDate: '2025-03-01', description: 'Machine vision and AI for automated defect detection.', program: 'SBIR', phase: 'Phase I' },
@@ -476,6 +530,9 @@ function addFallbackSBIR(allOpps, profile) {
     ];
     
     for (const s of fallbackSbir) {
+        if (seenIds.has(s.id)) continue;
+        seenIds.add(s.id);
+        
         allOpps.push({
             ...s,
             noticeId: s.id,
@@ -517,7 +574,6 @@ function handleEmailSubscription(req, res) {
         return res.status(400).json({ error: 'Valid email required' });
     }
     
-    // In production, save to database and set up email jobs
     console.log('Email subscription:', { email, frequency, filters });
     
     return res.status(200).json({ 

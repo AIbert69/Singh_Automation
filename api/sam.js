@@ -1,8 +1,24 @@
-// Singh Automation SAM.gov Scanner API with Smart Qualification Logic
-// OPTIMIZED: Parallel API calls instead of sequential (fixes Vercel timeout)
+// Singh Automation SAM.gov Scanner API
+// PRODUCTION BUILD - Parallel API calls, full qualification logic, hard errors only
 // Deploy to: /api/sam.js on Vercel
 
 export default async function handler(req, res) {
+    const startTime = Date.now();
+    const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Structured logging helper
+    const log = (level, message, data = {}) => {
+        console.log(JSON.stringify({
+            level,
+            requestId,
+            timestamp: new Date().toISOString(),
+            message,
+            ...data
+        }));
+    };
+    
+    log('info', 'SAM.gov scan started');
+    
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
@@ -10,11 +26,8 @@ export default async function handler(req, res) {
     
     // Handle email subscription (POST)
     if (req.method === 'POST') {
-        return handleEmailSubscription(req, res);
+        return handleEmailSubscription(req, res, requestId, log);
     }
-    
-    const requestId = req.headers['x-request-id'] || crypto.randomUUID();
-    console.log(`[${requestId}] SAM.gov scan started`);
     
     const SAM_KEY = process.env.SAM_API_KEY || 'SAM-747578b6-9d9c-4787-acd6-7e17dae04795';
     const today = new Date();
@@ -33,7 +46,6 @@ export default async function handler(req, res) {
                      'SEWP', 'CIO-SP3', 'STARS III', 'Alliant 2', 'ITES-3S', 'T4NG']
     };
     
-    // All keywords - but we'll call them in PARALLEL
     const samKeywords = [
         'robotic welding', 'robotics', 'automation', 'conveyor', 
         'warehouse automation', 'PLC', 'SCADA', 'machine vision', 
@@ -45,36 +57,53 @@ export default async function handler(req, res) {
     
     let allOpps = [];
     const seenIds = new Set();
+    const errors = [];
     
-    // ========== 1. SAM.GOV FEDERAL CONTRACTS (PARALLEL) ==========
-    try {
-        // Helper to fetch with timeout
-        const fetchWithTimeout = async (url, timeoutMs = 8000) => {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-            try {
-                const r = await fetch(url, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                if (!r.ok) return null;
-                return await r.json();
-            } catch (e) {
-                clearTimeout(timeoutId);
+    // ========== FETCH HELPER WITH TIMEOUT AND LOGGING ==========
+    const fetchWithTimeout = async (url, label, timeoutMs = 8000) => {
+        const fetchStart = Date.now();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        
+        try {
+            const r = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            const latency = Date.now() - fetchStart;
+            
+            if (!r.ok) {
+                log('warn', `${label} returned non-OK`, { status: r.status, latency, url: url.substring(0, 100) });
                 return null;
             }
-        };
+            
+            const data = await r.json();
+            log('info', `${label} success`, { latency, itemCount: data?.opportunitiesData?.length || (Array.isArray(data) ? data.length : 0) });
+            return data;
+        } catch (e) {
+            clearTimeout(timeoutId);
+            const latency = Date.now() - fetchStart;
+            log('error', `${label} failed`, { error: e.message, latency, url: url.substring(0, 100) });
+            return null;
+        }
+    };
+
+    // ========== 1. SAM.GOV FEDERAL CONTRACTS (PARALLEL) ==========
+    try {
+        const samUrls = samKeywords.map(kw => ({
+            url: `https://api.sam.gov/prod/opportunities/v2/search?api_key=${SAM_KEY}&keyword=${encodeURIComponent(kw)}&postedFrom=${encodeURIComponent(fmt(ago))}&postedTo=${encodeURIComponent(fmt(today))}&limit=15`,
+            keyword: kw
+        }));
         
-        // Build all SAM URLs
-        const samUrls = samKeywords.map(kw => 
-            `https://api.sam.gov/prod/opportunities/v2/search?api_key=${SAM_KEY}&keyword=${encodeURIComponent(kw)}&postedFrom=${encodeURIComponent(fmt(ago))}&postedTo=${encodeURIComponent(fmt(today))}&limit=15`
+        log('info', 'Starting SAM.gov parallel fetch', { queryCount: samUrls.length });
+        
+        const samResults = await Promise.all(
+            samUrls.map(({ url, keyword }) => fetchWithTimeout(url, `SAM:${keyword}`))
         );
         
-        // Fetch ALL in parallel
-        console.log(`[${requestId}] Fetching ${samUrls.length} SAM queries in parallel...`);
-        const samResults = await Promise.all(samUrls.map(url => fetchWithTimeout(url)));
-        
-        // Process results
+        let samSuccessCount = 0;
         for (const data of samResults) {
             if (!data?.opportunitiesData) continue;
+            samSuccessCount++;
+            
             for (const o of data.opportunitiesData) {
                 if (seenIds.has(o.noticeId)) continue;
                 seenIds.add(o.noticeId);
@@ -109,35 +138,38 @@ export default async function handler(req, res) {
                 allOpps.push(opp);
             }
         }
-        console.log(`[${requestId}] SAM.gov returned ${allOpps.length} unique opportunities`);
-    } catch (e) { 
-        console.error(`[${requestId}] SAM error:`, e.message); 
+        
+        log('info', 'SAM.gov fetch complete', { successfulQueries: samSuccessCount, totalQueries: samUrls.length, opportunitiesFound: allOpps.length });
+        
+        if (samSuccessCount === 0) {
+            errors.push({ source: 'SAM.gov', error: 'All SAM.gov queries failed' });
+        }
+        
+    } catch (e) {
+        log('error', 'SAM.gov batch error', { error: e.message });
+        errors.push({ source: 'SAM.gov', error: e.message });
     }
 
     // ========== 2. SBIR/STTR OPPORTUNITIES (PARALLEL) ==========
     try {
-        const sbirUrls = sbirKeywords.map(kw => 
-            `https://api.www.sbir.gov/public/api/solicitations?keyword=${encodeURIComponent(kw)}&open=1&rows=20`
+        const sbirUrls = sbirKeywords.map(kw => ({
+            url: `https://api.www.sbir.gov/public/api/solicitations?keyword=${encodeURIComponent(kw)}&open=1&rows=20`,
+            keyword: kw
+        }));
+        
+        log('info', 'Starting SBIR parallel fetch', { queryCount: sbirUrls.length });
+        
+        const sbirResults = await Promise.all(
+            sbirUrls.map(({ url, keyword }) => fetchWithTimeout(url, `SBIR:${keyword}`, 5000))
         );
         
-        const fetchSbir = async (url) => {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
-                const r = await fetch(url, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                if (!r.ok) return [];
-                return await r.json();
-            } catch (e) { return []; }
-        };
-        
-        console.log(`[${requestId}] Fetching ${sbirUrls.length} SBIR queries in parallel...`);
-        const sbirResults = await Promise.all(sbirUrls.map(url => fetchSbir(url)));
-        
+        let sbirSuccessCount = 0;
         for (const sbirData of sbirResults) {
             if (!Array.isArray(sbirData)) continue;
+            sbirSuccessCount++;
+            
             for (const sol of sbirData) {
-                const solId = `sbir-${sol.solicitation_number || sol.solicitation_title}`;
+                const solId = `sbir-${sol.solicitation_number || sol.solicitation_title || Date.now()}`;
                 if (seenIds.has(solId)) continue;
                 seenIds.add(solId);
                 
@@ -174,6 +206,9 @@ export default async function handler(req, res) {
                     program: sol.program,
                     phase: sol.phase,
                     branch: sol.branch,
+                    status: 'GO',
+                    statusReason: 'SBIR/STTR program - Singh eligible as small business',
+                    recommendation: 'GO',
                     qualification: {
                         status: 'GO',
                         reason: 'SBIR/STTR program - Singh eligible as small business',
@@ -185,24 +220,23 @@ export default async function handler(req, res) {
                             restrictions: 'None - open competition'
                         }
                     },
-                    status: 'GO',
-                    statusReason: 'SBIR/STTR program - Singh eligible as small business',
                     matchBreakdown: {
                         program: `${sol.program || 'SBIR'} ${sol.phase || ''}`,
                         eligibility: 'Small Business - Eligible',
                         keywords: 'Automation/Robotics related',
                         restrictions: 'None - open competition'
-                    },
-                    recommendation: 'GO'
+                    }
                 };
                 
                 allOpps.push(opp);
             }
         }
-        console.log(`[${requestId}] SBIR returned opportunities`);
-    } catch (e) { 
-        console.error(`[${requestId}] SBIR API error:`, e.message);
-        addFallbackSBIR(allOpps, seenIds);
+        
+        log('info', 'SBIR fetch complete', { successfulQueries: sbirSuccessCount, totalQueries: sbirUrls.length });
+        
+    } catch (e) {
+        log('error', 'SBIR batch error', { error: e.message });
+        errors.push({ source: 'SBIR.gov', error: e.message });
     }
 
     // ========== 3. STATE & LOCAL OPPORTUNITIES ==========
@@ -242,6 +276,8 @@ export default async function handler(req, res) {
         
         allOpps.push(opp);
     }
+    
+    log('info', 'State opportunities added', { count: stateOpps.length });
 
     // ========== 4. DIBBS / DoD PARTS ==========
     const dibbsOpps = [
@@ -262,6 +298,9 @@ export default async function handler(req, res) {
             source: 'DIBBS',
             type: 'dibbs',
             category: 'DoD Parts',
+            status: 'Review',
+            statusReason: 'DIBBS commodity supply - confirm sourcing and margins',
+            recommendation: 'Review',
             qualification: {
                 status: 'Review',
                 reason: 'DIBBS commodity supply - confirm sourcing and margins',
@@ -273,19 +312,18 @@ export default async function handler(req, res) {
                     restrictions: 'None detected'
                 }
             },
-            status: 'Review',
-            statusReason: 'DIBBS commodity supply - confirm sourcing and margins',
             matchBreakdown: {
                 naics: '334419',
                 setAside: d.setAside || 'Small Business',
                 keywords: 'Parts/Components',
                 restrictions: 'None detected'
-            },
-            recommendation: 'Review'
+            }
         };
         
         allOpps.push(opp);
     }
+    
+    log('info', 'DIBBS opportunities added', { count: dibbsOpps.length });
 
     // ========== 5. FORECAST OPPORTUNITIES ==========
     const forecastOpps = [
@@ -317,11 +355,28 @@ export default async function handler(req, res) {
         
         allOpps.push(opp);
     }
+    
+    log('info', 'Forecast opportunities added', { count: forecastOpps.length });
 
-    // Sort by posted date (newest first)
+    // ========== HARD ERROR IF NO LIVE DATA ==========
+    const liveOpps = allOpps.filter(o => o.source === 'SAM.gov' || o.source === 'SBIR.gov');
+    if (liveOpps.length === 0 && errors.length > 0) {
+        const totalTime = Date.now() - startTime;
+        log('error', 'HARD FAILURE - No live data retrieved', { errors, totalTime });
+        
+        return res.status(502).json({
+            success: false,
+            error: 'Failed to retrieve live opportunity data from SAM.gov and SBIR.gov',
+            details: errors,
+            requestId,
+            timestamp: new Date().toISOString(),
+            latencyMs: totalTime
+        });
+    }
+
+    // ========== RESPONSE ==========
     allOpps.sort((a, b) => new Date(b.postedDate || 0) - new Date(a.postedDate || 0));
     
-    // Calculate stats
     const stats = {
         total: allOpps.length,
         federal: allOpps.filter(o => o.type === 'contract').length,
@@ -336,7 +391,8 @@ export default async function handler(req, res) {
         totalValue: allOpps.reduce((sum, o) => sum + (o.value || 0), 0)
     };
     
-    console.log(`[${requestId}] Returning ${allOpps.length} total opportunities`);
+    const totalTime = Date.now() - startTime;
+    log('info', 'Scan complete', { stats, totalTime, errorCount: errors.length });
     
     res.status(200).json({ 
         success: true, 
@@ -344,11 +400,13 @@ export default async function handler(req, res) {
         stats,
         opportunities: allOpps,
         requestId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        latencyMs: totalTime,
+        warnings: errors.length > 0 ? errors : undefined
     });
 }
 
-// ========== QUALIFICATION LOGIC (UNCHANGED) ==========
+// ========== QUALIFICATION LOGIC ==========
 function qualifyOpportunity(opp, profile) {
     const setAside = (opp.setAside || '').toLowerCase();
     const title = (opp.title || '').toLowerCase();
@@ -357,7 +415,6 @@ function qualifyOpportunity(opp, profile) {
     
     // ===== HARD NO-GO RULES =====
     
-    // 1. SDVOSB-only check
     if (setAside.includes('sdvosb') || setAside.includes('service-disabled veteran')) {
         return {
             status: 'NO-GO',
@@ -371,7 +428,6 @@ function qualifyOpportunity(opp, profile) {
         };
     }
     
-    // 2. VOSB-only check
     if (setAside.includes('vosb') && !setAside.includes('sdvosb')) {
         return {
             status: 'NO-GO',
@@ -385,7 +441,6 @@ function qualifyOpportunity(opp, profile) {
         };
     }
     
-    // 3. 8(a) set-aside check
     if (setAside.includes('8(a)') || setAside.includes('8a')) {
         return {
             status: 'NO-GO',
@@ -399,7 +454,6 @@ function qualifyOpportunity(opp, profile) {
         };
     }
     
-    // 4. HUBZone set-aside check
     if (setAside.includes('hubzone')) {
         return {
             status: 'NO-GO',
@@ -413,7 +467,6 @@ function qualifyOpportunity(opp, profile) {
         };
     }
     
-    // 5. WOSB/EDWOSB sole source check
     if ((setAside.includes('wosb') || setAside.includes('women-owned')) && 
         (setAside.includes('sole source') || setAside.includes('set-aside'))) {
         return {
@@ -428,7 +481,6 @@ function qualifyOpportunity(opp, profile) {
         };
     }
     
-    // 6. Contract vehicle restrictions
     for (const vehicle of profile.noVehicles) {
         const vehicleLower = vehicle.toLowerCase();
         if (fullText.includes(vehicleLower) && 
@@ -454,13 +506,11 @@ function qualifyOpportunity(opp, profile) {
     let matchedKeywords = [];
     let matchedNaics = false;
     
-    // Check NAICS match
     if (opp.naicsCode && profile.naicsCodes.includes(opp.naicsCode)) {
         score += 30;
         matchedNaics = true;
     }
     
-    // Check keyword matches
     for (const kw of profile.keywords) {
         if (fullText.includes(kw.toLowerCase())) {
             score += 5;
@@ -468,7 +518,6 @@ function qualifyOpportunity(opp, profile) {
         }
     }
     
-    // Set-aside compatibility bonus
     const compatibleSetAsides = ['small business', 'total small business', 'unrestricted', 
                                   'full and open', 'competitive', 'sbir', 'sttr', 
                                   'small disadvantaged', 'sb/', 'mbe', 'minority'];
@@ -479,7 +528,6 @@ function qualifyOpportunity(opp, profile) {
         }
     }
     
-    // Determine status based on score
     let status, reason, recommendation;
     
     if (score >= 50) {
@@ -522,63 +570,24 @@ function getStateSource(state) {
     return sources[state] || 'State Portal';
 }
 
-function addFallbackSBIR(allOpps, seenIds) {
-    const fallbackSbir = [
-        { id: 'sbir-1', title: 'Advanced Robotics for Manufacturing', agency: 'DOD', solicitation: 'DOD-SBIR-2025', value: 275000, closeDate: '2025-02-15', description: 'Next-gen robotics systems for defense manufacturing.', program: 'SBIR', phase: 'Phase I' },
-        { id: 'sbir-2', title: 'AI-Enabled Machine Vision for QC', agency: 'NSF', solicitation: 'NSF-SBIR-2025', value: 256000, closeDate: '2025-03-01', description: 'Machine vision and AI for automated defect detection.', program: 'SBIR', phase: 'Phase I' },
-        { id: 'sbir-3', title: 'Smart Manufacturing Automation', agency: 'DOE', solicitation: 'DOE-SBIR-2025', value: 275000, closeDate: '2025-02-28', description: 'Innovative automation solutions for energy-efficient manufacturing.', program: 'SBIR', phase: 'Phase I' },
-    ];
-    
-    for (const s of fallbackSbir) {
-        if (seenIds.has(s.id)) continue;
-        seenIds.add(s.id);
-        
-        allOpps.push({
-            ...s,
-            noticeId: s.id,
-            postedDate: '2024-12-01',
-            setAside: `${s.program} ${s.phase}`,
-            naicsCode: '',
-            isLive: true,
-            source: 'SBIR.gov',
-            type: 'sbir',
-            category: 'SBIR/STTR',
-            status: 'GO',
-            statusReason: 'SBIR/STTR - Singh eligible as small business',
-            recommendation: 'GO',
-            qualification: {
-                status: 'GO',
-                reason: 'SBIR/STTR program - Singh eligible as small business',
-                recommendation: 'GO',
-                breakdown: {
-                    program: `${s.program} ${s.phase}`,
-                    eligibility: 'Small Business - Eligible',
-                    keywords: 'Automation/Robotics',
-                    restrictions: 'None'
-                }
-            },
-            matchBreakdown: {
-                program: `${s.program} ${s.phase}`,
-                eligibility: 'Small Business - Eligible',
-                keywords: 'Automation/Robotics',
-                restrictions: 'None'
-            }
-        });
-    }
-}
-
-function handleEmailSubscription(req, res) {
+function handleEmailSubscription(req, res, requestId, log) {
     const { email, frequency, filters } = req.body;
     
     if (!email || !email.includes('@')) {
-        return res.status(400).json({ error: 'Valid email required' });
+        log('warn', 'Invalid email subscription attempt', { email });
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Valid email required',
+            requestId 
+        });
     }
     
-    console.log('Email subscription:', { email, frequency, filters });
+    log('info', 'Email subscription', { email, frequency, filters });
     
     return res.status(200).json({ 
         success: true, 
         message: `Subscribed ${email} for ${frequency || 'daily'} alerts`,
-        note: 'Full email delivery requires SendGrid integration'
+        note: 'Full email delivery requires SendGrid integration',
+        requestId
     });
 }

@@ -1,8 +1,14 @@
-// /api/health.js - Backend Health Check
-// Deploy to Vercel: vercel --prod
+// Singh Automation - Health Check API
+// PRODUCTION BUILD - Structured logging, requestId tracking
+// Deploy to: /api/health.js on Vercel
 
 export default async function handler(req, res) {
-    // CORS headers
+    const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const log = (level, message, data = {}) => {
+        console.log(JSON.stringify({ level, requestId, timestamp: new Date().toISOString(), message, ...data }));
+    };
+    
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
@@ -14,6 +20,7 @@ export default async function handler(req, res) {
     const health = {
         status: 'ok',
         timestamp: new Date().toISOString(),
+        requestId,
         services: {}
     };
     
@@ -21,17 +28,33 @@ export default async function handler(req, res) {
     const claudeKey = process.env.ANTHROPIC_API_KEY;
     health.services.claude = !!(claudeKey && claudeKey.startsWith('sk-ant-'));
     
-    // Check SAM.gov API key (optional - public API may work without)
+    // Check SAM.gov API key
     const samKey = process.env.SAM_API_KEY;
-    health.services.sam = true; // SAM.gov public API available
+    health.services.sam = !!(samKey && samKey.startsWith('SAM-'));
+    health.services.samPublic = true; // Public API always available as fallback
     
-    // Overall status
-    health.sam = health.services.sam;
+    // Shorthand for frontend
+    health.sam = health.services.sam || health.services.samPublic;
     health.claude = health.services.claude;
     
+    // Determine overall status
+    const errors = [];
+    
     if (!health.services.claude) {
+        errors.push('ANTHROPIC_API_KEY not configured');
+    }
+    
+    if (!health.services.sam) {
+        // Not an error - public API works
+    }
+    
+    if (errors.length > 0) {
         health.status = 'degraded';
-        health.warning = 'Claude API key not configured - proposal/validation features unavailable';
+        health.errors = errors;
+        health.warning = 'Some features unavailable: ' + errors.join(', ');
+        log('warn', 'Health check degraded', { errors });
+    } else {
+        log('info', 'Health check passed', { services: health.services });
     }
     
     return res.status(200).json(health);

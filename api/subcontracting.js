@@ -1,11 +1,20 @@
 // Singh Automation - Subcontracting Opportunities API v2
-// Now includes: Prime contractor contact database, subcontracting portal links
+// PRODUCTION BUILD - Hard errors, structured logging, no fallbacks
 // Deploy to: /api/subcontracting.js on Vercel
 
 export default async function handler(req, res) {
+    const startTime = Date.now();
+    const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const log = (level, message, data = {}) => {
+        console.log(JSON.stringify({ level, requestId, timestamp: new Date().toISOString(), message, ...data }));
+    };
+    
+    log('info', 'Subcontracting scan started');
+    
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     try {
@@ -19,7 +28,9 @@ export default async function handler(req, res) {
             filterTier: body.filterTier || 'all'
         };
 
-        const opportunities = await fetchSubcontractingOpportunities(options);
+        log('info', 'Fetching opportunities', { options });
+
+        const opportunities = await fetchSubcontractingOpportunities(options, log);
         
         const stats = {
             total: opportunities.length,
@@ -29,22 +40,30 @@ export default async function handler(req, res) {
             totalValue: opportunities.reduce((sum, o) => sum + (o.awardAmount || 0), 0)
         };
 
+        const totalTime = Date.now() - startTime;
+        log('info', 'Subcontracting scan complete', { stats, latencyMs: totalTime });
+
         return res.status(200).json({
             success: true,
             opportunities,
             stats,
             filters: options,
             dataSources: ['USASpending.gov'],
-            generatedAt: new Date().toISOString()
+            requestId,
+            timestamp: new Date().toISOString(),
+            latencyMs: totalTime
         });
 
     } catch (error) {
-        console.error('Subcontracting API error:', error);
+        const totalTime = Date.now() - startTime;
+        log('error', 'Subcontracting scan failed', { error: error.message, latencyMs: totalTime });
+        
         return res.status(500).json({
             success: false,
             error: error.message,
-            opportunities: getFallbackOpportunities(),
-            stats: { total: 5, hot: 2, warm: 2, cold: 1, totalValue: 35000000 }
+            requestId,
+            timestamp: new Date().toISOString(),
+            latencyMs: totalTime
         });
     }
 }
@@ -193,18 +212,10 @@ const SINGH_CONFIG = {
         uei: "GJ1DPYQ3X8K5"
     },
     
-    // NAICS codes Singh targets
     targetNAICS: [
-        "333249", // Industrial Machinery Manufacturing
-        "333318", // Other Commercial Service Machinery
-        "541330", // Engineering Services
-        "541512", // Computer Systems Design
-        "541715", // R&D in Physical Sciences
-        "333923", // Overhead Cranes and Hoists
-        "332710"  // Machine Shops
+        "333249", "333318", "541330", "541512", "541715", "333923", "332710"
     ],
     
-    // Keywords that indicate automation scope
     scopeKeywords: [
         "robot", "robotic", "automation", "automated", "autonomous",
         "conveyor", "material handling", "amr", "agv",
@@ -215,7 +226,6 @@ const SINGH_CONFIG = {
         "fanuc", "universal robot", "cobot", "collaborative"
     ],
     
-    // Primes that are NOT automation specialists (good targets)
     generalContractorTerms: [
         "construction", "general contractor", "building", "facilities",
         "engineering", "logistics", "consulting", "management", "it services",
@@ -239,7 +249,6 @@ function getPrimeContactInfo(recipientName) {
         }
     }
     
-    // Default search suggestion
     return {
         portalUrl: `https://www.google.com/search?q=${encodeURIComponent(recipientName + " subcontractor supplier portal")}`,
         email: null,
@@ -251,7 +260,7 @@ function getPrimeContactInfo(recipientName) {
 // ============================================
 // USASPENDING API - AWARD FETCHING
 // ============================================
-async function fetchSubcontractingOpportunities(options) {
+async function fetchSubcontractingOpportunities(options, log) {
     const { daysBack, minAmount, maxAmount, limit } = options;
     
     const startDate = new Date();
@@ -293,84 +302,89 @@ async function fetchSubcontractingOpportunities(options) {
         order: "desc"
     };
 
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+    const fetchStart = Date.now();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-        if (!response.ok) {
-            console.error('USASpending API error:', response.status);
-            return getFallbackOpportunities();
-        }
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    
+    const latency = Date.now() - fetchStart;
 
-        const data = await response.json();
-        
-        if (!data.results || data.results.length === 0) {
-            return getFallbackOpportunities();
-        }
-
-        // Process and score each opportunity
-        const opportunities = data.results.map(award => {
-            const scoring = scoreOpportunity(award);
-            const contactInfo = getPrimeContactInfo(award["Recipient Name"] || "");
-            const outreach = generateOutreachEmail(award, scoring);
-            
-            return {
-                // Core fields - BOTH camelCase and snake_case for compatibility
-                awardId: award["Award ID"] || "",
-                recipientName: award["Recipient Name"] || "Unknown Contractor",
-                recipient_name: award["Recipient Name"] || "Unknown Contractor",
-                recipientUei: award["Recipient UEI"] || "",
-                description: award["Description"] || "",
-                awardAmount: award["Award Amount"] || 0,
-                award_amount: award["Award Amount"] || 0,
-                agency: award["Awarding Agency"] || award["Awarding Sub Agency"] || "Federal Agency",
-                subAgency: award["Awarding Sub Agency"] || "",
-                state: award["Place of Performance State"] || "",
-                city: award["Place of Performance City"] || "",
-                location: award["Place of Performance City"] && award["Place of Performance State"]
-                    ? `${award["Place of Performance City"]}, ${award["Place of Performance State"]}`
-                    : award["Place of Performance State"] || "USA",
-                naicsCode: award["NAICS Code"] || "",
-                naicsDesc: award["NAICS Description"] || "",
-                startDate: award["Start Date"] || "",
-                endDate: award["End Date"] || "",
-                
-                // Scoring
-                score: scoring.score,
-                match_score: scoring.score,
-                tier: scoring.tier,
-                signals: scoring.signals,
-                
-                // Outreach
-                outreachSubject: outreach.subject,
-                outreachBody: outreach.body,
-                
-                // Contact info
-                contact: contactInfo,
-                
-                // Links
-                usaSpendingUrl: award["generated_internal_id"]
-                    ? `https://www.usaspending.gov/award/${award["generated_internal_id"]}`
-                    : "https://www.usaspending.gov"
-            };
-        });
-
-        // Sort by score and filter by tier if requested
-        opportunities.sort((a, b) => b.score - a.score);
-        
-        if (options.filterTier && options.filterTier !== 'all') {
-            return opportunities.filter(o => o.tier === options.filterTier);
-        }
-        
-        return opportunities;
-
-    } catch (error) {
-        console.error('Error fetching from USASpending:', error);
-        return getFallbackOpportunities();
+    if (!response.ok) {
+        log('error', 'USASpending API error', { status: response.status, latency });
+        throw new Error(`USASpending API returned ${response.status}`);
     }
+
+    const data = await response.json();
+    
+    if (!data.results || data.results.length === 0) {
+        log('warn', 'USASpending returned no results', { latency });
+        throw new Error('USASpending API returned no results for the given filters');
+    }
+
+    log('info', 'USASpending fetch complete', { resultCount: data.results.length, latency });
+
+    // Process and score each opportunity
+    const opportunities = data.results.map(award => {
+        const scoring = scoreOpportunity(award);
+        const contactInfo = getPrimeContactInfo(award["Recipient Name"] || "");
+        const outreach = generateOutreachEmail(award, scoring);
+        
+        return {
+            // Core fields - BOTH camelCase and snake_case for compatibility
+            awardId: award["Award ID"] || "",
+            recipientName: award["Recipient Name"] || "Unknown Contractor",
+            recipient_name: award["Recipient Name"] || "Unknown Contractor",
+            recipientUei: award["Recipient UEI"] || "",
+            description: award["Description"] || "",
+            awardAmount: award["Award Amount"] || 0,
+            award_amount: award["Award Amount"] || 0,
+            agency: award["Awarding Agency"] || award["Awarding Sub Agency"] || "Federal Agency",
+            subAgency: award["Awarding Sub Agency"] || "",
+            state: award["Place of Performance State"] || "",
+            city: award["Place of Performance City"] || "",
+            location: award["Place of Performance City"] && award["Place of Performance State"]
+                ? `${award["Place of Performance City"]}, ${award["Place of Performance State"]}`
+                : award["Place of Performance State"] || "USA",
+            naicsCode: award["NAICS Code"] || "",
+            naicsDesc: award["NAICS Description"] || "",
+            startDate: award["Start Date"] || "",
+            endDate: award["End Date"] || "",
+            
+            // Scoring
+            score: scoring.score,
+            match_score: scoring.score,
+            tier: scoring.tier,
+            signals: scoring.signals,
+            
+            // Outreach
+            outreachSubject: outreach.subject,
+            outreachBody: outreach.body,
+            
+            // Contact info
+            contact: contactInfo,
+            
+            // Links
+            usaSpendingUrl: award["generated_internal_id"]
+                ? `https://www.usaspending.gov/award/${award["generated_internal_id"]}`
+                : "https://www.usaspending.gov"
+        };
+    });
+
+    // Sort by score and filter by tier if requested
+    opportunities.sort((a, b) => b.score - a.score);
+    
+    if (options.filterTier && options.filterTier !== 'all') {
+        return opportunities.filter(o => o.tier === options.filterTier);
+    }
+    
+    return opportunities;
 }
 
 // ============================================
@@ -494,168 +508,4 @@ www.singhautomation.com
 function truncate(str, len) {
     if (!str) return '';
     return str.length > len ? str.substring(0, len) + '...' : str;
-}
-
-// ============================================
-// FALLBACK DATA (when API fails)
-// ============================================
-function getFallbackOpportunities() {
-    return [
-        {
-            awardId: "CONT_AWD_DEMO_001",
-            recipientName: "Turner Construction Company",
-            recipient_name: "Turner Construction Company",
-            recipientUei: "DEMO123",
-            description: "Modernization of manufacturing facility including automated material handling systems and robotic assembly integration",
-            awardAmount: 8200000,
-            award_amount: 8200000,
-            agency: "U.S. Army",
-            subAgency: "Army Corps of Engineers",
-            state: "AL",
-            city: "Huntsville",
-            location: "Huntsville, AL",
-            naicsCode: "236220",
-            naicsDesc: "Commercial and Institutional Building Construction",
-            startDate: "2024-10-01",
-            endDate: "2026-09-30",
-            score: 86,
-            match_score: 86,
-            tier: "hot",
-            signals: ["Scope: robot, robotic, automat", "Prime is not automation specialist", "General/facilities contractor", "Large contract ($5M+)"],
-            outreachSubject: "Subcontracting Support – Modernization of manufacturing facility...",
-            outreachBody: `Dear Turner Construction Company Team,
-
-I noticed your company was recently awarded a contract with U.S. Army involving modernization of manufacturing facility including automated material handling systems and robotic assembly integration.
-
-Singh Automation is a FANUC and Universal Robots authorized integrator specializing in industrial robotics, AI vision systems, and warehouse automation. If your team needs support executing the robotics, automation, or vision systems portion of this contract, we'd welcome the opportunity to discuss teaming.
-
-Our qualifications:
-• FANUC Authorized System Integrator (ASI)
-• Universal Robots Certified System Partner (CSP)
-• CAGE Code: 86VF7 | UEI: GJ1DPYQ3X8K5
-• Certified Small Business, MBE, WBENC
-• NAICS: 333249, 541330, 541512, 541715
-
-We have facilities in both Michigan and California and can mobilize quickly for projects nationwide.
-
-Would you be available for a brief call this week to explore potential collaboration?
-
-Best regards,
-
-Singh Automation
-www.singhautomation.com
-(269) 381-6236`,
-            usaSpendingUrl: "https://www.usaspending.gov",
-            contact: {
-                portalUrl: "https://www.turnerconstruction.com/subcontractors",
-                email: "turner@tcco.com",
-                phone: "(212) 229-6000",
-                notes: "Register via Vertikal prequalification platform"
-            }
-        },
-        {
-            awardId: "CONT_AWD_DEMO_002",
-            recipientName: "Hensel Phelps Construction",
-            recipient_name: "Hensel Phelps Construction",
-            recipientUei: "DEMO456",
-            description: "Distribution center automation upgrade including AMR deployment and conveyor system installation",
-            awardAmount: 12400000,
-            award_amount: 12400000,
-            agency: "Defense Logistics Agency",
-            subAgency: "DLA Distribution",
-            state: "CA",
-            city: "Tracy",
-            location: "Tracy, CA",
-            naicsCode: "236220",
-            naicsDesc: "Commercial and Institutional Building Construction",
-            startDate: "2024-11-01",
-            endDate: "2026-10-31",
-            score: 90,
-            match_score: 90,
-            tier: "hot",
-            signals: ["Scope: automat, automation, conveyor", "Prime is not automation specialist", "Large contract ($10M+)", "Location: CA"],
-            outreachSubject: "Subcontracting Support – Distribution center automation...",
-            outreachBody: `Dear Hensel Phelps Construction Team,
-
-I noticed your company was recently awarded a contract with Defense Logistics Agency involving distribution center automation upgrade including AMR deployment and conveyor system installation.
-
-Singh Automation is a FANUC and Universal Robots authorized integrator specializing in industrial robotics, AI vision systems, and warehouse automation. If your team needs support executing the robotics, automation, or vision systems portion of this contract, we'd welcome the opportunity to discuss teaming.
-
-Our qualifications:
-• FANUC Authorized System Integrator (ASI)
-• Universal Robots Certified System Partner (CSP)
-• CAGE Code: 86VF7 | UEI: GJ1DPYQ3X8K5
-• Certified Small Business, MBE, WBENC
-• NAICS: 333249, 541330, 541512, 541715
-
-We have facilities in both Michigan and California and can mobilize quickly for projects nationwide.
-
-Would you be available for a brief call this week to explore potential collaboration?
-
-Best regards,
-
-Singh Automation
-www.singhautomation.com
-(269) 381-6236`,
-            usaSpendingUrl: "https://www.usaspending.gov",
-            contact: {
-                portalUrl: "https://www.henselphelps.com/trade-partners/",
-                email: null,
-                supplierDiversity: "blewis@henselphelps.com",
-                notes: "Regional contact pages available"
-            }
-        },
-        {
-            awardId: "CONT_AWD_DEMO_003",
-            recipientName: "Leidos Holdings Inc",
-            recipient_name: "Leidos Holdings Inc",
-            recipientUei: "DEMO789",
-            description: "Advanced manufacturing technology development for vision-based inspection systems",
-            awardAmount: 5700000,
-            award_amount: 5700000,
-            agency: "U.S. Air Force",
-            subAgency: "Air Force Research Laboratory",
-            state: "OH",
-            city: "Dayton",
-            location: "Dayton, OH",
-            naicsCode: "541512",
-            naicsDesc: "Computer Systems Design Services",
-            startDate: "2024-09-15",
-            endDate: "2027-09-14",
-            score: 63,
-            match_score: 63,
-            tier: "warm",
-            signals: ["Scope: inspection system", "Prime is not automation specialist", "Large contract ($5M+)", "NAICS: 541512"],
-            outreachSubject: "Subcontracting Support – Advanced manufacturing technology...",
-            outreachBody: `Dear Leidos Holdings Inc Team,
-
-I noticed your company was recently awarded a contract with U.S. Air Force involving advanced manufacturing technology development for vision-based inspection systems.
-
-Singh Automation is a FANUC and Universal Robots authorized integrator specializing in industrial robotics, AI vision systems, and warehouse automation. If your team needs support executing the robotics, automation, or vision systems portion of this contract, we'd welcome the opportunity to discuss teaming.
-
-Our qualifications:
-• FANUC Authorized System Integrator (ASI)
-• Universal Robots Certified System Partner (CSP)
-• CAGE Code: 86VF7 | UEI: GJ1DPYQ3X8K5
-• Certified Small Business, MBE, WBENC
-• NAICS: 333249, 541330, 541512, 541715
-
-We have facilities in both Michigan and California and can mobilize quickly for projects nationwide.
-
-Would you be available for a brief call this week to explore potential collaboration?
-
-Best regards,
-
-Singh Automation
-www.singhautomation.com
-(269) 381-6236`,
-            usaSpendingUrl: "https://www.usaspending.gov",
-            contact: {
-                portalUrl: "https://www.leidos.com/suppliers",
-                email: "supplier.diversity@leidos.com",
-                phone: "571-526-6000",
-                notes: "Small business liaison office available"
-            }
-        }
-    ];
 }

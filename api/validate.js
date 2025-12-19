@@ -1,5 +1,6 @@
-// /api/validate.js - Claude-Powered Opportunity Validation
-// Deploy to Vercel: vercel --prod
+// Singh Automation - Claude-Powered Opportunity Validation
+// PRODUCTION BUILD - Structured logging, hard errors
+// Deploy to: /api/validate.js on Vercel
 
 const SINGH_PROFILE = {
     name: 'Singh Automation LLC',
@@ -23,7 +24,13 @@ const SINGH_PROFILE = {
 };
 
 export default async function handler(req, res) {
-    // CORS headers
+    const startTime = Date.now();
+    const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const log = (level, message, data = {}) => {
+        console.log(JSON.stringify({ level, requestId, timestamp: new Date().toISOString(), message, ...data }));
+    };
+    
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
@@ -33,18 +40,22 @@ export default async function handler(req, res) {
     }
     
     if (req.method !== 'POST') {
-        return res.status(405).json({ success: false, error: 'Method not allowed' });
+        return res.status(405).json({ 
+            success: false, 
+            error: 'Method not allowed. Use POST.',
+            requestId 
+        });
     }
-    
-    const requestId = req.headers['x-request-id'] || req.body?.requestId || crypto.randomUUID();
     
     // Check for Claude API key
     const claudeKey = process.env.ANTHROPIC_API_KEY;
     if (!claudeKey) {
+        log('error', 'ANTHROPIC_API_KEY not configured');
         return res.status(503).json({
             success: false,
-            error: 'ANTHROPIC_API_KEY not configured',
+            error: 'ANTHROPIC_API_KEY not configured on server',
             requestId,
+            timestamp: new Date().toISOString()
         });
     }
     
@@ -52,19 +63,24 @@ export default async function handler(req, res) {
         const { opportunity } = req.body;
         
         if (!opportunity) {
+            log('warn', 'Missing opportunity data in request');
             return res.status(400).json({
                 success: false,
-                error: 'Missing opportunity data',
+                error: 'Missing opportunity data in request body',
                 requestId,
+                timestamp: new Date().toISOString()
             });
         }
         
-        console.log(`[${requestId}] Validating: ${opportunity.title}`);
+        log('info', 'Validation started', { title: opportunity.title, agency: opportunity.agency });
         
         // Build validation prompt
         const prompt = buildValidationPrompt(opportunity);
         
-        // Call Claude API
+        // Call Claude API with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 55000);
+        
         const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -77,8 +93,9 @@ export default async function handler(req, res) {
                 max_tokens: 2000,
                 messages: [{ role: 'user', content: prompt }],
             }),
-            signal: AbortSignal.timeout(55000),
+            signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         
         if (!claudeResponse.ok) {
             const errorText = await claudeResponse.text();
@@ -89,15 +106,21 @@ export default async function handler(req, res) {
         const responseText = claudeData.content?.[0]?.text || '';
         
         // Parse Claude's response
-        const analysis = parseValidationResponse(responseText, opportunity);
+        const analysis = parseValidationResponse(responseText, opportunity, log);
         
-        console.log(`[${requestId}] Validation result: ${analysis.validation.recommendation}`);
+        const totalTime = Date.now() - startTime;
+        log('info', 'Validation complete', { 
+            recommendation: analysis.validation.recommendation,
+            confidence: analysis.validation.confidence,
+            latencyMs: totalTime 
+        });
         
         return res.status(200).json({
             success: true,
             analysis,
             requestId,
             timestamp: new Date().toISOString(),
+            latencyMs: totalTime,
             tokensUsed: {
                 input: claudeData.usage?.input_tokens || 0,
                 output: claudeData.usage?.output_tokens || 0,
@@ -105,13 +128,15 @@ export default async function handler(req, res) {
         });
         
     } catch (error) {
-        console.error(`[${requestId}] Validation error:`, error.message);
+        const totalTime = Date.now() - startTime;
+        log('error', 'Validation failed', { error: error.message, latencyMs: totalTime });
         
         return res.status(500).json({
             success: false,
             error: error.message,
             requestId,
             timestamp: new Date().toISOString(),
+            latencyMs: totalTime
         });
     }
 }
@@ -159,7 +184,7 @@ Analyze this opportunity and respond in this EXACT JSON format:
 Respond ONLY with the JSON, no other text.`;
 }
 
-function parseValidationResponse(text, opp) {
+function parseValidationResponse(text, opp, log) {
     try {
         // Try to extract JSON from response
         const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -180,10 +205,10 @@ function parseValidationResponse(text, opp) {
             };
         }
     } catch (e) {
-        console.warn('Failed to parse Claude response as JSON:', e.message);
+        log('warn', 'Failed to parse Claude response as JSON', { error: e.message });
     }
     
-    // Fallback if parsing fails
+    // Fallback if parsing fails - returns REVIEW with warning
     return {
         validation: {
             recommendation: 'REVIEW',
@@ -192,10 +217,12 @@ function parseValidationResponse(text, opp) {
                 { name: 'Analysis', status: 'WARN', detail: 'Manual review required - automated analysis incomplete' }
             ],
             summary: 'Automated analysis could not be completed. Please review manually.',
+            risks: ['Automated analysis incomplete'],
         },
         timeline: {
             milestones: generateMilestones(opp),
         },
+        nextSteps: ['Review solicitation manually', 'Contact contracting officer for clarification'],
     };
 }
 
@@ -211,4 +238,5 @@ function generateMilestones(opp) {
         { task: 'Submit proposal', daysFromNow: daysLeft - 1, critical: true },
     ];
 }
+
 

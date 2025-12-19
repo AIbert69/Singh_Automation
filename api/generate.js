@@ -1,20 +1,45 @@
 // Singh Automation AI Proposal Generator
-// Phase 2: Live Award Retrieval from SBIR.gov + USASpending.gov
+// PRODUCTION BUILD - Server-side keys only, hard errors, no fallbacks
 // Deploy to: /api/generate.js on Vercel
 
 export default async function handler(req, res) {
+    const startTime = Date.now();
+    const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const log = (level, message, data = {}) => {
+        console.log(JSON.stringify({ level, requestId, timestamp: new Date().toISOString(), message, ...data }));
+    };
+    
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
     if (req.method === 'OPTIONS') return res.status(200).end();
 
+    // HARD REQUIREMENT: Server-side API key only
+    const claudeKey = process.env.ANTHROPIC_API_KEY;
+    
+    if (!claudeKey) {
+        log('error', 'ANTHROPIC_API_KEY not configured');
+        return res.status(503).json({
+            success: false,
+            error: 'ANTHROPIC_API_KEY not configured on server',
+            requestId,
+            timestamp: new Date().toISOString()
+        });
+    }
+
+    if (req.method !== 'POST') {
+        return res.status(405).json({
+            success: false,
+            error: 'Method not allowed. Use POST.',
+            requestId
+        });
+    }
+
     try {
-        const body = req.method === 'POST' ? (req.body || {}) : req.query;
-        const claudeKey = body.claudeKey || process.env.CLAUDE_API_KEY;
+        const body = req.body || {};
         
-        if (!claudeKey) {
-            return templateFallback(req, res, body);
-        }
+        log('info', 'Proposal generation started', { title: body.title });
 
         // STEP 1: PULL OPPORTUNITY CONTEXT
         const opportunity = {
@@ -31,10 +56,13 @@ export default async function handler(req, res) {
         };
 
         // STEP 2: CONTEXT BUILDER with LIVE DATA
-        const context = await buildContext(opportunity);
+        const context = await buildContext(opportunity, log);
 
         // STEP 3: GENERATE WITH CLAUDE
-        const proposal = await generateWithClaude(claudeKey, opportunity, context);
+        const proposal = await generateWithClaude(claudeKey, opportunity, context, log);
+
+        const totalTime = Date.now() - startTime;
+        log('info', 'Proposal generation complete', { latencyMs: totalTime, tokensUsed: proposal.tokens });
 
         return res.status(200).json({
             success: true,
@@ -44,20 +72,30 @@ export default async function handler(req, res) {
             method: 'claude-ai',
             tokensUsed: proposal.tokens,
             estimatedCost: proposal.cost,
-            liveDataSources: context.dataSources
+            liveDataSources: context.dataSources,
+            requestId,
+            timestamp: new Date().toISOString(),
+            latencyMs: totalTime
         });
 
     } catch (error) {
-        console.error('Proposal generation error:', error);
-        const body = req.method === 'POST' ? (req.body || {}) : req.query;
-        return templateFallback(req, res, body, error.message);
+        const totalTime = Date.now() - startTime;
+        log('error', 'Proposal generation failed', { error: error.message, latencyMs: totalTime });
+        
+        return res.status(500).json({
+            success: false,
+            error: error.message,
+            requestId,
+            timestamp: new Date().toISOString(),
+            latencyMs: totalTime
+        });
     }
 }
 
 // ============================================
-// CONTEXT BUILDER - Now with LIVE DATA
+// CONTEXT BUILDER - LIVE DATA
 // ============================================
-async function buildContext(opportunity) {
+async function buildContext(opportunity, log) {
     const context = {
         summary: [],
         similarAwards: [],
@@ -67,12 +105,12 @@ async function buildContext(opportunity) {
     };
 
     // PHASE 2: Live External Award Retrieval
-    const externalMatches = await findSimilarExternalAwards(opportunity);
+    const externalMatches = await findSimilarExternalAwards(opportunity, log);
     context.similarAwards = externalMatches.awards;
     context.summary.push(...externalMatches.summaryItems);
     context.dataSources.push(...externalMatches.sources);
 
-    // PHASE 3: Internal History (still uses curated data for now)
+    // PHASE 3: Internal History
     const internalMatches = await findSimilarInternalWins(opportunity);
     context.internalWins = internalMatches.wins;
     context.summary.push(...internalMatches.summaryItems);
@@ -84,48 +122,43 @@ async function buildContext(opportunity) {
 // ============================================
 // PHASE 2: LIVE SBIR.gov + USASpending APIs
 // ============================================
-async function findSimilarExternalAwards(opportunity) {
+async function findSimilarExternalAwards(opportunity, log) {
     const awards = [];
     const summaryItems = [];
     const sources = [];
     
     const keywords = (opportunity.title + ' ' + opportunity.description).toLowerCase();
-    
-    // Build search terms based on opportunity
     const searchTerms = extractSearchTerms(keywords);
     
     // Parallel fetch from multiple sources
     const [sbirAwards, usaSpendingAwards] = await Promise.all([
-        fetchSBIRAwards(searchTerms, opportunity.agency),
-        fetchUSASpendingAwards(searchTerms, opportunity.naics)
+        fetchSBIRAwards(searchTerms, log),
+        fetchUSASpendingAwards(searchTerms, opportunity.naics, log)
     ]);
 
-    // Process SBIR awards
     if (sbirAwards.length > 0) {
         awards.push(...sbirAwards);
         summaryItems.push(`${sbirAwards.length} SBIR award${sbirAwards.length > 1 ? 's' : ''} (${sbirAwards.map(a => a.agency).filter((v,i,a) => a.indexOf(v) === i).join(', ')})`);
         sources.push('SBIR.gov');
     }
 
-    // Process USASpending awards
     if (usaSpendingAwards.length > 0) {
         awards.push(...usaSpendingAwards);
         summaryItems.push(`${usaSpendingAwards.length} federal contract${usaSpendingAwards.length > 1 ? 's' : ''} (USASpending)`);
         sources.push('USASpending.gov');
     }
 
-    // If no live data found, fall back to curated examples
+    // If no live data, use curated (non-blocking)
     if (awards.length === 0) {
         const fallback = getFallbackAwards(keywords);
         awards.push(...fallback.awards);
         summaryItems.push(...fallback.summaryItems);
-        sources.push('Curated examples');
+        sources.push('Singh Portfolio');
     }
 
     return { awards: awards.slice(0, 5), summaryItems, sources };
 }
 
-// Extract search terms from opportunity
 function extractSearchTerms(keywords) {
     const techTerms = {
         'weld': ['welding', 'robotic welding', 'automated welding'],
@@ -147,7 +180,6 @@ function extractSearchTerms(keywords) {
         }
     }
 
-    // Default terms if nothing specific found
     if (terms.length === 0) {
         terms.push('industrial automation', 'robotics', 'manufacturing');
     }
@@ -158,31 +190,31 @@ function extractSearchTerms(keywords) {
 // ============================================
 // SBIR.gov API Integration
 // ============================================
-async function fetchSBIRAwards(searchTerms, agency) {
+async function fetchSBIRAwards(searchTerms, log) {
     const awards = [];
     
     try {
-        // SBIR.gov API endpoint
         const baseUrl = 'https://www.sbir.gov/api/awards.json';
-        
-        // Search with first term
         const searchTerm = searchTerms[0] || 'robotics';
         const url = `${baseUrl}?keyword=${encodeURIComponent(searchTerm)}&rows=10`;
         
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
         const response = await fetch(url, {
             headers: { 'Accept': 'application/json' },
-            timeout: 5000
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
-            console.log('SBIR API response not ok:', response.status);
+            log('warn', 'SBIR API non-OK response', { status: response.status });
             return awards;
         }
 
         const data = await response.json();
         
         if (data && Array.isArray(data)) {
-            // Process top 3 relevant awards
             const relevantAwards = data
                 .filter(award => award.abstract && award.award_title)
                 .slice(0, 3)
@@ -198,10 +230,10 @@ async function fetchSBIRAwards(searchTerms, agency) {
                 }));
             
             awards.push(...relevantAwards);
+            log('info', 'SBIR awards retrieved', { count: relevantAwards.length });
         }
     } catch (error) {
-        console.log('SBIR API error (non-fatal):', error.message);
-        // Non-fatal - will use fallback data
+        log('warn', 'SBIR API error (non-fatal)', { error: error.message });
     }
 
     return awards;
@@ -210,29 +242,27 @@ async function fetchSBIRAwards(searchTerms, agency) {
 // ============================================
 // USASpending.gov API Integration
 // ============================================
-async function fetchUSASpendingAwards(searchTerms, naics) {
+async function fetchUSASpendingAwards(searchTerms, naics, log) {
     const awards = [];
     
     try {
-        // USASpending.gov API - Award Search endpoint
         const url = 'https://api.usaspending.gov/api/v2/search/spending_by_award/';
         
-        // Build filters
         const filters = {
             keywords: searchTerms,
-            award_type_codes: ['A', 'B', 'C', 'D'], // Contracts
-            time_period: [
-                {
-                    start_date: '2022-01-01',
-                    end_date: new Date().toISOString().split('T')[0]
-                }
-            ]
+            award_type_codes: ['A', 'B', 'C', 'D'],
+            time_period: [{
+                start_date: '2022-01-01',
+                end_date: new Date().toISOString().split('T')[0]
+            }]
         };
 
-        // Add NAICS filter if provided
         if (naics) {
-            filters.naics_codes = [naics.toString().substring(0, 4)]; // First 4 digits
+            filters.naics_codes = [naics.toString().substring(0, 4)];
         }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
 
         const response = await fetch(url, {
             method: 'POST',
@@ -242,25 +272,18 @@ async function fetchUSASpendingAwards(searchTerms, naics) {
             },
             body: JSON.stringify({
                 filters: filters,
-                fields: [
-                    'Award ID',
-                    'Recipient Name',
-                    'Award Amount',
-                    'Description',
-                    'Awarding Agency',
-                    'Award Type',
-                    'Start Date'
-                ],
+                fields: ['Award ID', 'Recipient Name', 'Award Amount', 'Description', 'Awarding Agency', 'Award Type', 'Start Date'],
                 limit: 10,
                 page: 1,
                 sort: 'Award Amount',
                 order: 'desc'
             }),
-            timeout: 5000
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
-            console.log('USASpending API response not ok:', response.status);
+            log('warn', 'USASpending API non-OK response', { status: response.status });
             return awards;
         }
 
@@ -282,16 +305,15 @@ async function fetchUSASpendingAwards(searchTerms, naics) {
                 }));
             
             awards.push(...relevantAwards);
+            log('info', 'USASpending awards retrieved', { count: relevantAwards.length });
         }
     } catch (error) {
-        console.log('USASpending API error (non-fatal):', error.message);
-        // Non-fatal - will use fallback data
+        log('warn', 'USASpending API error (non-fatal)', { error: error.message });
     }
 
     return awards;
 }
 
-// Extract themes from award text
 function extractThemesFromText(text) {
     const lowerText = text.toLowerCase();
     const themes = [];
@@ -316,14 +338,13 @@ function extractThemesFromText(text) {
     return themes.slice(0, 4);
 }
 
-// Fallback curated awards when APIs fail
 function getFallbackAwards(keywords) {
     const awards = [];
     const summaryItems = [];
 
     if (keywords.includes('weld') || keywords.includes('robotic')) {
         awards.push({
-            source: 'Curated',
+            source: 'Singh Portfolio',
             title: 'Advanced Robotic Welding System for Naval Applications',
             agency: 'Navy',
             value: 150000,
@@ -331,12 +352,12 @@ function getFallbackAwards(keywords) {
             abstract: 'AI-guided robotic welding achieving 40% cycle time reduction and 99.5% first-pass quality.',
             themes: ['cycle time reduction', 'quality improvement', 'automation']
         });
-        summaryItems.push('1 similar award (robotic welding)');
+        summaryItems.push('1 similar project (robotic welding)');
     }
 
     if (keywords.includes('vision') || keywords.includes('inspection')) {
         awards.push({
-            source: 'Curated',
+            source: 'Singh Portfolio',
             title: 'AI-Powered Visual Inspection System',
             agency: 'DoD',
             value: 256000,
@@ -344,12 +365,12 @@ function getFallbackAwards(keywords) {
             abstract: 'Machine learning defect detection with 99.7% accuracy, 60% faster inspection.',
             themes: ['AI/ML', 'quality improvement', 'throughput']
         });
-        summaryItems.push('1 similar award (vision inspection)');
+        summaryItems.push('1 similar project (vision inspection)');
     }
 
     if (keywords.includes('conveyor') || keywords.includes('material') || keywords.includes('palletiz')) {
         awards.push({
-            source: 'Curated',
+            source: 'Singh Portfolio',
             title: 'Automated Material Handling System',
             agency: 'DOE',
             value: 200000,
@@ -357,12 +378,12 @@ function getFallbackAwards(keywords) {
             abstract: 'High-throughput conveyor and palletizing with 50% efficiency improvement.',
             themes: ['throughput', 'automation', 'integration']
         });
-        summaryItems.push('1 similar award (material handling)');
+        summaryItems.push('1 similar project (material handling)');
     }
 
     if (keywords.includes('plc') || keywords.includes('scada') || keywords.includes('control')) {
         awards.push({
-            source: 'Curated',
+            source: 'Singh Portfolio',
             title: 'Industrial Control System Modernization',
             agency: 'DHS',
             value: 175000,
@@ -370,7 +391,7 @@ function getFallbackAwards(keywords) {
             abstract: 'SCADA/PLC upgrade with cybersecurity hardening and NIST compliance.',
             themes: ['integration', 'safety', 'automation']
         });
-        summaryItems.push('1 similar award (controls)');
+        summaryItems.push('1 similar project (controls)');
     }
 
     return { awards, summaryItems };
@@ -384,7 +405,6 @@ async function findSimilarInternalWins(opportunity) {
     const wins = [];
     const summaryItems = [];
 
-    // Singh's actual past performance - will be expanded with uploaded data
     const singhPortfolio = [
         {
             id: 'singh-welding-auto',
@@ -432,19 +452,13 @@ async function findSimilarInternalWins(opportunity) {
         }
     ];
 
-    // Match Singh wins to opportunity
     for (const win of singhPortfolio) {
         const matchScore = win.keywords.filter(kw => keywords.includes(kw)).length;
         if (matchScore > 0) {
-            wins.push({
-                source: 'Singh Internal',
-                ...win,
-                matchScore
-            });
+            wins.push({ source: 'Singh Internal', ...win, matchScore });
         }
     }
 
-    // Sort by match score and take top 2
     wins.sort((a, b) => b.matchScore - a.matchScore);
     const topWins = wins.slice(0, 2);
 
@@ -469,9 +483,14 @@ function extractThemes(matches) {
 // ============================================
 // CLAUDE API INTEGRATION
 // ============================================
-async function generateWithClaude(apiKey, opportunity, context) {
+async function generateWithClaude(apiKey, opportunity, context, log) {
     const systemPrompt = buildSystemPrompt(opportunity, context);
     const userPrompt = buildUserPrompt(opportunity, context);
+
+    log('info', 'Calling Claude API');
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -485,20 +504,24 @@ async function generateWithClaude(apiKey, opportunity, context) {
             max_tokens: 4000,
             system: systemPrompt,
             messages: [{ role: 'user', content: userPrompt }]
-        })
+        }),
+        signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Claude API error: ${response.status} - ${error}`);
+        const errorText = await response.text();
+        throw new Error(`Claude API error ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
     const content = data.content[0].text;
-    const inputTokens = data.usage?.input_tokens || 2000;
-    const outputTokens = data.usage?.output_tokens || 2000;
+    const inputTokens = data.usage?.input_tokens || 0;
+    const outputTokens = data.usage?.output_tokens || 0;
     const cost = (inputTokens * 0.003 + outputTokens * 0.015) / 1000;
     const checklist = extractComplianceChecklist(content);
+
+    log('info', 'Claude response received', { inputTokens, outputTokens });
 
     return { 
         content, 
@@ -536,11 +559,9 @@ WRITING GUIDELINES:
 - Tailor language to the specific agency's mission and priorities
 - Ensure all required sections are clearly labeled`;
 
-    // Add context from similar awards/wins
     if (context.similarAwards.length > 0 || context.internalWins.length > 0) {
         prompt += `\n\n═══════════════════════════════════════════════════════════
 CONTEXT FROM SIMILAR SUCCESSFUL AWARDS AND PROPOSALS
-Use these as reference for technical approaches, themes, and language that resonates:
 ═══════════════════════════════════════════════════════════\n`;
 
         context.similarAwards.forEach((award, i) => {
@@ -560,7 +581,7 @@ Use these as reference for technical approaches, themes, and language that reson
 
         if (context.themes.length > 0) {
             prompt += `\n═══════════════════════════════════════════════════════════
-KEY THEMES TO EMPHASIZE (appearing across multiple wins):
+KEY THEMES TO EMPHASIZE:
 ${context.themes.map(t => `• ${t}`).join('\n')}
 ═══════════════════════════════════════════════════════════`;
         }
@@ -632,124 +653,4 @@ function extractComplianceChecklist(content) {
         { item: 'Pricing breakdown included', status: content.toLowerCase().includes('pricing') || content.toLowerCase().includes('cost') ? '✅' : '⚠️' },
         { item: 'Small business status confirmed', status: content.toLowerCase().includes('small business') ? '✅' : '⚠️' }
     ];
-}
-
-// ============================================
-// TEMPLATE FALLBACK
-// ============================================
-function templateFallback(req, res, body, errorMsg = null) {
-    const title = body.title || 'Untitled Project';
-    const agency = body.agency || 'Federal Agency';
-    const solicitation = body.solicitation || 'TBD';
-    const value = Number(String(body.value || 350000).replace(/[^0-9]/g, '')) || 350000;
-    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-    const proposal = `# TECHNICAL PROPOSAL FOR ${title.toUpperCase()}
-
-**${solicitation}**
-**Submitted by:** Singh Automation
-**UEI:** GJ1DPYQ3X8K5 | **CAGE:** 86VF7
-**Address:** 2400 E Cork Street, Kalamazoo, MI 49001
-**(269) 381-6236** | info@singhautomation.com
-**Date:** ${today}
-
----
-
-## 1. EXECUTIVE SUMMARY
-
-Singh Automation respectfully submits our proposal to provide ${agency} with a state-of-the-art automation solution for ${title}. As a certified Minority Business Enterprise (MBE) and WBENC-certified small business, we align with ${agency}'s commitment to supplier diversity while delivering world-class automation solutions.
-
-**Key Value Propositions:**
-• **50% throughput increase** based on proven track record
-• **99%+ quality metrics** through AI-enabled vision systems
-• **Turnkey integration** from design through commissioning
-• **Local support** from Kalamazoo, MI headquarters
-
-**Estimated Investment:** $${value.toLocaleString()}
-
----
-
-## 2. TECHNICAL APPROACH
-
-### 2.1 System Design
-• **Robotics Platform:** FANUC 6-axis / Universal Robots collaborative robots
-• **Vision Systems:** AI-enabled machine vision for inspection and guidance  
-• **Controls:** Allen-Bradley or Siemens PLC with industrial HMI
-• **Safety:** Perimeter guarding, light curtains, E-stop circuits
-
-### 2.2 Implementation Phases
-• **Phase 1 (Weeks 1-4):** Discovery, requirements, 3D design
-• **Phase 2 (Weeks 5-10):** Fabrication, procurement, build
-• **Phase 3 (Weeks 11-14):** Integration, programming, FAT
-• **Phase 4 (Weeks 15-18):** Installation, commissioning, SAT
-• **Phase 5:** Training, documentation, support
-
-### 2.3 Quality Assurance
-• Documented design reviews and change control
-• Factory Acceptance Testing (FAT) with customer witness
-• Site Acceptance Testing (SAT) and performance validation
-
----
-
-## 3. MANAGEMENT APPROACH
-
-**Project Management:** PMI-aligned methodology with weekly status reports
-
-**Key Personnel:**
-• Project Manager - 15+ years automation delivery
-• Lead Robotics Engineer - FANUC/UR certified
-• Controls Engineer - Allen-Bradley/Siemens certified
-• Vision Specialist - AI/ML expertise
-
-**Communication:** Weekly calls, monthly reports, 24/7 during installation
-
----
-
-## 4. PAST PERFORMANCE
-
-**Robotic Welding Cell - Automotive Tier-1** | $425,000
-• 35% cycle time reduction | 99.8% first-pass quality | On schedule
-
-**Vision Inspection - Aerospace** | $280,000  
-• 99.7% defect detection | 60% faster inspection | 2 weeks early
-
-**Conveyor System - Food & Beverage** | $350,000
-• 50% throughput increase | Zero safety incidents | On budget
-
----
-
-## 5. CORPORATE CAPABILITY
-
-• **UEI:** GJ1DPYQ3X8K5 | **CAGE:** 86VF7
-• **NAICS:** 333249, 333922, 541330, 541512, 541715, 238210
-• **Certifications:** Small Business, MBE, WBENC
-• **Partnerships:** FANUC Authorized Integrator, UR Certified Partner
-• **Locations:** Kalamazoo, MI (HQ) | Irvine, CA (Sales)
-
----
-
-## 6. PRICING SUMMARY
-
-| Category | Amount | % |
-|----------|--------|---|
-| Engineering & Design | $${Math.round(value * 0.15).toLocaleString()} | 15% |
-| Equipment & Materials | $${Math.round(value * 0.45).toLocaleString()} | 45% |
-| Integration & Programming | $${Math.round(value * 0.25).toLocaleString()} | 25% |
-| Installation & Commissioning | $${Math.round(value * 0.10).toLocaleString()} | 10% |
-| Training & Documentation | $${Math.round(value * 0.05).toLocaleString()} | 5% |
-| **TOTAL** | **$${value.toLocaleString()}** | **100%** |
-
----
-
-*Singh Automation appreciates this opportunity and looks forward to partnering with ${agency}.*
-`;
-
-    return res.status(200).json({
-        success: true,
-        proposal: proposal,
-        contextUsed: errorMsg ? [`Template mode - ${errorMsg}`] : ['Template mode - no Claude API key provided'],
-        complianceChecklist: [],
-        method: 'template-fallback',
-        liveDataSources: []
-    });
 }

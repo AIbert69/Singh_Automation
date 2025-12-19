@@ -211,3 +211,4 @@ function generateMilestones(opp) {
         { task: 'Submit proposal', daysFromNow: daysLeft - 1, critical: true },
     ];
 }
+

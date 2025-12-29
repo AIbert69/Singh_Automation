@@ -253,14 +253,14 @@ export default async function handler(req, res) {
         { id: 'ca-eprocure-1', title: 'Search CA State Opportunities', agency: 'California DGS', 
           solicitation: 'Cal eProcure Portal', value: null, closeDate: null,
           description: 'Browse California state procurement opportunities. Search for automation, robotics, PLC, SCADA, conveyor systems.',
-          link: 'https://caleprocure.ca.gov/pages/public-search.aspx', 
+          link: 'https://caleprocure.ca.gov/pages/Events-BS3/event-search.aspx', 
           setAside: 'Various', state: 'CA', isPortal: true },
         
         // Michigan State  
         { id: 'mi-sigma-1', title: 'Search Michigan State Opportunities', agency: 'Michigan DTMB',
           solicitation: 'SIGMA VSS Portal', value: null, closeDate: null,
           description: 'Browse Michigan state procurement opportunities. Search for automation, welding, robotics, controls.',
-          link: 'https://sigma.michigan.gov/webapp/PRDVSS2X1/AltSelfService',
+          link: 'https://www.michigan.gov/budget/budget-offices/sigma/doing-business-with-the-state',
           setAside: 'Various', state: 'MI', isPortal: true },
           
         // Texas State
@@ -301,7 +301,7 @@ export default async function handler(req, res) {
         { id: 'ca-orange-1', title: 'Orange County Procurement', agency: 'Orange County CPO',
           solicitation: 'OC Bids Portal', value: null, closeDate: null,
           description: 'Orange County procurement for water districts, airports, transit. Contact: 714-567-7314, cpo@ceo.ocgov.com',
-          link: 'https://ocgov.com/gov/cpo/bids',
+          link: 'https://cpo.oc.gov/open-bids-county-contracts-portal',
           contact: { phone: '714-567-7314', email: 'cpo@ceo.ocgov.com', address: '400 W. Civic Center Drive, 5th Floor, Santa Ana, CA 92701' },
           setAside: 'Small Business', county: 'Orange', state: 'CA', isPortal: true },
           

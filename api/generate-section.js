@@ -42,7 +42,7 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 4000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }]
@@ -531,8 +531,7 @@ function getFewShotExamples(section) {
 // BUILD USER PROMPT - Combines opportunity data + RAG + Few-Shot
 // =============================================================================
 function buildUserPrompt(section, opportunity, companyInfo, ragContext, fewShotExamples) {
-  // Default company info - always use these if not provided
-  const defaults = {
+  const company = companyInfo || {
     name: 'Singh Automation LLC',
     cage: '86VF7',
     uei: 'GJ1DPYQ3X8K5',
@@ -555,22 +554,6 @@ function buildUserPrompt(section, opportunity, companyInfo, ragContext, fewShotE
       'Dual-location presence: HQ in Kalamazoo MI (rapid Midwest response), Sales in Irvine CA (West Coast coverage)',
       'Small business agility with 15-20% cost savings vs. large defense contractors'
     ]
-  };
-  
-  // Merge passed companyInfo with defaults (defaults fill in missing values)
-  // Use defaults if array is missing OR empty
-  const company = {
-    name: companyInfo?.name || defaults.name,
-    cage: companyInfo?.cage || defaults.cage,
-    uei: companyInfo?.uei || defaults.uei,
-    hq: companyInfo?.hq || defaults.hq,
-    sales: companyInfo?.sales || defaults.sales,
-    phone: companyInfo?.phone || defaults.phone,
-    email: companyInfo?.email || defaults.email,
-    naics: (companyInfo?.naics && companyInfo.naics.length > 0) ? companyInfo.naics : defaults.naics,
-    capabilities: (companyInfo?.capabilities && companyInfo.capabilities.length > 0) ? companyInfo.capabilities : defaults.capabilities,
-    certs: (companyInfo?.certs && companyInfo.certs.length > 0) ? companyInfo.certs : defaults.certs,
-    discriminators: (companyInfo?.discriminators && companyInfo.discriminators.length > 0) ? companyInfo.discriminators : defaults.discriminators
   };
 
   const opp = {
@@ -604,16 +587,16 @@ function buildUserPrompt(section, opportunity, companyInfo, ragContext, fewShotE
 - Email: ${company.email}
 
 ### Capabilities
-${(company.capabilities || []).map(c => `• ${c}`).join('\n')}
+${company.capabilities.map(c => `• ${c}`).join('\n')}
 
 ### Certifications
-${(company.certs || []).join(', ')}
+${company.certs.join(', ')}
 
 ### Key Discriminators (MUST emphasize these)
-${(company.discriminators || []).map((d, i) => `${i + 1}. ${d}`).join('\n')}
+${company.discriminators.map((d, i) => `${i + 1}. ${d}`).join('\n')}
 
 ### NAICS Codes
-${(company.naics || []).join(', ')}
+${company.naics.join(', ')}
 `;
 
   // Add RAG context if available

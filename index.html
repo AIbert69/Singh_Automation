@@ -2360,13 +2360,48 @@ function showDetail(id) {
         }
     }
     
+    // Add Review Checklist Section
+    const reviewChecklist = generateReviewChecklist(o);
     body += `
-        <div style="background: #1a1a1a; padding: 0.5rem; border-radius: 4px;">
-            <label style="font-size: 0.6rem; color: var(--gray);">🔗 Source Link</label><br>
-            ${o.link ? `<a href="${o.link}" target="_blank" rel="noopener noreferrer" style="color: var(--green); font-size: 0.75rem;">${o.link.length > 60 ? o.link.substring(0, 60) + '...' : o.link}</a>` : '<span style="color: var(--gray); font-size: 0.75rem;">No direct link available</span>'}
+        <div style="background: rgba(100,149,237,0.1); border: 1px solid rgba(100,149,237,0.3); padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <strong style="font-size: 0.85rem; color: var(--blue);">📋 Review Checklist</strong>
+                <button class="btn btn-sm" style="background: var(--green); color: #000; font-size: 0.7rem; padding: 0.25rem 0.5rem;" onclick="agentReviewOpportunity('${o.id}')">🤖 AI Review</button>
+            </div>
+            ${reviewChecklist.map(section => `
+                <div style="margin-bottom: 0.5rem;">
+                    <div style="font-size: 0.7rem; color: var(--gray); text-transform: uppercase; margin-bottom: 0.3rem;">${section.category}</div>
+                    ${section.items.map(item => `
+                        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; margin-bottom: 0.2rem; padding: 0.2rem 0;">
+                            <span style="width: 16px; text-align: center;">${item.status === 'pass' ? '✅' : item.status === 'fail' ? '❌' : '⬜'}</span>
+                            <span style="flex: 1; color: ${item.status === 'fail' ? 'var(--red)' : '#ccc'};">${item.label}</span>
+                            <span style="font-size: 0.65rem; color: var(--gray);">${item.detail}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('')}
         </div>
     `;
-    
+
+    // Smart Source Link Section
+    const smartLink = getSmartSourceLink(o);
+    body += `
+        <div style="background: #1a1a1a; padding: 0.75rem; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <label style="font-size: 0.7rem; color: var(--gray);">🔗 Source Link</label>
+                ${!smartLink.isDirect ? '<span style="font-size: 0.6rem; background: var(--orange); color: #000; padding: 0.1rem 0.3rem; border-radius: 3px;">Portal Link</span>' : '<span style="font-size: 0.6rem; background: var(--green); color: #000; padding: 0.1rem 0.3rem; border-radius: 3px;">Direct Link</span>'}
+            </div>
+            ${o.link ? `<a href="${o.link}" target="_blank" rel="noopener noreferrer" style="color: var(--green); font-size: 0.75rem; word-break: break-all;">${o.link.length > 60 ? o.link.substring(0, 60) + '...' : o.link}</a>` : '<span style="color: var(--gray); font-size: 0.75rem;">No direct link available</span>'}
+            ${smartLink.searchTip && !smartLink.isDirect ? `
+                <div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(255,165,0,0.1); border-radius: 4px; border-left: 3px solid var(--orange);">
+                    <div style="font-size: 0.65rem; color: var(--orange); font-weight: 600; margin-bottom: 0.25rem;">💡 How to Find</div>
+                    <div style="font-size: 0.7rem; color: var(--gray);">${smartLink.searchTip}</div>
+                    ${smartLink.searchTerms ? `<div style="margin-top: 0.3rem; font-size: 0.65rem;"><strong style="color: var(--blue);">Search:</strong> <code style="background: #333; padding: 0.1rem 0.3rem; border-radius: 3px; color: var(--green);">${smartLink.searchTerms.primary}</code></div>` : ''}
+                </div>
+            ` : ''}
+        </div>
+    `;
+
     document.getElementById('modalBody').innerHTML = body;
     
     // Check if Quote button should show
@@ -2374,21 +2409,35 @@ function showDetail(id) {
         ? `<button class="btn btn-quote btn-sm" onclick="openQuoteRequest('${o.id}')" title="Prepare a non-binding distributor RFQ for pricing validation.">📋 Request Distributor Quote</button>`
         : '';
     
-    const viewSourceBtn = o.link 
-        ? `<button class="btn btn-primary" onclick="window.open('${o.link}','_blank')">🔗 View Source</button>`
+    // Smart source link button - handles both direct and portal links
+    const viewSourceBtn = o.link
+        ? `<button class="btn btn-primary" onclick="openSmartSourceLink('${o.id}')" title="${smartLink.isDirect ? 'Open direct link' : 'Open portal with search guidance'}">🔗 ${smartLink.isDirect ? 'View Source' : 'Find on Portal'}</button>`
         : `<button class="btn btn-primary" disabled title="No source link available">🔗 View Source</button>`;
-    
+
     document.getElementById('modalFooter').innerHTML = `
-        ${viewSourceBtn}
-        <button class="btn btn-secondary" onclick="runValidation('${o.id}')" ${!o.eligibility.ok?'disabled':''} data-testid="btn-validate">🔍 Validate</button>
-        <button class="btn btn-go btn-sm" onclick="setPipelineStatus('${o.id}','go')" ${!o.eligibility.ok?'disabled':''} data-testid="btn-go">✅ GO</button>
-        <button class="btn btn-review btn-sm" onclick="setPipelineStatus('${o.id}','review')" data-testid="btn-review">🔍 Review</button>
-        <button class="btn btn-nogo btn-sm" onclick="setPipelineStatus('${o.id}','nogo')" data-testid="btn-nogo">🚫 No-Go</button>
-        ${quoteBtn}
-        <button class="btn btn-proposal btn-sm" onclick="goToProposal('${o.id}')" ${!o.eligibility.ok?'disabled':''} data-testid="btn-proposal">📝 Proposal</button>
-        <button class="btn btn-sm" style="background: linear-gradient(135deg, #1B4F72, #2E86AB); color: #fff;" onclick="downloadBeautifulProposal('${o.id}')" data-testid="btn-download-proposal">📄 Download Proposal</button>
-        <button class="btn btn-sm" style="background: linear-gradient(135deg, var(--green), #2E86AB); color: #fff;" onclick="askAgentAboutOpp('${o.id}')" data-testid="btn-ask-agent">🤖 Ask Agent_SAM</button>
-        <button class="btn btn-secondary" onclick="closeModal()" data-testid="btn-close-modal">Close</button>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;">
+            <!-- Primary Actions Row -->
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; width: 100%; padding-bottom: 0.5rem; border-bottom: 1px solid #333;">
+                ${viewSourceBtn}
+                <button class="btn btn-sm" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff;" onclick="agentReviewOpportunity('${o.id}')" data-testid="btn-agent-review" title="Get AI-powered detailed review">🤖 Agent Review</button>
+                <button class="btn btn-secondary" onclick="runValidation('${o.id}')" ${!o.eligibility.ok?'disabled':''} data-testid="btn-validate">🔍 Validate</button>
+            </div>
+
+            <!-- Status Actions Row -->
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; width: 100%; padding-bottom: 0.5rem; border-bottom: 1px solid #333;">
+                <button class="btn btn-go btn-sm" onclick="setPipelineStatus('${o.id}','go')" ${!o.eligibility.ok?'disabled':''} data-testid="btn-go" title="Mark as GO - pursue this opportunity">✅ GO</button>
+                <button class="btn btn-review btn-sm" onclick="agentReviewOpportunity('${o.id}')" data-testid="btn-review" title="Get detailed AI review before deciding">🔍 Review</button>
+                <button class="btn btn-nogo btn-sm" onclick="setPipelineStatus('${o.id}','nogo')" data-testid="btn-nogo" title="Mark as NO-GO - skip this opportunity">🚫 No-Go</button>
+            </div>
+
+            <!-- Proposal Actions Row -->
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; width: 100%;">
+                ${quoteBtn}
+                <button class="btn btn-proposal btn-sm" onclick="goToProposal('${o.id}')" ${!o.eligibility.ok?'disabled':''} data-testid="btn-proposal">📝 Proposal</button>
+                <button class="btn btn-sm" style="background: linear-gradient(135deg, #1B4F72, #2E86AB); color: #fff;" onclick="downloadBeautifulProposal('${o.id}')" data-testid="btn-download-proposal">📄 Download</button>
+                <button class="btn btn-secondary" onclick="closeModal()" data-testid="btn-close-modal">Close</button>
+            </div>
+        </div>
     `;
     
     document.getElementById('detailModal').classList.add('active');
@@ -4138,6 +4187,256 @@ const QUOTE_AUTOMATION_KEYWORDS = [
     'universal robot', 'cobot', 'eoat', 'gripper', 'automation', 
     'conveyor', 'actuator', 'encoder', 'motor', 'pneumatic', 'valve'
 ];
+
+// ========== SMART SOURCE LINKS ==========
+/**
+ * Generates a smart source link for the opportunity
+ * For portals without direct links, creates search URLs with relevant terms
+ */
+function getSmartSourceLink(o) {
+    const baseLink = o.link || '';
+    const title = o.title || '';
+    const source = (o.source || '').toLowerCase();
+    const type = (o.type || '').toLowerCase();
+
+    // If it's a direct opportunity link (SAM.gov, etc.), use it
+    if (baseLink.includes('sam.gov/opp/') || baseLink.includes('sbir.gov') || baseLink.includes('grants.gov/search-results')) {
+        return { url: baseLink, isDirect: true, searchTip: null };
+    }
+
+    // For state/county portals, create search-enhanced links
+    const searchTerms = extractSearchTerms(o);
+
+    // Portal-specific search URL builders
+    const portalSearchUrls = {
+        'caleprocure': {
+            baseUrl: 'https://caleprocure.ca.gov/pages/Events-BS3/event-search.aspx',
+            tip: `Search for: "${searchTerms.primary}" in the keyword field. Filter by NAICS ${o.naicsCode || '333249'}.`
+        },
+        'michigan': {
+            baseUrl: 'https://sigma.michigan.gov/webapp/PRDVSS2X1/AltSelfService',
+            tip: `Search SIGMA VSS for: "${searchTerms.primary}". Register as vendor first if needed.`
+        },
+        'txsmartbuy': {
+            baseUrl: 'https://www.txsmartbuy.com/sp',
+            tip: `Search SmartBuy for: "${searchTerms.primary}". Check HUB requirements.`
+        }
+    };
+
+    // Try to match portal
+    for (const [portal, config] of Object.entries(portalSearchUrls)) {
+        if (baseLink.toLowerCase().includes(portal) || source.includes(portal.replace('_', ' '))) {
+            return {
+                url: baseLink || config.baseUrl,
+                isDirect: false,
+                searchTip: config.tip,
+                searchTerms: searchTerms
+            };
+        }
+    }
+
+    // County/other portals
+    if (type === 'county' || type === 'state' || o.isPortal) {
+        return {
+            url: baseLink,
+            isDirect: false,
+            searchTip: `Search the portal for: "${searchTerms.primary}". Keywords to try: ${searchTerms.keywords.join(', ')}`,
+            searchTerms: searchTerms
+        };
+    }
+
+    // Default - direct link
+    return { url: baseLink, isDirect: true, searchTip: null };
+}
+
+/**
+ * Extracts search terms from opportunity for portal searches
+ */
+function extractSearchTerms(o) {
+    const title = (o.title || '').toLowerCase();
+    const desc = (o.description || '').toLowerCase();
+    const text = title + ' ' + desc;
+
+    // Primary search term - most specific keyword found
+    const specificTerms = ['robotic welding', 'plc', 'scada', 'conveyor', 'automation', 'robotics', 'vision system'];
+    let primary = 'automation';
+    for (const term of specificTerms) {
+        if (text.includes(term)) {
+            primary = term;
+            break;
+        }
+    }
+
+    // Additional keywords
+    const keywords = [];
+    const allTerms = ['robot', 'automation', 'plc', 'controls', 'conveyor', 'industrial', 'manufacturing'];
+    for (const term of allTerms) {
+        if (text.includes(term) && !keywords.includes(term)) {
+            keywords.push(term);
+        }
+    }
+
+    // Add NAICS if available
+    if (o.naicsCode) {
+        keywords.push(`NAICS ${o.naicsCode}`);
+    }
+
+    return { primary, keywords: keywords.slice(0, 5) };
+}
+
+// ========== AGENT REVIEW FUNCTIONALITY ==========
+/**
+ * Triggers AI-assisted review of an opportunity
+ * Opens the Agent panel with a structured review request
+ */
+function agentReviewOpportunity(id) {
+    const o = opportunities.find(x => x.id === id);
+    if (!o) return;
+
+    // Close the modal
+    closeModal();
+
+    // Navigate to Agent_SAM page
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-page="agent"]').classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-agent').classList.add('active');
+
+    // Set the context
+    const select = document.getElementById('agentContext');
+    if (select) {
+        select.value = id;
+        agentContext = o;
+    }
+
+    // Generate structured review request
+    const reviewRequest = `🔍 **DETAILED REVIEW REQUEST**
+
+Please provide a comprehensive review of this opportunity:
+
+**${o.title}**
+- Agency: ${o.agency || 'Unknown'}
+- Value: ${fmtCurrency(o.value)}
+- NAICS: ${o.naicsCode || 'N/A'}
+- Set-Aside: ${o.setAside || 'Full & Open'}
+- Source: ${o.source || 'Unknown'}
+- Closes: ${fmtDate(o.closeDate)}
+
+**Description:**
+${(o.description || 'No description available').substring(0, 800)}
+
+---
+
+**Please analyze and provide:**
+
+1. **ELIGIBILITY CHECK** ✅
+   - Are we certified for this set-aside type?
+   - Do we have the required NAICS code?
+   - Any contract vehicle requirements we don't meet?
+
+2. **TECHNICAL FIT** 🔧
+   - Does this match our capabilities (robotic welding, PLC/SCADA, conveyor systems)?
+   - What equipment would likely be needed?
+   - Can we self-perform or need teaming?
+
+3. **COMPETITIVE ANALYSIS** 📊
+   - Who are likely competitors?
+   - What's our win probability estimate?
+   - Price sensitivity assessment
+
+4. **RED FLAGS** 🚩
+   - Any disqualifying requirements?
+   - Unrealistic timeline or scope?
+   - Missing critical information?
+
+5. **RECOMMENDATION**
+   - GO / NO-GO / NEEDS MORE INFO
+   - Confidence level (High/Medium/Low)
+   - Specific next steps if GO
+
+6. **ACTION ITEMS** 📋
+   - What do we need to do in the next 48 hours?
+   - Who needs to be involved?`;
+
+    document.getElementById('agentInput').value = reviewRequest;
+    setTimeout(() => sendToAgent(), 300);
+}
+
+/**
+ * Generates a review checklist for manual review
+ */
+function generateReviewChecklist(o) {
+    const checks = [];
+    const purchasingElig = analyzePurchasingEligibility(o);
+
+    // Eligibility checks
+    checks.push({
+        category: 'Eligibility',
+        items: [
+            { label: 'Set-aside requirements met', status: o.eligibility?.status === 'GO' ? 'pass' : 'check', detail: o.setAside || 'Full & Open' },
+            { label: 'NAICS code match', status: ['333249', '333922', '541330', '541512', '541715', '238210'].includes(o.naicsCode) ? 'pass' : 'check', detail: o.naicsCode || 'Not specified' },
+            { label: 'No contract vehicle required', status: !(o.description || '').toLowerCase().includes('holders only') ? 'pass' : 'fail', detail: 'Check for SeaPort, OASIS, GSA restrictions' }
+        ]
+    });
+
+    // Technical checks
+    checks.push({
+        category: 'Technical Fit',
+        items: [
+            { label: 'Hardware component identified', status: purchasingElig.eligible ? 'pass' : 'check', detail: purchasingElig.category },
+            { label: 'Within our capabilities', status: 'check', detail: 'Review scope for robotic/automation fit' },
+            { label: 'Timeline feasible', status: 'check', detail: `Closes: ${fmtDate(o.closeDate)}` }
+        ]
+    });
+
+    // Business checks
+    checks.push({
+        category: 'Business Case',
+        items: [
+            { label: 'Value justified', status: o.value > 50000 ? 'pass' : 'check', detail: fmtCurrency(o.value) },
+            { label: 'Win probability reasonable', status: o.matchScore >= 65 ? 'pass' : 'check', detail: `${o.matchScore || 0}% match` },
+            { label: 'Resource availability', status: 'check', detail: 'Confirm BD/proposal team availability' }
+        ]
+    });
+
+    return checks;
+}
+
+/**
+ * Opens the source link with smart navigation
+ */
+function openSmartSourceLink(id) {
+    const o = opportunities.find(x => x.id === id);
+    if (!o) return;
+
+    const smartLink = getSmartSourceLink(o);
+
+    if (smartLink.isDirect) {
+        // Direct link - just open it
+        window.open(smartLink.url, '_blank');
+    } else {
+        // Portal link - show guidance modal first
+        const guidance = `
+📍 **How to Find This Opportunity**
+
+This is a procurement portal, not a direct link. Follow these steps:
+
+1. **Click "Open Portal"** to go to ${o.agency || 'the portal'}
+2. **Search for:** ${smartLink.searchTerms?.primary || 'automation'}
+3. **Additional keywords:** ${smartLink.searchTerms?.keywords?.join(', ') || 'robotics, controls, PLC'}
+${o.naicsCode ? `4. **Filter by NAICS:** ${o.naicsCode}` : ''}
+
+💡 **Tip:** ${smartLink.searchTip || 'Use the portal search function to find current opportunities.'}
+
+---
+Would you like to open the portal now?
+        `;
+
+        if (confirm(guidance)) {
+            window.open(smartLink.url, '_blank');
+        }
+    }
+}
 
 // ========== PURCHASING ELIGIBILITY ANALYSIS ==========
 function analyzePurchasingEligibility(o) {

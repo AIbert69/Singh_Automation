@@ -2300,9 +2300,9 @@ function showDetail(id) {
         </div>
         ` : ''}
         
-        <div style="background: #1a1a1a; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem;">
-            <strong style="font-size: 0.75rem; color: var(--gray);">Description</strong>
-            <p style="font-size: 0.8rem; margin-top: 0.4rem; line-height: 1.5;">${o.description||'No description'}</p>
+        <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--blue);">
+            <strong style="font-size: 0.85rem; color: var(--blue); display: block; margin-bottom: 0.5rem;">📋 What They're Looking For</strong>
+            <p style="font-size: 0.85rem; line-height: 1.6; color: #e0e0e0;">${o.description||'No description available'}</p>
         </div>
     `;
     
@@ -2360,82 +2360,39 @@ function showDetail(id) {
         }
     }
     
-    // Add Review Checklist Section
-    const reviewChecklist = generateReviewChecklist(o);
-    body += `
-        <div style="background: rgba(100,149,237,0.1); border: 1px solid rgba(100,149,237,0.3); padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                <strong style="font-size: 0.85rem; color: var(--blue);">📋 Review Checklist</strong>
-                <button class="btn btn-sm" style="background: var(--green); color: #000; font-size: 0.7rem; padding: 0.25rem 0.5rem;" onclick="agentReviewOpportunity('${o.id}')">🤖 AI Review</button>
-            </div>
-            ${reviewChecklist.map(section => `
-                <div style="margin-bottom: 0.5rem;">
-                    <div style="font-size: 0.7rem; color: var(--gray); text-transform: uppercase; margin-bottom: 0.3rem;">${section.category}</div>
-                    ${section.items.map(item => `
-                        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; margin-bottom: 0.2rem; padding: 0.2rem 0;">
-                            <span style="width: 16px; text-align: center;">${item.status === 'pass' ? '✅' : item.status === 'fail' ? '❌' : '⬜'}</span>
-                            <span style="flex: 1; color: ${item.status === 'fail' ? 'var(--red)' : '#ccc'};">${item.label}</span>
-                            <span style="font-size: 0.65rem; color: var(--gray);">${item.detail}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            `).join('')}
-        </div>
-    `;
-
-    // Smart Source Link Section
+    // Source link - simple inline display
     const smartLink = getSmartSourceLink(o);
-    body += `
-        <div style="background: #1a1a1a; padding: 0.75rem; border-radius: 4px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <label style="font-size: 0.7rem; color: var(--gray);">🔗 Source Link</label>
-                ${!smartLink.isDirect ? '<span style="font-size: 0.6rem; background: var(--orange); color: #000; padding: 0.1rem 0.3rem; border-radius: 3px;">Portal Link</span>' : '<span style="font-size: 0.6rem; background: var(--green); color: #000; padding: 0.1rem 0.3rem; border-radius: 3px;">Direct Link</span>'}
+    if (o.link) {
+        body += `
+            <div style="font-size: 0.7rem; color: var(--gray); margin-bottom: 1rem;">
+                🔗 <a href="${o.link}" target="_blank" rel="noopener noreferrer" style="color: var(--green);">View on ${o.source || 'Source Portal'}</a>
+                ${!smartLink.isDirect && smartLink.searchTerms ? ` <span style="color: var(--gray);">• Search: "${smartLink.searchTerms.primary}"</span>` : ''}
             </div>
-            ${o.link ? `<a href="${o.link}" target="_blank" rel="noopener noreferrer" style="color: var(--green); font-size: 0.75rem; word-break: break-all;">${o.link.length > 60 ? o.link.substring(0, 60) + '...' : o.link}</a>` : '<span style="color: var(--gray); font-size: 0.75rem;">No direct link available</span>'}
-            ${smartLink.searchTip && !smartLink.isDirect ? `
-                <div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(255,165,0,0.1); border-radius: 4px; border-left: 3px solid var(--orange);">
-                    <div style="font-size: 0.65rem; color: var(--orange); font-weight: 600; margin-bottom: 0.25rem;">💡 How to Find</div>
-                    <div style="font-size: 0.7rem; color: var(--gray);">${smartLink.searchTip}</div>
-                    ${smartLink.searchTerms ? `<div style="margin-top: 0.3rem; font-size: 0.65rem;"><strong style="color: var(--blue);">Search:</strong> <code style="background: #333; padding: 0.1rem 0.3rem; border-radius: 3px; color: var(--green);">${smartLink.searchTerms.primary}</code></div>` : ''}
-                </div>
-            ` : ''}
-        </div>
-    `;
+        `;
+    }
 
     document.getElementById('modalBody').innerHTML = body;
     
-    // Check if Quote button should show
-    const quoteBtn = checkQuoteEligibility(o) 
-        ? `<button class="btn btn-quote btn-sm" onclick="openQuoteRequest('${o.id}')" title="Prepare a non-binding distributor RFQ for pricing validation.">📋 Request Distributor Quote</button>`
-        : '';
-    
-    // Smart source link button - handles both direct and portal links
-    const viewSourceBtn = o.link
-        ? `<button class="btn btn-primary" onclick="openSmartSourceLink('${o.id}')" title="${smartLink.isDirect ? 'Open direct link' : 'Open portal with search guidance'}">🔗 ${smartLink.isDirect ? 'View Source' : 'Find on Portal'}</button>`
-        : `<button class="btn btn-primary" disabled title="No source link available">🔗 View Source</button>`;
-
+    // Simplified footer: Agent-focused with clear actions
     document.getElementById('modalFooter').innerHTML = `
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;">
-            <!-- Primary Actions Row -->
-            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; width: 100%; padding-bottom: 0.5rem; border-bottom: 1px solid #333;">
-                ${viewSourceBtn}
-                <button class="btn btn-sm" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff;" onclick="agentReviewOpportunity('${o.id}')" data-testid="btn-agent-review" title="Get AI-powered detailed review">🤖 Agent Review</button>
-                <button class="btn btn-secondary" onclick="runValidation('${o.id}')" ${!o.eligibility.ok?'disabled':''} data-testid="btn-validate">🔍 Validate</button>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center;">
+            <!-- Primary: Ask Agent (prominent) -->
+            <button class="btn" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; padding: 0.75rem 2rem; font-size: 1rem; width: 100%; max-width: 300px;" onclick="agentReviewOpportunity('${o.id}')" data-testid="btn-agent-review">
+                🤖 Ask Agent to Review
+            </button>
+
+            <!-- Decision buttons -->
+            <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                <button class="btn btn-go" onclick="setPipelineStatus('${o.id}','go')" ${!o.eligibility.ok?'disabled':''} style="padding: 0.5rem 1.5rem;">✅ GO</button>
+                <button class="btn btn-nogo" onclick="setPipelineStatus('${o.id}','nogo')" style="padding: 0.5rem 1.5rem;">🚫 No-Go</button>
             </div>
 
-            <!-- Status Actions Row -->
-            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; width: 100%; padding-bottom: 0.5rem; border-bottom: 1px solid #333;">
-                <button class="btn btn-go btn-sm" onclick="setPipelineStatus('${o.id}','go')" ${!o.eligibility.ok?'disabled':''} data-testid="btn-go" title="Mark as GO - pursue this opportunity">✅ GO</button>
-                <button class="btn btn-review btn-sm" onclick="agentReviewOpportunity('${o.id}')" data-testid="btn-review" title="Get detailed AI review before deciding">🔍 Review</button>
-                <button class="btn btn-nogo btn-sm" onclick="setPipelineStatus('${o.id}','nogo')" data-testid="btn-nogo" title="Mark as NO-GO - skip this opportunity">🚫 No-Go</button>
-            </div>
-
-            <!-- Proposal Actions Row -->
-            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; width: 100%;">
-                ${quoteBtn}
-                <button class="btn btn-proposal btn-sm" onclick="goToProposal('${o.id}')" ${!o.eligibility.ok?'disabled':''} data-testid="btn-proposal">📝 Proposal</button>
-                <button class="btn btn-sm" style="background: linear-gradient(135deg, #1B4F72, #2E86AB); color: #fff;" onclick="downloadBeautifulProposal('${o.id}')" data-testid="btn-download-proposal">📄 Download</button>
-                <button class="btn btn-secondary" onclick="closeModal()" data-testid="btn-close-modal">Close</button>
+            <!-- Secondary actions -->
+            <div style="display: flex; gap: 0.5rem; justify-content: center; font-size: 0.8rem;">
+                ${o.link ? `<a href="${o.link}" target="_blank" rel="noopener noreferrer" style="color: var(--green);">🔗 View Source</a>` : ''}
+                ${o.eligibility.ok ? `<span style="color: var(--gray);">|</span> <a href="#" onclick="goToProposal('${o.id}'); return false;" style="color: var(--blue);">📝 Proposal</a>` : ''}
+                <span style="color: var(--gray);">|</span>
+                <a href="#" onclick="closeModal(); return false;" style="color: var(--gray);">Close</a>
             </div>
         </div>
     `;

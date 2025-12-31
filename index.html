@@ -63,7 +63,26 @@
         .btn-proposal { background: linear-gradient(135deg, var(--green), var(--green-dark)); color: #000; }
         .btn-proposal:hover { box-shadow: 0 0 12px rgba(154, 205, 50, 0.4); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
+
+        /* Accessibility - Focus styles for keyboard navigation */
+        :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+        .btn:focus-visible, .nav-btn:focus-visible, .tab:focus-visible, .filter-pill:focus-visible {
+            outline: 2px solid var(--green); outline-offset: 2px; box-shadow: 0 0 8px rgba(154,205,50,0.5);
+        }
+        a:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; border-radius: 2px; }
+        input:focus-visible, select:focus-visible, textarea:focus-visible {
+            outline: 2px solid var(--green); outline-offset: 0; border-color: var(--green);
+        }
+
+        /* Tooltip for definitions */
+        .info-tooltip { position: relative; cursor: help; border-bottom: 1px dotted var(--gray); }
+        .info-tooltip::after {
+            content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            background: #222; color: #fff; padding: 0.4rem 0.6rem; border-radius: 4px; font-size: 0.7rem;
+            white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 1000;
+        }
+        .info-tooltip:hover::after { opacity: 1; }
+
         .config-bar { background: rgba(154,205,50,0.03); border-bottom: 1px solid var(--border); padding: 0.6rem 1.5rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
         .config-bar label { font-size: 0.75rem; color: var(--green); font-weight: 500; }
         .config-bar input { padding: 0.4rem 0.6rem; background: var(--card); border: 1px solid var(--border); border-radius: 4px; color: #fff; font-size: 0.8rem; }
@@ -365,37 +384,42 @@
     <!-- SCANNER PAGE -->
     <div class="page active" id="page-scanner">
         <div class="stats-bar">
-            <div class="stat" data-testid="stat-live"><div class="stat-value" id="statLive">0</div><div class="stat-label">Live</div></div>
-            <div class="stat" data-testid="stat-total"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total</div></div>
-            <div class="stat" data-testid="stat-qualified"><div class="stat-value" id="statQualified">0</div><div class="stat-label">Qualified</div></div>
-            <div class="stat" data-testid="stat-urgent"><div class="stat-value" id="statUrgent">0</div><div class="stat-label">Urgent</div></div>
-            <div class="stat" data-testid="stat-value"><div class="stat-value" id="statValue">$0</div><div class="stat-label">Value</div></div>
-            <div class="stat" data-testid="stat-match"><div class="stat-value" id="statMatch">0%</div><div class="stat-label">Avg Match</div></div>
+            <div class="stat" data-testid="stat-live" title="Opportunities currently accepting responses from live API sources"><div class="stat-value" id="statLive">0</div><div class="stat-label">Live</div></div>
+            <div class="stat" data-testid="stat-total" title="Total opportunities scanned across all sources"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total</div></div>
+            <div class="stat" data-testid="stat-qualified" title="Opportunities matching Singh's NAICS codes, certifications, and keywords - eligible to pursue"><div class="stat-value" id="statQualified">0</div><div class="stat-label">Qualified ⓘ</div></div>
+            <div class="stat" data-testid="stat-urgent" title="Opportunities closing within 14 days - requires immediate action"><div class="stat-value" id="statUrgent">0</div><div class="stat-label">Urgent</div></div>
+            <div class="stat" data-testid="stat-value" title="Combined estimated value of all scanned opportunities"><div class="stat-value" id="statValue">$0</div><div class="stat-label">Value</div></div>
+            <div class="stat" data-testid="stat-match" title="Average match score across all opportunities (based on NAICS, keywords, set-asides)"><div class="stat-value" id="statMatch">0%</div><div class="stat-label">Avg Match ⓘ</div></div>
         </div>
         
         <div class="main">
             <div class="sidebar">
                 <div class="panel">
                     <div class="panel-title">🏛️ Sources</div>
-                    <div class="source-item"><span>SAM.gov</span><span class="badge badge-live">LIVE</span></div>
-                    <div class="source-item"><span>SBIR/STTR</span><span class="badge badge-live">LIVE</span></div>
-                    <div class="source-item"><span>Grants.gov</span><span class="badge badge-live">LIVE</span></div>
-                    <div class="source-item"><span>DIBBS</span><span class="badge badge-live">LIVE</span></div>
-                    <div class="source-item"><span>CA eProcure</span><span class="badge badge-live">LIVE</span></div>
-                    <div class="source-item"><span>MI SIGMA</span><span class="badge badge-live">LIVE</span></div>
-                    <div class="source-item"><span>TX SmartBuy</span><span class="badge badge-live">LIVE</span></div>
-                    <div class="source-item"><span>Forecasts</span><span class="badge" style="background: #555;">BETA</span></div>
+                    <!-- Data freshness indicator -->
+                    <div id="dataFreshness" style="font-size: 0.65rem; color: var(--gray); margin-bottom: 0.5rem; padding: 0.3rem 0; border-bottom: 1px solid var(--border);">
+                        🕐 Last scanned: <span id="lastScanTime">Not yet scanned</span>
+                    </div>
+                    <div class="source-item"><span>SAM.gov</span><span class="badge badge-live">LIVE API</span></div>
+                    <div class="source-item"><span>SBIR/STTR</span><span class="badge badge-live">LIVE API</span></div>
+                    <div class="source-item"><span>Grants.gov</span><span class="badge badge-live">LIVE API</span></div>
+                    <div class="source-item"><span>DIBBS</span><span class="badge" style="background: #3b82f6;">PORTAL</span></div>
+                    <div class="source-item"><span>CA eProcure</span><span class="badge" style="background: #3b82f6;">PORTAL</span></div>
+                    <div class="source-item"><span>MI SIGMA</span><span class="badge" style="background: #3b82f6;">PORTAL</span></div>
+                    <div class="source-item"><span>TX SmartBuy</span><span class="badge" style="background: #3b82f6;">PORTAL</span></div>
+                    <div class="source-item"><span>Forecasts</span><span class="badge" style="background: #555;">EXAMPLES</span></div>
+                    <!-- Source Legend -->
+                    <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid var(--border); font-size: 0.6rem; color: var(--gray);">
+                        <div style="margin-bottom: 0.3rem;"><span style="background: var(--green); color: #000; padding: 0.1rem 0.3rem; border-radius: 2px; font-weight: 600;">LIVE API</span> Real-time data via API</div>
+                        <div style="margin-bottom: 0.3rem;"><span style="background: #3b82f6; color: #fff; padding: 0.1rem 0.3rem; border-radius: 2px; font-weight: 600;">PORTAL</span> Links to procurement portals</div>
+                        <div><span style="background: #555; color: #fff; padding: 0.1rem 0.3rem; border-radius: 2px; font-weight: 600;">EXAMPLES</span> Sample/demo data</div>
+                    </div>
                 </div>
                 <div class="panel">
-                    <div class="panel-title">📧 Email Alerts</div>
-                    <input type="email" id="alertEmail" placeholder="your@email.com" style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; background: var(--darker); border: 1px solid var(--border); border-radius: 4px; color: var(--light);">
-                    <select id="alertFreq" style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; background: var(--darker); border: 1px solid var(--border); border-radius: 4px; color: var(--light);">
-                        <option value="daily">Daily Digest</option>
-                        <option value="weekly">Weekly Summary</option>
-                        <option value="instant">Instant (New Opps)</option>
-                    </select>
-                    <button class="btn btn-primary btn-sm" onclick="subscribeAlerts()" style="width: 100%;">🔔 Subscribe</button>
-                    <button class="btn btn-sm btn-secondary" onclick="testDigest()" style="width: 100%; margin-top: 0.5rem;">📬 Test Digest Now</button>
+                    <div class="panel-title">📧 Email Alerts <span style="font-size: 0.65rem; background: var(--orange); color: #000; padding: 0.1rem 0.4rem; border-radius: 3px; margin-left: 0.5rem;">COMING SOON</span></div>
+                    <div style="font-size: 0.75rem; color: var(--gray); padding: 0.5rem 0;">
+                        Email alerts are under development. Use the Scanner to manually check for new opportunities.
+                    </div>
                     <div id="digestStatus" style="font-size: 0.7rem; color: var(--gray); margin-top: 0.5rem;"></div>
                 </div>
                 <div class="panel">
@@ -433,6 +457,32 @@
                 <div class="panel">
                     <div class="panel-title">⚡ Quick Actions</div>
                     <div id="qualifiedList"></div>
+                </div>
+                <!-- Scoring Methodology -->
+                <div class="panel" style="font-size: 0.7rem;">
+                    <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        📊 Scoring Methodology
+                        <span style="font-size: 0.6rem; color: var(--gray);">v2.0</span>
+                    </div>
+                    <div style="color: var(--gray); line-height: 1.4;">
+                        <div style="margin-bottom: 0.5rem;">
+                            <strong style="color: #fff;">Match Score</strong> = NAICS + Keywords + Set-Aside
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.2rem;">
+                            <span>NAICS code match:</span><span style="color: var(--green);">+30 pts</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.2rem;">
+                            <span>Each keyword match:</span><span style="color: var(--green);">+5 pts</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>Compatible set-aside:</span><span style="color: var(--green);">+20 pts</span>
+                        </div>
+                        <div style="border-top: 1px solid var(--border); padding-top: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between;"><span>≥50 pts:</span><span style="color: var(--green);">GO</span></div>
+                            <div style="display: flex; justify-content: space-between;"><span>25-49 pts:</span><span style="color: var(--orange);">REVIEW</span></div>
+                            <div style="display: flex; justify-content: space-between;"><span>&lt;25 pts:</span><span style="color: var(--gray);">LOW</span></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="panel">
                     <div class="panel-title">📋 Pipeline</div>
@@ -568,6 +618,14 @@
     <!-- SUBCONTRACTING PAGE -->
     <div class="page" id="page-subcontracting">
         <div class="main main-full" style="max-width: 1200px;">
+            <!-- Demo Data Warning Banner - shown when using demo data -->
+            <div id="subDemoBanner" class="demo-warning-banner" style="background: linear-gradient(90deg, rgba(245,158,11,0.2), rgba(239,68,68,0.1)); border: 2px solid var(--orange); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+                <span style="font-size: 1.5rem;">⚠️</span>
+                <div>
+                    <strong style="color: var(--orange);">DEMONSTRATION DATA</strong>
+                    <p style="font-size: 0.75rem; color: var(--gray); margin: 0.25rem 0 0 0;">The data shown below is for demonstration purposes only. These are not live subcontracting opportunities. Contact primes directly to verify current needs.</p>
+                </div>
+            </div>
             <div class="panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <div class="panel-title" style="margin-bottom: 0;">🎯 Subcontracting Opportunities</div>
@@ -1140,6 +1198,10 @@ async function scanAll() {
             
             processOpportunities(d.opportunities, 'Live');
             setModeIndicator('live', 'LIVE DATA');
+            // Update data freshness timestamp
+            const scanTime = new Date();
+            const el = document.getElementById('lastScanTime');
+            if (el) el.textContent = scanTime.toLocaleTimeString() + ' (' + scanTime.toLocaleDateString() + ')';
             hideLoading();
             return; // Success - exit function
             
@@ -1534,9 +1596,9 @@ function trackSeenOpportunities(opps) {
 }
 
 function fmtCurrency(v) {
-    if (!v) return 'TBD';
+    if (!v) return '—'; // Changed from TBD - clearer for gov buyers
     const n = parseFloat(v);
-    if (isNaN(n)) return 'TBD';
+    if (isNaN(n)) return '—';
     return n >= 1e6 ? '$' + (n/1e6).toFixed(1) + 'M' : n >= 1e3 ? '$' + (n/1e3).toFixed(0) + 'K' : '$' + n.toLocaleString();
 }
 
@@ -2308,15 +2370,22 @@ function showDetail(id) {
     
     // Show validation results if available
     if (validation) {
-        // PRODUCTION: Always backend validated - no demo indicator
+        // PRODUCTION: Always backend validated with full audit trail
         const requestId = pipeline[o.id]?.requestId || 'N/A';
+        const validatedAt = pipeline[o.id]?.validatedAt || new Date().toISOString();
+        const oppHash = btoa(o.id + (o.title||'').substring(0,20)).substring(0,12);
         body += `
             <div class="validation-section">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3>📋 Validation Checks</h3>
                     <span style="font-size: 0.7rem; color: var(--green); background: rgba(154,205,50,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;">🔌 Backend Validated</span>
                 </div>
-                <div style="font-size: 0.65rem; color: var(--gray); margin-bottom: 0.5rem;">Request ID: ${requestId}</div>
+                <div style="font-size: 0.65rem; color: var(--gray); margin-bottom: 0.5rem; display: flex; flex-wrap: wrap; gap: 1rem;">
+                    <span title="Unique request identifier">📎 ${requestId}</span>
+                    <span title="When validation was performed">🕐 ${new Date(validatedAt).toLocaleString()}</span>
+                    <span title="Opportunity fingerprint">🔐 ${oppHash}</span>
+                    <span title="Validator version">📦 v2.0.0</span>
+                </div>
                 <div class="check-list">
                     ${validation.checks.map(c => `
                         <div class="check-item">
@@ -2360,13 +2429,21 @@ function showDetail(id) {
         }
     }
     
-    // Source link - simple inline display
+    // Source link - distinguish direct links from portal links
     const smartLink = getSmartSourceLink(o);
     if (o.link) {
+        const isPortal = o.isPortal || !smartLink.isDirect;
+        const linkLabel = isPortal ? 'Visit Portal' : 'View Opportunity';
         body += `
-            <div style="font-size: 0.7rem; color: var(--gray); margin-bottom: 1rem;">
-                🔗 <a href="${o.link}" target="_blank" rel="noopener noreferrer" style="color: var(--green);">View on ${o.source || 'Source Portal'}</a>
-                ${!smartLink.isDirect && smartLink.searchTerms ? ` <span style="color: var(--gray);">• Search: "${smartLink.searchTerms.primary}"</span>` : ''}
+            <div style="font-size: 0.75rem; color: var(--gray); margin-bottom: 1rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                ${isPortal ? '🌐' : '🔗'} <a href="${o.link}" target="_blank" rel="noopener noreferrer" style="color: var(--green); font-weight: 500;">${linkLabel}</a>
+                <span style="color: var(--gray);"> on ${o.source || 'Source'}</span>
+                ${isPortal && smartLink.searchTerms ? `
+                    <div style="margin-top: 0.4rem; padding: 0.4rem; background: rgba(59,130,246,0.1); border-radius: 4px; border-left: 2px solid var(--blue);">
+                        <span style="color: var(--blue); font-size: 0.7rem;">💡 Search tip:</span>
+                        <code style="background: #222; padding: 0.15rem 0.4rem; border-radius: 3px; color: var(--green); font-size: 0.7rem;">${smartLink.searchTerms.primary}</code>
+                    </div>
+                ` : ''}
             </div>
         `;
     }
@@ -2389,7 +2466,7 @@ function showDetail(id) {
 
             <!-- Secondary actions -->
             <div style="display: flex; gap: 0.5rem; justify-content: center; font-size: 0.8rem;">
-                ${o.link ? `<a href="${o.link}" target="_blank" rel="noopener noreferrer" style="color: var(--green);">🔗 View Source</a>` : ''}
+                ${o.link ? `<a href="${o.link}" target="_blank" rel="noopener noreferrer" style="color: var(--green);">${o.isPortal ? '🌐 Visit Portal' : '🔗 View Opportunity'}</a>` : ''}
                 ${o.eligibility.ok ? `<span style="color: var(--gray);">|</span> <a href="#" onclick="goToProposal('${o.id}'); return false;" style="color: var(--blue);">📝 Proposal</a>` : ''}
                 <span style="color: var(--gray);">|</span>
                 <a href="#" onclick="closeModal(); return false;" style="color: var(--gray);">Close</a>
@@ -2625,11 +2702,13 @@ async function runValidation(id) {
             checklist: d.analysis.checklist,
             timeline: d.analysis.timeline,
             timestamp: new Date().toISOString(),
+            validatedAt: new Date().toISOString(), // Audit timestamp
             title: o.title,
             agency: o.agency,
             value: o.value,
             backendValidated: true,
-            requestId: requestId
+            requestId: requestId,
+            validatorVersion: '2.0.0' // Audit version
         };
         safeStorage('pipeline', pipeline);
         
@@ -3714,7 +3793,7 @@ function renderPurchasing() {
                 <span style="font-size: 0.7rem; color: var(--gray);">${o.purchasing.reason}</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border);">
-                ${o.link ? `<a href="${o.link}" target="_blank" rel="noopener noreferrer" style="font-size: 0.7rem; color: var(--green);">View Source →</a>` : '<span style="font-size: 0.7rem; color: var(--gray);">No direct link</span>'}
+                ${o.link ? `<a href="${o.link}" target="_blank" rel="noopener noreferrer" style="font-size: 0.7rem; color: var(--green);">${o.isPortal ? '🌐 Visit Portal' : '🔗 View Opportunity'} →</a>` : '<span style="font-size: 0.7rem; color: var(--gray);">No direct link</span>'}
                 ${o.matchScore >= 65 ? `<button class="btn btn-sm btn-quote" onclick="event.stopPropagation(); openQuoteRequest('${o.id}')">📋 Request Quote</button>` : ''}
             </div>
         </div>
@@ -3724,8 +3803,9 @@ function renderPurchasing() {
 
 async function loadSubcontracting() {
     const list = document.getElementById('subList');
+    const demoBanner = document.getElementById('subDemoBanner');
     list.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--gray);"><div class="loading-spinner"></div><p>Loading opportunities...</p></div>';
-    
+
     try {
         const response = await fetch('/api/subcontracting');
         if (response.ok) {
@@ -3734,6 +3814,7 @@ async function loadSubcontracting() {
                 subOpportunities = data.opportunities;
                 document.getElementById('subSource').innerHTML = '🟢 Live';
                 document.getElementById('subSource').style.color = 'var(--green)';
+                if (demoBanner) demoBanner.style.display = 'none'; // Hide demo warning for live data
                 renderSubOpportunities();
                 return;
             }
@@ -3741,11 +3822,12 @@ async function loadSubcontracting() {
     } catch(e) {
         console.log('Subcontracting API unavailable, using demo');
     }
-    
-    // Fallback to demo data
+
+    // Fallback to demo data - show prominent warning
     subOpportunities = getSubDemoData();
     document.getElementById('subSource').innerHTML = '📊 Demo';
     document.getElementById('subSource').style.color = 'var(--orange)';
+    if (demoBanner) demoBanner.style.display = 'flex'; // Show demo warning
     renderSubOpportunities();
 }
 

@@ -420,7 +420,6 @@
                     <div style="font-size: 0.75rem; color: var(--gray); padding: 0.5rem 0;">
                         Email alerts are under development. Use the Scanner to manually check for new opportunities.
                     </div>
-                    <div id="digestStatus" style="font-size: 0.7rem; color: var(--gray); margin-top: 0.5rem;"></div>
                 </div>
                 <div class="panel">
                     <div class="panel-title">🏆 Certs</div>
@@ -4125,73 +4124,6 @@ function openOutreachEmail() {
     const subject = encodeURIComponent(document.getElementById('outreachSubject').value);
     const body = encodeURIComponent(document.getElementById('outreachBody').value);
     window.open(`mailto:${to}?subject=${subject}&body=${body}`, '_blank');
-}
-
-// ========== EMAIL ALERTS ==========
-async function testDigest() {
-    const statusEl = document.getElementById('digestStatus');
-    statusEl.innerHTML = '<span style="color: var(--blue);">⏳ Triggering digest...</span>';
-    
-    try {
-        const r = await fetch(BACKEND_BASE + '/api/cron/daily-scan', {
-            method: 'GET',
-            headers: { 'X-Request-ID': crypto.randomUUID() }
-        });
-        
-        const data = await r.json();
-        
-        if (data.success) {
-            statusEl.innerHTML = `<span style="color: var(--green);">✅ Digest sent! ${data.stats?.go || 0} GO, ${data.stats?.urgent || 0} urgent</span>`;
-            log(`Digest sent: ${data.stats?.go || 0} GO opportunities, ${data.stats?.urgent || 0} urgent`, 'success');
-        } else {
-            throw new Error(data.error || 'Unknown error');
-        }
-    } catch (e) {
-        statusEl.innerHTML = `<span style="color: var(--red);">❌ ${e.message}</span>`;
-        log('Digest test failed: ' + e.message, 'error');
-    }
-}
-
-async function subscribeAlerts() {
-    const email = document.getElementById('alertEmail').value;
-    const frequency = document.getElementById('alertFreq').value;
-    
-    if (!email || !email.includes('@')) {
-        alert('Please enter a valid email address');
-        return;
-    }
-    
-    try {
-        const backendUrl = document.getElementById('apiUrl').value;
-        const r = await fetch(backendUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email,
-                frequency,
-                filters: {
-                    federal: true,
-                    sbir: true,
-                    state: true,
-                    dibbs: true,
-                    minValue: 50000,
-                    naicsCodes: ['333249', '333922', '541330', '541512', '541715', '238210']
-                }
-            })
-        });
-        const data = await r.json();
-        
-        if (data.success) {
-            log(`✅ Subscribed ${email} for ${frequency} alerts`, 'success');
-            alert(`Success! You'll receive ${frequency} alerts at ${email}`);
-            document.getElementById('alertEmail').value = '';
-        } else {
-            throw new Error(data.error);
-        }
-    } catch (e) {
-        log('Email subscription failed: ' + e.message, 'error');
-        alert('Subscription failed. Please try again.');
-    }
 }
 
 // ========== CATEGORY BADGES ==========

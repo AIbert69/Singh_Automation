@@ -356,12 +356,12 @@
             <div class="logo-text"><span>SINGH</span> AUTO</div>
         </div>
         <nav class="nav">
-            <button class="nav-btn active" data-page="scanner" data-testid="nav-scanner">📡 Scanner</button>
-            <button class="nav-btn" data-page="purchasing" data-testid="nav-purchasing">🛒 Purchasing</button>
-            <button class="nav-btn" data-page="subcontracting" data-testid="nav-subcontracting">🎯 Subcontracting</button>
-            <button class="nav-btn" data-page="pipeline" data-testid="nav-pipeline">📊 Pipeline</button>
-            <button class="nav-btn" data-page="agent" data-testid="nav-agent">🤖 Agent_SAM</button>
-            <button class="nav-btn" data-page="train" data-testid="nav-train">🧠 Train Agent</button>
+            <button class="nav-btn active" data-page="scanner" data-testid="nav-scanner" title="Search and discover government contracting opportunities">📡 Scanner</button>
+            <button class="nav-btn" data-page="purchasing" data-testid="nav-purchasing" title="Check eligibility for GSA, VA, and DIBBS programs">🛒 Purchasing</button>
+            <button class="nav-btn" data-page="subcontracting" data-testid="nav-subcontracting" title="Find subcontracting opportunities with prime contractors">🎯 Subcontracting</button>
+            <button class="nav-btn" data-page="pipeline" data-testid="nav-pipeline" title="Track opportunities through your bid pipeline">📊 Pipeline</button>
+            <button class="nav-btn" data-page="agent" data-testid="nav-agent" title="AI assistant for proposal writing and opportunity analysis">🤖 Agent_SAM</button>
+            <button class="nav-btn" data-page="train" data-testid="nav-train" title="Train the AI agent with your company's past performance and win themes">🧠 Train Agent</button>
         </nav>
         <div style="display: flex; align-items: center; gap: 0.75rem;">
             <div id="modeIndicator" class="mode-indicator mode-ready" title="Production Mode">
@@ -369,14 +369,14 @@
                 <span class="mode-text">PRODUCTION</span>
             </div>
             <div class="status"><span class="status-dot" id="statusDot"></span><span id="statusText">Ready</span></div>
-            <button class="btn btn-primary btn-sm" onclick="scanAll()" data-testid="btn-scan-live">🔄 Scan Live Data</button>
+            <button class="btn btn-primary btn-sm" onclick="scanAll()" data-testid="btn-scan-live" title="Fetch live opportunities from SAM.gov, SBIR, Grants.gov and other sources">🔄 Scan Live Data</button>
         </div>
     </header>
 
     <div class="config-bar" id="configBar">
         <div id="authStatus" style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="color: var(--red); font-size: 0.75rem;">⚠️ Backend authentication required</span>
-            <button class="btn btn-sm btn-primary" onclick="checkBackendAuth()">🔌 Check Connection</button>
+            <button class="btn btn-sm btn-primary" onclick="checkBackendAuth()" title="Verify connection to the backend API server">🔌 Check Connection</button>
         </div>
         <input type="hidden" id="apiUrl" value="https://singh-automation.vercel.app/api/sam">
     </div>
@@ -433,14 +433,14 @@
             <div class="content" style="display: flex; flex-direction: column; gap: 0.75rem;">
                 <div class="tabs" id="tabsContainer"></div>
                 <div class="filter-bar">
-                    <input type="text" class="search-input" placeholder="🔍 Search..." id="searchInput">
-                    <button class="filter-pill active" data-filter="all">All</button>
-                    <button class="filter-pill" data-filter="contract" data-testid="filter-federal">Federal</button>
-                    <button class="filter-pill" data-filter="sbir" data-testid="filter-sbir">SBIR</button>
-                    <button class="filter-pill" data-filter="grant" data-testid="filter-grants">Grants</button>
-                    <button class="filter-pill" data-filter="state" data-testid="filter-state">State</button>
-                    <button class="filter-pill" data-filter="dibbs">DIBBS</button>
-                    <button class="filter-pill" data-filter="forecast">Forecast</button>
+                    <input type="text" class="search-input" placeholder="🔍 Search..." id="searchInput" title="Search by title, agency, solicitation number, or NAICS code">
+                    <button class="filter-pill active" data-filter="all" title="Show all opportunity types">All</button>
+                    <button class="filter-pill" data-filter="contract" data-testid="filter-federal" title="Federal contract opportunities from SAM.gov">Federal</button>
+                    <button class="filter-pill" data-filter="sbir" data-testid="filter-sbir" title="Small Business Innovation Research & STTR opportunities">SBIR</button>
+                    <button class="filter-pill" data-filter="grant" data-testid="filter-grants" title="Federal grant opportunities from Grants.gov">Grants</button>
+                    <button class="filter-pill" data-filter="state" data-testid="filter-state" title="State government opportunities (CA, MI, TX)">State</button>
+                    <button class="filter-pill" data-filter="dibbs" title="Defense Logistics Agency Internet Bid Board System">DIBBS</button>
+                    <button class="filter-pill" data-filter="forecast" title="Planned future procurement forecasts">Forecast</button>
                 </div>
                 <div class="opp-list" id="oppList" data-testid="opp-list">
                     <div style="text-align: center; padding: 2rem; color: var(--gray);">
@@ -533,9 +533,80 @@
                             <span id="actualWinRate" style="color: var(--green); font-weight: 600;">--</span>
                         </div>
                     </div>
-                    <button class="btn btn-sm btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="openOutcomeModal()">
+                    <button class="btn btn-sm btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="openOutcomeModal()" title="Record win, loss, or no-bid decisions to track your performance">
                         📝 Record Outcome
                     </button>
+                </div>
+
+                <!-- INFO/ABOUT PANEL -->
+                <div class="panel">
+                    <div class="panel-title">ℹ️ About This Platform</div>
+                    <div style="font-size: 0.7rem; color: var(--gray); line-height: 1.5;">
+                        <div style="margin-bottom: 0.5rem;">
+                            <strong style="color: #fff;">Singh Automation GovCon Scanner</strong>
+                            <span style="color: var(--green); font-size: 0.6rem; margin-left: 0.3rem;">v2.0</span>
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            AI-powered government contracting opportunity discovery and proposal assistance for Singh Automation LLC.
+                        </div>
+                        <div style="padding: 0.4rem; background: rgba(154,205,50,0.1); border-radius: 4px; margin-bottom: 0.5rem;">
+                            <div style="font-size: 0.65rem; color: var(--green); margin-bottom: 0.2rem;">🔒 Security</div>
+                            <div style="font-size: 0.6rem;">API keys server-side only. CORS-protected. No data stored externally.</div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; font-size: 0.6rem;">
+                            <span style="background: var(--dark); padding: 0.2rem 0.4rem; border-radius: 3px;">CAGE: 86VF7</span>
+                            <span style="background: var(--dark); padding: 0.2rem 0.4rem; border-radius: 3px;">UEI: GJ1DPYQ3X8K5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUICK HELP GUIDE -->
+                <div class="panel">
+                    <div class="panel-title">❓ Quick Help</div>
+                    <div style="font-size: 0.65rem; color: var(--gray); line-height: 1.6;">
+                        <div style="margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border);">
+                            <strong style="color: var(--green);">1. Scan for Opportunities</strong>
+                            <div>Click "Scan Live Data" to fetch real opportunities from SAM.gov and other sources.</div>
+                        </div>
+                        <div style="margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border);">
+                            <strong style="color: var(--green);">2. Review & Validate</strong>
+                            <div>Click any opportunity to see details. Use "Validate with AI" for eligibility check.</div>
+                        </div>
+                        <div style="margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border);">
+                            <strong style="color: var(--green);">3. Make GO/No-GO Decision</strong>
+                            <div>Mark qualified opportunities as GO to add them to your pipeline.</div>
+                        </div>
+                        <div style="margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border);">
+                            <strong style="color: var(--green);">4. Generate Proposals</strong>
+                            <div>Use the Agent tab to get AI help drafting proposals and responses.</div>
+                        </div>
+                        <div>
+                            <strong style="color: var(--green);">5. Track Outcomes</strong>
+                            <div>Record wins/losses to improve your strategy over time.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DATA PROVENANCE -->
+                <div class="panel">
+                    <div class="panel-title">📊 Data Provenance</div>
+                    <div style="font-size: 0.65rem; color: var(--gray); line-height: 1.5;">
+                        <div style="margin-bottom: 0.5rem;">
+                            <strong style="color: #fff;">Live API Sources:</strong>
+                            <div style="margin-top: 0.2rem;">• <strong>SAM.gov</strong> - Official federal procurement database</div>
+                            <div>• <strong>SBIR.gov</strong> - Small Business Innovation Research</div>
+                            <div>• <strong>Grants.gov</strong> - Federal grant opportunities</div>
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <strong style="color: #fff;">Portal Links:</strong>
+                            <div style="margin-top: 0.2rem;">• State procurement portals (CA, MI, TX)</div>
+                            <div>• DIBBS (Defense Logistics Agency)</div>
+                        </div>
+                        <div style="background: rgba(245,158,11,0.1); padding: 0.4rem; border-radius: 4px;">
+                            <div style="color: var(--orange); font-size: 0.6rem;">⚠️ Data Accuracy</div>
+                            <div style="font-size: 0.6rem; margin-top: 0.2rem;">Always verify opportunity details on official government portals before submitting proposals.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -742,11 +813,12 @@
                 <!-- Input Area -->
                 <div style="border-top: 1px solid var(--border); padding-top: 0.75rem;">
                     <div style="display: flex; gap: 0.5rem;">
-                        <input type="text" id="agentInput" placeholder="Ask Agent_SAM anything..." 
+                        <input type="text" id="agentInput" placeholder="Ask Agent_SAM anything..."
                                style="flex: 1; padding: 0.75rem 1rem; background: #0a0a0a; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 0.85rem;"
                                onkeypress="if(event.key==='Enter')sendToAgent()"
-                               data-testid="agent-input">
-                        <button class="btn btn-primary" onclick="sendToAgent()" id="agentSendBtn" style="padding: 0.75rem 1.25rem;" data-testid="agent-send-btn">
+                               data-testid="agent-input"
+                               title="Ask about opportunity analysis, proposal sections, win themes, or compliance requirements">
+                        <button class="btn btn-primary" onclick="sendToAgent()" id="agentSendBtn" style="padding: 0.75rem 1.25rem;" data-testid="agent-send-btn" title="Send your question to Agent_SAM">
                             Send →
                         </button>
                     </div>
@@ -758,14 +830,14 @@
                 <div style="display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
                     <div style="font-weight: 700; font-size: 1rem;">📝 Proposal Generator</div>
                     <div style="margin-left: auto; display: flex; gap: 0.5rem;">
-                        <button class="btn btn-primary btn-sm" onclick="generateProposalInAgent()" id="agentGenerateBtn">
+                        <button class="btn btn-primary btn-sm" onclick="generateProposalInAgent()" id="agentGenerateBtn" title="Generate a complete proposal using AI based on the selected opportunity">
                             🚀 Generate
                         </button>
-                        <button class="btn btn-sm" style="background: linear-gradient(135deg, #1B4F72, #2E86AB); color: #fff;" onclick="downloadProposalFromAgent()" id="agentDownloadBtn">
+                        <button class="btn btn-sm" style="background: linear-gradient(135deg, #1B4F72, #2E86AB); color: #fff;" onclick="downloadProposalFromAgent()" id="agentDownloadBtn" title="Download proposal as formatted Word document (.docx)">
                             📄 .docx
                         </button>
-                        <button class="btn btn-secondary btn-sm" onclick="copyProposal()">📋</button>
-                        <button class="btn btn-secondary btn-sm" onclick="downloadProposalTxt()">txt</button>
+                        <button class="btn btn-secondary btn-sm" onclick="copyProposal()" title="Copy proposal text to clipboard">📋</button>
+                        <button class="btn btn-secondary btn-sm" onclick="downloadProposalTxt()" title="Download proposal as plain text file">txt</button>
                     </div>
                 </div>
                 
@@ -927,10 +999,10 @@
                         </div>
                     </div>
                     <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                        <button class="btn btn-sm btn-secondary" style="flex: 1;" onclick="exportAgentMemory()">📤 Export Memory</button>
-                        <button class="btn btn-sm btn-secondary" style="flex: 1;" onclick="document.getElementById('importMemory').click()">📥 Import Memory</button>
+                        <button class="btn btn-sm btn-secondary" style="flex: 1;" onclick="exportAgentMemory()" title="Export all training data as JSON backup">📤 Export Memory</button>
+                        <button class="btn btn-sm btn-secondary" style="flex: 1;" onclick="document.getElementById('importMemory').click()" title="Import previously exported training data">📥 Import Memory</button>
                         <input type="file" id="importMemory" style="display: none;" accept=".json" onchange="importAgentMemory(event)">
-                        <button class="btn btn-sm" style="background: var(--red); color: #fff;" onclick="clearAgentMemory()">🗑️ Clear</button>
+                        <button class="btn btn-sm" style="background: var(--red); color: #fff;" onclick="clearAgentMemory()" title="Delete all training data (cannot be undone)">🗑️ Clear</button>
                     </div>
                 </div>
                 
@@ -1854,7 +1926,7 @@ function renderPipelinePage() {
             <div style="display: flex; gap: 0.5rem;">
                 <button class="btn btn-sm btn-secondary" onclick="exportPipelineCSV()" title="Export as CSV">📊 Export CSV</button>
                 <button class="btn btn-sm btn-secondary" onclick="exportPipelinePDF()" title="Export as PDF">📄 Export PDF</button>
-                <button class="btn btn-sm btn-secondary" onclick="clearPipeline()">🗑️ Clear All</button>
+                <button class="btn btn-sm btn-secondary" onclick="clearPipeline()" title="Remove all opportunities from pipeline (cannot be undone)">🗑️ Clear All</button>
             </div>
         </div>
         ${renderGroup(goItems, 'GO - Ready to Pursue', 'var(--green)', '🟢')}

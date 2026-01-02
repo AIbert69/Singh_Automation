@@ -346,6 +346,335 @@
         .spinner { width: 44px; height: 44px; border: 3px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ========== ANIMATIONS & MICRO-INTERACTIONS ========== */
+
+        /* Fade in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Pulse glow animation */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 20px 5px rgba(16, 185, 129, 0.2); }
+        }
+
+        /* Float animation for icons */
+        @keyframes float {
+            0%, 100% { transform: translateY(-50%); }
+            50% { transform: translateY(calc(-50% - 4px)); }
+        }
+
+        /* Shimmer loading effect */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Scale bounce */
+        @keyframes scaleBounce {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Stat card hover effects */
+        .stat-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        .stat-card:hover .stat-icon {
+            animation: float 2s ease-in-out infinite;
+        }
+        .stat-card:hover .stat-value {
+            color: var(--green);
+        }
+        .stat-card .stat-value {
+            transition: color 0.3s ease;
+        }
+
+        /* Navigation button effects */
+        .nav-btn {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        .nav-btn:hover::before {
+            left: 100%;
+        }
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .nav-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        .nav-btn.active {
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Button hover effects */
+        .btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+        .btn:active {
+            transform: translateY(0) scale(0.97);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4);
+        }
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s, height 0.4s;
+        }
+        .btn-primary:active::after {
+            width: 200px;
+            height: 200px;
+        }
+
+        /* Table row hover effects */
+        .opp-row {
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .opp-row::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--green);
+            transform: scaleY(0);
+            transition: transform 0.2s ease;
+        }
+        .opp-row:hover {
+            background: rgba(16, 185, 129, 0.05);
+            transform: translateX(4px);
+        }
+        .opp-row:hover::before {
+            transform: scaleY(1);
+        }
+        .opp-row:hover .opp-title {
+            color: var(--green);
+        }
+        .opp-title {
+            transition: color 0.2s ease;
+        }
+
+        /* Match bar animation */
+        .match-bar-fill {
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .opp-row:hover .match-bar-fill {
+            filter: brightness(1.2);
+        }
+
+        /* Source tag hover */
+        .source-tag {
+            transition: all 0.2s ease;
+        }
+        .source-tag:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+
+        /* Status pill animations */
+        .status-pill {
+            transition: all 0.2s ease;
+        }
+        .status-pill:hover {
+            transform: scale(1.05);
+        }
+        .status-pill .dot {
+            animation: pulseGlow 2s infinite;
+        }
+
+        /* Panel hover effects */
+        .panel {
+            transition: all 0.3s ease;
+        }
+        .panel:hover {
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        /* Action button effects */
+        .action-btn {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .action-btn:hover {
+            transform: translateY(-4px);
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--green);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        .action-btn:hover .icon {
+            transform: scale(1.2);
+        }
+        .action-btn .icon {
+            transition: transform 0.25s ease;
+        }
+        .action-btn:active {
+            transform: translateY(-2px) scale(0.98);
+        }
+
+        /* Pipeline item hover */
+        .pipeline-item {
+            transition: all 0.2s ease;
+        }
+        .pipeline-item:hover {
+            transform: translateX(4px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .pipeline-item .count {
+            transition: transform 0.2s ease;
+        }
+        .pipeline-item:hover .count {
+            transform: scale(1.1);
+        }
+
+        /* Source toggle animation */
+        .source-toggle {
+            transition: background 0.3s ease;
+        }
+        .source-toggle::after {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .source-toggle:hover {
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Source item hover */
+        .source-item {
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            margin: 0 -0.5rem;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        .source-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Win/loss item hover */
+        .winloss-item {
+            transition: all 0.25s ease;
+        }
+        .winloss-item:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .winloss-item:hover .icon {
+            transform: scale(1.2);
+        }
+        .winloss-item .icon {
+            transition: transform 0.25s ease;
+        }
+
+        /* Revenue progress animation */
+        .revenue-progress-fill {
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .revenue-progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+            background-size: 200% 100%;
+        }
+
+        /* Filter pill effects */
+        .filter-pill {
+            transition: all 0.2s ease;
+        }
+        .filter-pill:hover:not(.active) {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .filter-pill.active {
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Search box focus effect */
+        .search-box {
+            transition: all 0.3s ease;
+        }
+        .search-box:focus-within {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        /* Cert badge hover */
+        .cert-badge {
+            transition: all 0.2s ease;
+            cursor: default;
+        }
+        .cert-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Status badge pulse */
+        .status-badge .dot {
+            animation: pulseGlow 2s infinite;
+        }
+
+        /* Header status hover */
+        .status-badge {
+            transition: all 0.2s ease;
+        }
+        .status-badge:hover {
+            transform: scale(1.05);
+        }
+
+        /* Logo hover effect */
+        .logo-icon {
+            transition: all 0.3s ease;
+        }
+        .logo:hover .logo-icon {
+            transform: rotate(-5deg) scale(1.05);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Content fade in on load */
+        .page.active {
+            animation: fadeIn 0.4s ease-out;
+        }
+
         /* Responsive */
         @media (max-width: 1200px) {
             .main { grid-template-columns: 220px 1fr 240px; }

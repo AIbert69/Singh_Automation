@@ -2381,7 +2381,8 @@ function renderTabs() {
 
 function renderOpps() {
     const c = document.getElementById('oppList');
-    const s = (document.getElementById('searchInput').value || '').toLowerCase();
+    if (!c) return;
+    const s = (document.getElementById('searchInput')?.value || '').toLowerCase();
     
     let f = opportunities.filter(o => {
         // Tab filtering
@@ -4538,6 +4539,7 @@ let currentPurchFilter = 'all';
 
 async function loadPurchasing() {
     const list = document.getElementById('purchasingList');
+    if (!list) return;
     list.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--gray);"><div class="spinner"></div><p>Analyzing opportunities...</p></div>';
     
     // If no opportunities loaded, scan first
@@ -4586,7 +4588,8 @@ function filterPurchasing(filter, btn) {
 
 function renderPurchasing() {
     const list = document.getElementById('purchasingList');
-    
+    if (!list) return;
+
     let filtered = purchasingOpportunities;
     if (currentPurchFilter !== 'all') {
         filtered = purchasingOpportunities.filter(o => o.purchasing.category === currentPurchFilter);
@@ -4691,6 +4694,7 @@ function getSubDemoData() {
 
 function renderSubOpportunities() {
     const list = document.getElementById('subList');
+    if (!list) return;
     let filtered = subOpportunities;
     
     if (currentSubFilter !== 'all') {

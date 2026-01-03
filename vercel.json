@@ -8,7 +8,7 @@
     { "source": "/api/v1/generate", "destination": "/api/generate" },
     { "source": "/api/v1/rfq", "destination": "/api/generate-proposal" },
     { "source": "/api/v1/health", "destination": "/api/health" },
-    { "source": "/api/sam", "destination": "/api/v1/scan" },
+    { "source": "/api/sam", "destination": "/api/sam" },
     { "source": "/api/scan", "destination": "/api/v1/scan" },
     { "source": "/proposal-editor", "destination": "/proposal-editor.html" }
   ],

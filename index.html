@@ -2364,7 +2364,10 @@ function renderTabs() {
     if (c.forecast > 0) tabs += `<button class="tab ${currentTab==='forecast'?'active':''}" data-tab="forecast">Forecast ${c.forecast}</button>`;
     tabs += `<button class="tab ${currentTab==='qualified'?'active':''}" data-tab="qualified">✅ Qualified ${c.qualified}</button>`;
     
-    document.getElementById('tabsContainer').innerHTML = tabs;
+    const tabsContainer = document.getElementById('tabsContainer');
+    if (tabsContainer) {
+        tabsContainer.innerHTML = tabs;
+    }
 }
 
 function renderOpps() {

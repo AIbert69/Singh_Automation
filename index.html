@@ -4553,9 +4553,10 @@ document.addEventListener('click', e => {
         e.target.classList.add('active');
         renderOpps();
     }
-    if (e.target.closest('.opp-row')) {
-        const card = e.target.closest('.opp-row');
-        if (card.dataset.id) showDetail(card.dataset.id);
+    // Handle clicks on opportunity rows/cards (supports both .opp-row and .opp-card)
+    const oppElement = e.target.closest('.opp-row') || e.target.closest('.opp-card');
+    if (oppElement && oppElement.dataset.id) {
+        showDetail(oppElement.dataset.id);
     }
 });
 

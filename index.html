@@ -2458,13 +2458,15 @@ function renderTabs() {
     if (c.dibbs > 0) tabs += `<button class="tab ${currentTab==='dibbs'?'active':''}" data-tab="dibbs">DIBBS ${c.dibbs}</button>`;
     if (c.forecast > 0) tabs += `<button class="tab ${currentTab==='forecast'?'active':''}" data-tab="forecast">Forecast ${c.forecast}</button>`;
     tabs += `<button class="tab ${currentTab==='qualified'?'active':''}" data-tab="qualified">✅ Qualified ${c.qualified}</button>`;
-    
-    document.getElementById('tabsContainer').innerHTML = tabs;
+
+    const tabsContainer = document.getElementById('tabsContainer');
+    if (tabsContainer) tabsContainer.innerHTML = tabs;
 }
 
 function renderOpps() {
     const c = document.getElementById('oppList');
-    const s = (document.getElementById('searchInput').value || '').toLowerCase();
+    if (!c) return;
+    const s = (document.getElementById('searchInput')?.value || '').toLowerCase();
     
     let f = opportunities.filter(o => {
         // Tab filtering
@@ -2552,8 +2554,9 @@ function renderOpps() {
 
 function renderQualifiedList() {
     const list = document.getElementById('qualifiedList');
+    if (!list) return;
     const qual = opportunities.filter(o => o.eligibility.ok).slice(0, 5);
-    
+
     if (!qual.length) {
         list.innerHTML = '<div style="font-size: 0.75rem; color: var(--gray);">No qualified opportunities</div>';
         return;
@@ -2574,13 +2577,19 @@ function updateStats() {
     const u = opportunities.filter(o => { const d = daysUntil(o.closeDate); return d <= 14 && d > 0; });
     const tv = opportunities.reduce((s, o) => s + (parseFloat(o.value) || 0), 0);
     const am = opportunities.length ? Math.round(opportunities.reduce((s, o) => s + o.matchScore, 0) / opportunities.length) : 0;
-    
-    document.getElementById('statLive').textContent = opportunities.filter(o => o.isLive).length;
-    document.getElementById('statTotal').textContent = opportunities.length;
-    document.getElementById('statQualified').textContent = q.length;
-    document.getElementById('statUrgent').textContent = u.length;
-    document.getElementById('statValue').textContent = fmtCurrency(tv);
-    document.getElementById('statMatch').textContent = am + '%';
+
+    const statLive = document.getElementById('statLive');
+    const statTotal = document.getElementById('statTotal');
+    const statQualified = document.getElementById('statQualified');
+    const statUrgent = document.getElementById('statUrgent');
+    const statValue = document.getElementById('statValue');
+    const statMatch = document.getElementById('statMatch');
+    if (statLive) statLive.textContent = opportunities.filter(o => o.isLive).length;
+    if (statTotal) statTotal.textContent = opportunities.length;
+    if (statQualified) statQualified.textContent = q.length;
+    if (statUrgent) statUrgent.textContent = u.length;
+    if (statValue) statValue.textContent = fmtCurrency(tv);
+    if (statMatch) statMatch.textContent = am + '%';
 }
 
 function updateOppSelect() {
@@ -2605,19 +2614,23 @@ function updatePipelineStats() {
     const goCount = Object.values(pipeline).filter(p => p.status === 'go').length;
     const reviewCount = Object.values(pipeline).filter(p => p.status === 'review').length;
     const nogoCount = Object.values(pipeline).filter(p => p.status === 'nogo').length;
-    
-    document.getElementById('pipelineGo').textContent = goCount;
-    document.getElementById('pipelineReview').textContent = reviewCount;
-    document.getElementById('pipelineNoGo').textContent = nogoCount;
-    
+
+    const pipelineGoEl = document.getElementById('pipelineGo');
+    const pipelineReviewEl = document.getElementById('pipelineReview');
+    const pipelineNoGoEl = document.getElementById('pipelineNoGo');
+    if (pipelineGoEl) pipelineGoEl.textContent = goCount;
+    if (pipelineReviewEl) pipelineReviewEl.textContent = reviewCount;
+    if (pipelineNoGoEl) pipelineNoGoEl.textContent = nogoCount;
+
     // Update revenue calculator when pipeline changes
     updateRevenueCalculator();
 }
 
 function renderPipelinePage() {
     const container = document.getElementById('pipelineContent');
+    if (!container) return;
     const pipelineEntries = Object.entries(pipeline);
-    
+
     if (pipelineEntries.length === 0) {
         container.innerHTML = `
             <div style="text-align: center; padding: 2rem; color: var(--gray);">

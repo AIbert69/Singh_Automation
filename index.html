@@ -2460,13 +2460,15 @@ function renderOpps() {
 
 function renderQualifiedList() {
     const list = document.getElementById('qualifiedList');
+    if (!list) return;
+
     const qual = opportunities.filter(o => o.eligibility.ok).slice(0, 5);
-    
+
     if (!qual.length) {
         list.innerHTML = '<div style="font-size: 0.75rem; color: var(--gray);">No qualified opportunities</div>';
         return;
     }
-    
+
     list.innerHTML = qual.map(o => {
         const status = pipeline[o.id]?.status;
         return `<div class="alert-item" onclick="showDetail('${o.id}')">
@@ -2482,13 +2484,20 @@ function updateStats() {
     const u = opportunities.filter(o => { const d = daysUntil(o.closeDate); return d <= 14 && d > 0; });
     const tv = opportunities.reduce((s, o) => s + (parseFloat(o.value) || 0), 0);
     const am = opportunities.length ? Math.round(opportunities.reduce((s, o) => s + o.matchScore, 0) / opportunities.length) : 0;
-    
-    document.getElementById('statLive').textContent = opportunities.filter(o => o.isLive).length;
-    document.getElementById('statTotal').textContent = opportunities.length;
-    document.getElementById('statQualified').textContent = q.length;
-    document.getElementById('statUrgent').textContent = u.length;
-    document.getElementById('statValue').textContent = fmtCurrency(tv);
-    document.getElementById('statMatch').textContent = am + '%';
+
+    const statLive = document.getElementById('statLive');
+    const statTotal = document.getElementById('statTotal');
+    const statQualified = document.getElementById('statQualified');
+    const statUrgent = document.getElementById('statUrgent');
+    const statValue = document.getElementById('statValue');
+    const statMatch = document.getElementById('statMatch');
+
+    if (statLive) statLive.textContent = opportunities.filter(o => o.isLive).length;
+    if (statTotal) statTotal.textContent = opportunities.length;
+    if (statQualified) statQualified.textContent = q.length;
+    if (statUrgent) statUrgent.textContent = u.length;
+    if (statValue) statValue.textContent = fmtCurrency(tv);
+    if (statMatch) statMatch.textContent = am + '%';
 }
 
 function updateOppSelect() {
@@ -2513,10 +2522,13 @@ function updatePipelineStats() {
     const goCount = Object.values(pipeline).filter(p => p.status === 'go').length;
     const reviewCount = Object.values(pipeline).filter(p => p.status === 'review').length;
     const nogoCount = Object.values(pipeline).filter(p => p.status === 'nogo').length;
-    
-    document.getElementById('pipelineGo').textContent = goCount;
-    document.getElementById('pipelineReview').textContent = reviewCount;
-    document.getElementById('pipelineNoGo').textContent = nogoCount;
+
+    const pipelineGoEl = document.getElementById('pipelineGo');
+    const pipelineReviewEl = document.getElementById('pipelineReview');
+    const pipelineNoGoEl = document.getElementById('pipelineNoGo');
+    if (pipelineGoEl) pipelineGoEl.textContent = goCount;
+    if (pipelineReviewEl) pipelineReviewEl.textContent = reviewCount;
+    if (pipelineNoGoEl) pipelineNoGoEl.textContent = nogoCount;
     
     // Update revenue calculator when pipeline changes
     updateRevenueCalculator();
@@ -2524,8 +2536,10 @@ function updatePipelineStats() {
 
 function renderPipelinePage() {
     const container = document.getElementById('pipelineContent');
+    if (!container) return;
+
     const pipelineEntries = Object.entries(pipeline);
-    
+
     if (pipelineEntries.length === 0) {
         container.innerHTML = `
             <div style="text-align: center; padding: 2rem; color: var(--gray);">
@@ -2884,10 +2898,14 @@ function updateRevenueCalculator() {
     const percentComplete = pipelineNeeded > 0 ? Math.min(100, (currentValue / pipelineNeeded) * 100) : 0;
     
     // Update display
-    document.getElementById('pipelineNeeded').textContent = fmtCurrency(pipelineNeeded);
-    document.getElementById('currentPipeline').textContent = fmtCurrency(currentValue);
-    
+    const pipelineNeededEl = document.getElementById('pipelineNeeded');
+    const currentPipelineEl = document.getElementById('currentPipeline');
+    if (pipelineNeededEl) pipelineNeededEl.textContent = fmtCurrency(pipelineNeeded);
+    if (currentPipelineEl) currentPipelineEl.textContent = fmtCurrency(currentValue);
+
     const gapMsg = document.getElementById('pipelineGapMsg');
+    if (!gapMsg) return;
+
     if (gap <= 0) {
         gapMsg.innerHTML = `<span style="color: var(--green);">✅ Target met! ${Math.round(percentComplete)}% of goal</span>`;
     } else {
@@ -2903,32 +2921,39 @@ function updateRevenueCalculator() {
 function openNewProposal() {
     // Navigate to Agent page for proposal generation
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-page="agent"]').classList.add('active');
+    const agentNav = document.querySelector('[data-page="agent"]');
+    if (agentNav) agentNav.classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-agent').classList.add('active');
+    const agentPage = document.getElementById('page-agent');
+    if (agentPage) agentPage.classList.add('active');
 }
 
 function openFindPartners() {
     // Navigate to Subcontracting page
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-page="subcontracting"]').classList.add('active');
+    const subNav = document.querySelector('[data-page="subcontracting"]');
+    if (subNav) subNav.classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-subcontracting').classList.add('active');
+    const subPage = document.getElementById('page-subcontracting');
+    if (subPage) subPage.classList.add('active');
 }
 
 function openLessonsLearned() {
     // Navigate to Train Agent page
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-page="train"]').classList.add('active');
+    const trainNav = document.querySelector('[data-page="train"]');
+    if (trainNav) trainNav.classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-train').classList.add('active');
+    const trainPage = document.getElementById('page-train');
+    if (trainPage) trainPage.classList.add('active');
 }
 
 // ========== WIN/LOSS OUTCOME TRACKING ==========
 function openOutcomeModal() {
     const modal = document.getElementById('outcomeModal');
     const select = document.getElementById('outcomeOppSelect');
-    
+    if (!modal || !select) return;
+
     // Populate with GO opportunities
     const goOpps = Object.entries(pipeline)
         .filter(([id, p]) => p.status === 'go')
@@ -2937,28 +2962,37 @@ function openOutcomeModal() {
             return opp ? { id, title: opp.title, value: opp.value } : null;
         })
         .filter(Boolean);
-    
+
     select.innerHTML = '<option value="">-- Select GO opportunity --</option>' +
         goOpps.map(o => `<option value="${o.id}">${o.title.substring(0,40)}... | ${fmtCurrency(o.value)}</option>`).join('');
-    
+
     // Clear previous values
-    document.getElementById('outcomeResult').value = '';
-    document.getElementById('outcomeValue').value = '';
-    document.getElementById('outcomeLessons').value = '';
-    
+    const outcomeResult = document.getElementById('outcomeResult');
+    const outcomeValue = document.getElementById('outcomeValue');
+    const outcomeLessons = document.getElementById('outcomeLessons');
+    if (outcomeResult) outcomeResult.value = '';
+    if (outcomeValue) outcomeValue.value = '';
+    if (outcomeLessons) outcomeLessons.value = '';
+
     modal.style.display = 'flex';
 }
 
 function closeOutcomeModal() {
-    document.getElementById('outcomeModal').style.display = 'none';
+    const modal = document.getElementById('outcomeModal');
+    if (modal) modal.style.display = 'none';
 }
 
 function saveOutcome() {
-    const oppId = document.getElementById('outcomeOppSelect').value;
-    const result = document.getElementById('outcomeResult').value;
-    const value = document.getElementById('outcomeValue').value;
-    const lessons = document.getElementById('outcomeLessons').value;
-    
+    const oppSelectEl = document.getElementById('outcomeOppSelect');
+    const resultEl = document.getElementById('outcomeResult');
+    const valueEl = document.getElementById('outcomeValue');
+    const lessonsEl = document.getElementById('outcomeLessons');
+
+    const oppId = oppSelectEl?.value || '';
+    const result = resultEl?.value || '';
+    const value = valueEl?.value || '';
+    const lessons = lessonsEl?.value || '';
+
     if (!oppId || !result) {
         alert('Please select an opportunity and outcome.');
         return;
@@ -2988,24 +3022,29 @@ function updateWinLossStats() {
     const won = allOutcomes.filter(o => o.result === 'won').length;
     const lost = allOutcomes.filter(o => o.result === 'lost').length;
     const decided = won + lost; // Only count decided outcomes for win rate
-    
-    document.getElementById('outcomeSubmitted').textContent = submitted;
-    document.getElementById('outcomeWon').textContent = won;
-    document.getElementById('outcomeLost').textContent = lost;
-    
+
+    const outcomeSubmittedEl = document.getElementById('outcomeSubmitted');
+    const outcomeWonEl = document.getElementById('outcomeWon');
+    const outcomeLostEl = document.getElementById('outcomeLost');
+    const actualWinRateEl = document.getElementById('actualWinRate');
+
+    if (outcomeSubmittedEl) outcomeSubmittedEl.textContent = submitted;
+    if (outcomeWonEl) outcomeWonEl.textContent = won;
+    if (outcomeLostEl) outcomeLostEl.textContent = lost;
+
     const actualWinRate = decided > 0 ? Math.round((won / decided) * 100) : '--';
-    document.getElementById('actualWinRate').textContent = decided > 0 ? actualWinRate + '%' : '--';
-    
+    if (actualWinRateEl) actualWinRateEl.textContent = decided > 0 ? actualWinRate + '%' : '--';
+
     // If we have real data, suggest updating the win rate input
     if (decided >= 3) {
         const winRateInput = document.getElementById('winRate');
-        const currentRate = parseInt(winRateInput.value) || 25;
-        if (Math.abs(currentRate - actualWinRate) > 10) {
+        const currentRate = parseInt(winRateInput?.value) || 25;
+        if (Math.abs(currentRate - actualWinRate) > 10 && actualWinRateEl) {
             // Show hint that actual rate differs significantly
-            document.getElementById('actualWinRate').innerHTML = `${actualWinRate}% <span style="font-size: 0.6rem; color: var(--orange);" title="Your actual win rate differs from your target. Consider updating.">⚠️</span>`;
+            actualWinRateEl.innerHTML = `${actualWinRate}% <span style="font-size: 0.6rem; color: var(--orange);" title="Your actual win rate differs from your target. Consider updating.">⚠️</span>`;
         }
     }
-    
+
     // Calculate won revenue
     const wonRevenue = allOutcomes
         .filter(o => o.result === 'won' && o.value)
@@ -3016,9 +3055,9 @@ function updateWinLossStats() {
             if (v.includes('M')) n = parseFloat(v) * 1000000;
             return sum + (isNaN(n) ? 0 : n);
         }, 0);
-    
-    if (wonRevenue > 0) {
-        document.getElementById('outcomeWon').innerHTML = `${won} <span style="font-size: 0.6rem; color: var(--green);">(${fmtCurrency(wonRevenue)})</span>`;
+
+    if (wonRevenue > 0 && outcomeWonEl) {
+        outcomeWonEl.innerHTML = `${won} <span style="font-size: 0.6rem; color: var(--green);">(${fmtCurrency(wonRevenue)})</span>`;
     }
 }
 

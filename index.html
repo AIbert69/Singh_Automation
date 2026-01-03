@@ -1833,18 +1833,24 @@ function log(msg, type = 'info') {
     p.scrollTop = p.scrollHeight;
 }
 
-function showLoading(t, showActions = true) { 
-    document.getElementById('loadingText').textContent = t; 
-    document.getElementById('loadingOverlay').classList.add('active');
-    document.getElementById('loadingActions').style.display = showActions ? 'flex' : 'none';
-    document.getElementById('loadingProgress').textContent = '';
+function showLoading(t, showActions = true) {
+    const loadingText = document.getElementById('loadingText');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingActions = document.getElementById('loadingActions');
+    const loadingProgress = document.getElementById('loadingProgress');
+    if (loadingText) loadingText.textContent = t;
+    if (loadingOverlay) loadingOverlay.classList.add('active');
+    if (loadingActions) loadingActions.style.display = showActions ? 'flex' : 'none';
+    if (loadingProgress) loadingProgress.textContent = '';
 }
-function hideLoading() { 
-    document.getElementById('loadingOverlay').classList.remove('active'); 
+function hideLoading() {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) loadingOverlay.classList.remove('active');
     scanningInBackground = false;
 }
 function updateLoadingProgress(text) {
-    document.getElementById('loadingProgress').textContent = text;
+    const loadingProgress = document.getElementById('loadingProgress');
+    if (loadingProgress) loadingProgress.textContent = text;
 }
 function cancelScan() {
     if (scanController) {
@@ -3077,7 +3083,8 @@ function showDetail(id) {
     const canPursue = o.eligibility.canPursue;
     const canQuote = o.eligibility.canQuote;
     
-    document.getElementById('modalTitle').textContent = o.title;
+    const modalTitle = document.getElementById('modalTitle');
+    if (modalTitle) modalTitle.textContent = o.title;
     
     // Analyze Purchasing Eligibility
     const purchasingElig = analyzePurchasingEligibility(o);
@@ -3250,10 +3257,12 @@ function showDetail(id) {
         `;
     }
 
-    document.getElementById('modalBody').innerHTML = body;
-    
+    const modalBody = document.getElementById('modalBody');
+    if (modalBody) modalBody.innerHTML = body;
+
     // Simplified footer: Agent-focused with clear actions
-    document.getElementById('modalFooter').innerHTML = `
+    const modalFooter = document.getElementById('modalFooter');
+    if (modalFooter) modalFooter.innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center;">
             <!-- Primary: Ask Agent (prominent) -->
             <button class="btn" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; padding: 0.75rem 2rem; font-size: 1rem; width: 100%; max-width: 300px;" onclick="agentReviewOpportunity('${o.id}')" data-testid="btn-agent-review">
@@ -3275,11 +3284,15 @@ function showDetail(id) {
             </div>
         </div>
     `;
-    
-    document.getElementById('detailModal').classList.add('active');
+
+    const detailModal = document.getElementById('detailModal');
+    if (detailModal) detailModal.classList.add('active');
 }
 
-function closeModal() { document.getElementById('detailModal').classList.remove('active'); }
+function closeModal() {
+    const detailModal = document.getElementById('detailModal');
+    if (detailModal) detailModal.classList.remove('active');
+}
 
 // Ask Agent_SAM about a specific opportunity from the modal
 function askAgentAboutOpp(id) {
@@ -3335,7 +3348,8 @@ Give me:
 3. Major risks or concerns
 4. Recommended next steps`;
     
-    document.getElementById('agentInput').value = question;
+    const agentInput = document.getElementById('agentInput');
+    if (agentInput) agentInput.value = question;
     setTimeout(() => sendToAgent(), 300);
 }
 

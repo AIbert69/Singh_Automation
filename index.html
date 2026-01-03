@@ -223,6 +223,7 @@
         .source-tag.sam { background: rgba(16, 185, 129, 0.15); color: var(--green); }
         .source-tag.sbir { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
         .source-tag.state { background: rgba(6, 182, 212, 0.15); color: var(--cyan); }
+        .source-tag.county { background: rgba(20, 184, 166, 0.15); color: #2dd4bf; }
         .source-tag.dibbs { background: rgba(217, 119, 6, 0.15); color: var(--amber); }
 
         .opp-value { font-size: 0.9rem; font-weight: 600; color: #fff; }
@@ -2435,23 +2436,25 @@ function daysUntil(d) { if (!d) return 999; try { return Math.ceil((new Date(d) 
 
 // ========== RENDERING ==========
 function renderTabs() {
-    const c = { all: opportunities.length, contract: 0, sbir: 0, grant: 0, state: 0, dibbs: 0, forecast: 0, qualified: 0 };
+    const c = { all: opportunities.length, contract: 0, sbir: 0, grant: 0, state: 0, county: 0, dibbs: 0, forecast: 0, qualified: 0 };
     opportunities.forEach(o => {
         if (o.type === 'contract') c.contract++;
         if (o.type === 'sbir') c.sbir++;
         if (o.type === 'grant') c.grant++;
         if (o.type === 'state') c.state++;
+        if (o.type === 'county') c.county++;
         if (o.type === 'dibbs') c.dibbs++;
         if (o.type === 'forecast') c.forecast++;
         if (o.eligibility.ok) c.qualified++;
     });
-    
+
     // Only show tabs with items (always show All and Qualified)
     let tabs = `<button class="tab ${currentTab==='all'?'active':''}" data-tab="all">All ${c.all}</button>`;
     if (c.contract > 0) tabs += `<button class="tab ${currentTab==='contract'?'active':''}" data-tab="contract">Federal ${c.contract}</button>`;
     if (c.sbir > 0) tabs += `<button class="tab ${currentTab==='sbir'?'active':''}" data-tab="sbir">SBIR ${c.sbir}</button>`;
     if (c.grant > 0) tabs += `<button class="tab ${currentTab==='grant'?'active':''}" data-tab="grant">Grants ${c.grant}</button>`;
     if (c.state > 0) tabs += `<button class="tab ${currentTab==='state'?'active':''}" data-tab="state">State ${c.state}</button>`;
+    if (c.county > 0) tabs += `<button class="tab ${currentTab==='county'?'active':''}" data-tab="county">County ${c.county}</button>`;
     if (c.dibbs > 0) tabs += `<button class="tab ${currentTab==='dibbs'?'active':''}" data-tab="dibbs">DIBBS ${c.dibbs}</button>`;
     if (c.forecast > 0) tabs += `<button class="tab ${currentTab==='forecast'?'active':''}" data-tab="forecast">Forecast ${c.forecast}</button>`;
     tabs += `<button class="tab ${currentTab==='qualified'?'active':''}" data-tab="qualified">✅ Qualified ${c.qualified}</button>`;
@@ -2472,15 +2475,17 @@ function renderOpps() {
         if (currentTab === 'sbir' && o.type !== 'sbir') return false;
         if (currentTab === 'grant' && o.type !== 'grant') return false;
         if (currentTab === 'state' && o.type !== 'state') return false;
+        if (currentTab === 'county' && o.type !== 'county') return false;
         if (currentTab === 'dibbs' && o.type !== 'dibbs') return false;
         if (currentTab === 'forecast' && o.type !== 'forecast') return false;
-        
+
         // Category filter (from filter pills)
         if (currentFilter !== 'all') {
             if (currentFilter === 'contract' && o.type !== 'contract') return false;
             if (currentFilter === 'sbir' && o.type !== 'sbir') return false;
             if (currentFilter === 'grant' && o.type !== 'grant') return false;
             if (currentFilter === 'state' && o.type !== 'state') return false;
+            if (currentFilter === 'county' && o.type !== 'county') return false;
             if (currentFilter === 'dibbs' && o.type !== 'dibbs') return false;
             if (currentFilter === 'forecast' && o.type !== 'forecast') return false;
         }
@@ -2508,6 +2513,7 @@ function renderOpps() {
         if (o.type === 'contract') sourceClass = 'sam';
         else if (o.type === 'sbir') sourceClass = 'sbir';
         else if (o.type === 'state') sourceClass = 'state';
+        else if (o.type === 'county') sourceClass = 'county';
         else if (o.type === 'dibbs') sourceClass = 'dibbs';
 
         // Determine status pill

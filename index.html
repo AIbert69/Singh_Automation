@@ -3595,16 +3595,21 @@ function updateAgentStats() {
         return days > 0 && days <= 14;
     }).length;
     
-    document.getElementById('agentGoCount').textContent = goCount;
-    document.getElementById('agentReviewCount').textContent = reviewCount;
-    document.getElementById('agentTotalValue').textContent = '$' + (totalValue / 1000000).toFixed(1) + 'M';
-    document.getElementById('agentUrgentCount').textContent = urgentCount;
+    const agentGoCountEl = document.getElementById('agentGoCount');
+    const agentReviewCountEl = document.getElementById('agentReviewCount');
+    const agentTotalValueEl = document.getElementById('agentTotalValue');
+    const agentUrgentCountEl = document.getElementById('agentUrgentCount');
+    if (agentGoCountEl) agentGoCountEl.textContent = goCount;
+    if (agentReviewCountEl) agentReviewCountEl.textContent = reviewCount;
+    if (agentTotalValueEl) agentTotalValueEl.textContent = '$' + (totalValue / 1000000).toFixed(1) + 'M';
+    if (agentUrgentCountEl) agentUrgentCountEl.textContent = urgentCount;
 }
 
 function updateAgentContextDropdown() {
     const select = document.getElementById('agentContext');
+    if (!select) return;
     const goOpps = opportunities.filter(o => pipeline[o.id]?.status === 'go' || o.matchScore >= 60);
-    
+
     select.innerHTML = '<option value="">General - All Opportunities</option>' +
         goOpps.sort((a, b) => b.matchScore - a.matchScore)
             .slice(0, 20)
@@ -3613,12 +3618,13 @@ function updateAgentContextDropdown() {
 }
 
 function updateAgentContext() {
-    const id = document.getElementById('agentContext').value;
+    const selectEl = document.getElementById('agentContext');
+    const id = selectEl?.value || '';
     const infoEl = document.getElementById('selectedOppInfo');
     
     if (id) {
         agentContext = opportunities.find(o => o.id === id);
-        if (agentContext) {
+        if (agentContext && infoEl) {
             // Show opportunity info
             infoEl.innerHTML = `
                 <div style="background: #0a0a0a; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">
@@ -3631,13 +3637,14 @@ function updateAgentContext() {
         }
     } else {
         agentContext = null;
-        infoEl.innerHTML = '<span style="color: var(--gray);">Select an opportunity to analyze</span>';
+        if (infoEl) infoEl.innerHTML = '<span style="color: var(--gray);">Select an opportunity to analyze</span>';
         addAgentMessage('📍 Context cleared. I\'ll provide general pipeline advice.', 'agent');
     }
 }
 
 function addAgentMessage(content, type = 'agent') {
     const chat = document.getElementById('agentChat');
+    if (!chat) return;
     const div = document.createElement('div');
     div.className = type === 'user' ? 'user-message' : 'agent-message';
     

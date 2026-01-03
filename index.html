@@ -1795,16 +1795,16 @@ function setModeIndicator(mode, text) {
 
 async function checkBackendAuth() {
     const authStatus = document.getElementById('authStatus');
-    
+
     try {
-        const r = await fetch(BACKEND_BASE + '/api/health', { 
+        const r = await fetch(BACKEND_BASE + '/api/health', {
             method: 'GET',
             signal: AbortSignal.timeout(10000)
         });
-        
+
         if (r.ok) {
             const data = await r.json();
-            authStatus.innerHTML = `
+            if (authStatus) authStatus.innerHTML = `
                 <span style="color: var(--green); font-size: 0.75rem;">✅ Backend connected</span>
                 <span style="color: var(--gray); font-size: 0.65rem; margin-left: 0.5rem;">SAM: ${data.sam ? '✓' : '✗'} | Claude: ${data.claude ? '✓' : '✗'}</span>
             `;
@@ -1814,7 +1814,7 @@ async function checkBackendAuth() {
             throw new Error(`HTTP ${r.status}: ${r.statusText}`);
         }
     } catch (e) {
-        authStatus.innerHTML = `
+        if (authStatus) authStatus.innerHTML = `
             <span style="color: var(--red); font-size: 0.75rem;">❌ Backend unavailable: ${e.message}</span>
             <button class="btn btn-sm" style="margin-left: 0.5rem;" onclick="checkBackendAuth()">Retry</button>
         `;
@@ -1973,7 +1973,8 @@ async function scanAll() {
         requestId
     );
     
-    document.getElementById('oppList').innerHTML = errorHtml;
+    const oppListEl = document.getElementById('oppList');
+    if (oppListEl) oppListEl.innerHTML = errorHtml;
     log(`HARD FAILURE: Scanner failed after ${MAX_RETRIES} retries`, 'error');
 }
 
@@ -4562,11 +4563,16 @@ function updatePurchasingStats() {
     const vision = purchasingOpportunities.filter(o => o.purchasing.category === 'Vision/Sensors').length;
     const motion = purchasingOpportunities.filter(o => o.purchasing.category === 'Motion/VFD').length;
     
-    document.getElementById('purchTotal').textContent = total;
-    document.getElementById('purchPLC').textContent = plc;
-    document.getElementById('purchRobotics').textContent = robotics;
-    document.getElementById('purchVision').textContent = vision;
-    document.getElementById('purchMotion').textContent = motion;
+    const purchTotalEl = document.getElementById('purchTotal');
+    const purchPLCEl = document.getElementById('purchPLC');
+    const purchRoboticsEl = document.getElementById('purchRobotics');
+    const purchVisionEl = document.getElementById('purchVision');
+    const purchMotionEl = document.getElementById('purchMotion');
+    if (purchTotalEl) purchTotalEl.textContent = total;
+    if (purchPLCEl) purchPLCEl.textContent = plc;
+    if (purchRoboticsEl) purchRoboticsEl.textContent = robotics;
+    if (purchVisionEl) purchVisionEl.textContent = vision;
+    if (purchMotionEl) purchMotionEl.textContent = motion;
 }
 
 function filterPurchasing(filter, btn) {
@@ -4631,7 +4637,8 @@ function renderPurchasing() {
 async function loadSubcontracting() {
     const list = document.getElementById('subList');
     const demoBanner = document.getElementById('subDemoBanner');
-    list.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--gray);"><div class="loading-spinner"></div><p>Loading opportunities...</p></div>';
+    const subSource = document.getElementById('subSource');
+    if (list) list.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--gray);"><div class="loading-spinner"></div><p>Loading opportunities...</p></div>';
 
     try {
         const response = await fetch('/api/subcontracting');
@@ -4639,8 +4646,10 @@ async function loadSubcontracting() {
             const data = await response.json();
             if (data.success && data.opportunities?.length > 0) {
                 subOpportunities = data.opportunities;
-                document.getElementById('subSource').innerHTML = '🟢 Live';
-                document.getElementById('subSource').style.color = 'var(--green)';
+                if (subSource) {
+                    subSource.innerHTML = '🟢 Live';
+                    subSource.style.color = 'var(--green)';
+                }
                 if (demoBanner) demoBanner.style.display = 'none'; // Hide demo warning for live data
                 renderSubOpportunities();
                 return;
@@ -4652,8 +4661,10 @@ async function loadSubcontracting() {
 
     // Fallback to demo data - show prominent warning
     subOpportunities = getSubDemoData();
-    document.getElementById('subSource').innerHTML = '📊 Demo';
-    document.getElementById('subSource').style.color = 'var(--orange)';
+    if (subSource) {
+        subSource.innerHTML = '📊 Demo';
+        subSource.style.color = 'var(--orange)';
+    }
     if (demoBanner) demoBanner.style.display = 'flex'; // Show demo warning
     renderSubOpportunities();
 }

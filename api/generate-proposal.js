@@ -2,9 +2,9 @@
 // Singh Automation - One-Click Beautiful Proposal Generator
 // Returns downloadable .docx file
 
-const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, 
-        Header, Footer, AlignmentType, LevelFormat, HeadingLevel, BorderStyle, 
-        WidthType, ShadingType, PageNumber, PageBreak } = require('docx');
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+         Header, Footer, AlignmentType, LevelFormat, HeadingLevel, BorderStyle,
+         WidthType, ShadingType, PageNumber, PageBreak } from 'docx';
 
 export default async function handler(req, res) {
   // CORS - Allow production, preview deployments, and local development

@@ -1787,8 +1787,10 @@ function showHardError(component, endpoint, status, message, requestId = null) {
 
 function setModeIndicator(mode, text) {
     const indicator = document.getElementById('modeIndicator');
+    if (!indicator) return;
     indicator.className = 'mode-indicator mode-' + mode;
-    indicator.querySelector('.mode-text').textContent = text;
+    const modeText = indicator.querySelector('.mode-text');
+    if (modeText) modeText.textContent = text;
 }
 
 async function checkBackendAuth() {
@@ -3289,9 +3291,11 @@ function askAgentAboutOpp(id) {
     
     // Navigate to Agent_SAM page
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-page="agent"]').classList.add('active');
+    const agentNavBtn = document.querySelector('[data-page="agent"]');
+    if (agentNavBtn) agentNavBtn.classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-agent').classList.add('active');
+    const agentPageEl = document.getElementById('page-agent');
+    if (agentPageEl) agentPageEl.classList.add('active');
     
     // Set the context dropdown to this opportunity
     const select = document.getElementById('agentContext');
@@ -3350,9 +3354,11 @@ function goToProposal(id) {
     
     // Navigate to Agent_SAM page
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-page="agent"]').classList.add('active');
+    const agentNavBtn = document.querySelector('[data-page="agent"]');
+    if (agentNavBtn) agentNavBtn.classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-agent').classList.add('active');
+    const agentPageEl = document.getElementById('page-agent');
+    if (agentPageEl) agentPageEl.classList.add('active');
     
     // Set Agent_SAM context to this opportunity
     const contextSelect = document.getElementById('agentContext');
@@ -4889,9 +4895,11 @@ function askAgentAboutOutreach(idx) {
     
     // Navigate to Agent_SAM page
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-page="agent"]').classList.add('active');
+    const agentNavBtn = document.querySelector('[data-page="agent"]');
+    if (agentNavBtn) agentNavBtn.classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-agent').classList.add('active');
+    const agentPageEl = document.getElementById('page-agent');
+    if (agentPageEl) agentPageEl.classList.add('active');
     
     // Store the outreach context
     window.currentOutreach = { opp, subject, body };
@@ -5070,9 +5078,11 @@ function agentReviewOpportunity(id) {
 
     // Navigate to Agent_SAM page
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-page="agent"]').classList.add('active');
+    const agentNavBtn = document.querySelector('[data-page="agent"]');
+    if (agentNavBtn) agentNavBtn.classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-agent').classList.add('active');
+    const agentPageEl = document.getElementById('page-agent');
+    if (agentPageEl) agentPageEl.classList.add('active');
 
     // Set the context
     const select = document.getElementById('agentContext');

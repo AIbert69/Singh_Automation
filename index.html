@@ -904,10 +904,9 @@
         </button>
     </nav>
 
-    <div class="config-bar" id="configBar">
+    <div class="config-bar" id="configBar" style="display: none;">
         <div id="authStatus" style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="color: var(--red); font-size: 0.75rem;">⚠️ Backend authentication required</span>
-            <button class="btn btn-sm btn-primary" onclick="checkBackendAuth()" title="Verify connection to the backend API server">🔌 Check Connection</button>
+            <span style="color: var(--gray); font-size: 0.75rem;">Checking backend...</span>
         </div>
         <input type="hidden" id="apiUrl" value="https://singh-automation.vercel.app/api/sam">
     </div>
@@ -1787,7 +1786,7 @@ function showHardError(component, endpoint, status, message, requestId = null) {
 
 function setModeIndicator(mode, text) {
     const indicator = document.getElementById('modeIndicator');
-    if (!indicator) return;
+    if (!indicator) return; // Element not found, skip
     indicator.className = 'mode-indicator mode-' + mode;
     const modeText = indicator.querySelector('.mode-text');
     if (modeText) modeText.textContent = text;
@@ -1795,29 +1794,33 @@ function setModeIndicator(mode, text) {
 
 async function checkBackendAuth() {
     const authStatus = document.getElementById('authStatus');
-
+    const configBar = document.getElementById('configBar');
+    if (!authStatus) return; // Element not found, skip
+    
     try {
-        const r = await fetch(BACKEND_BASE + '/api/health', {
+        const r = await fetch(BACKEND_BASE + '/api/health', { 
             method: 'GET',
             signal: AbortSignal.timeout(10000)
         });
-
+        
         if (r.ok) {
             const data = await r.json();
-            if (authStatus) authStatus.innerHTML = `
-                <span style="color: var(--green); font-size: 0.75rem;">✅ Backend connected</span>
-                <span style="color: var(--gray); font-size: 0.65rem; margin-left: 0.5rem;">SAM: ${data.sam ? '✓' : '✗'} | Claude: ${data.claude ? '✓' : '✗'}</span>
-            `;
+            // Hide the config bar on success
+            if (configBar) configBar.style.display = 'none';
             setModeIndicator('live', 'CONNECTED');
             log('Backend connected', 'success');
         } else {
             throw new Error(`HTTP ${r.status}: ${r.statusText}`);
         }
     } catch (e) {
-        if (authStatus) authStatus.innerHTML = `
-            <span style="color: var(--red); font-size: 0.75rem;">❌ Backend unavailable: ${e.message}</span>
-            <button class="btn btn-sm" style="margin-left: 0.5rem;" onclick="checkBackendAuth()">Retry</button>
-        `;
+        // Show the config bar with error
+        if (configBar) configBar.style.display = 'flex';
+        if (authStatus) {
+            authStatus.innerHTML = `
+                <span style="color: var(--red); font-size: 0.75rem;">❌ Backend unavailable: ${e.message}</span>
+                <button class="btn btn-sm" style="margin-left: 0.5rem;" onclick="checkBackendAuth()">Retry</button>
+            `;
+        }
         setModeIndicator('error', 'DISCONNECTED');
         log('Backend check failed: ' + e.message, 'error');
     }
@@ -1833,19 +1836,19 @@ function log(msg, type = 'info') {
     p.scrollTop = p.scrollHeight;
 }
 
-function showLoading(t, showActions = true) {
+function showLoading(t, showActions = true) { 
     const loadingText = document.getElementById('loadingText');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const loadingActions = document.getElementById('loadingActions');
     const loadingProgress = document.getElementById('loadingProgress');
-    if (loadingText) loadingText.textContent = t;
+    if (loadingText) loadingText.textContent = t; 
     if (loadingOverlay) loadingOverlay.classList.add('active');
     if (loadingActions) loadingActions.style.display = showActions ? 'flex' : 'none';
     if (loadingProgress) loadingProgress.textContent = '';
 }
-function hideLoading() {
+function hideLoading() { 
     const loadingOverlay = document.getElementById('loadingOverlay');
-    if (loadingOverlay) loadingOverlay.classList.remove('active');
+    if (loadingOverlay) loadingOverlay.classList.remove('active'); 
     scanningInBackground = false;
 }
 function updateLoadingProgress(text) {
@@ -1862,22 +1865,22 @@ function cancelScan() {
         proposalController = null;
     }
     hideLoading();
-    // Reset status indicator (with null checks)
-    const statusTextCancel = document.getElementById('statusText');
-    const statusDotCancel = document.getElementById('statusDot');
-    if (statusTextCancel) statusTextCancel.textContent = 'Ready';
-    if (statusDotCancel) statusDotCancel.style.animation = '';
+    // Reset status indicator
+    const statusText = document.getElementById('statusText');
+    const statusDot = document.getElementById('statusDot');
+    if (statusText) statusText.textContent = 'Ready';
+    if (statusDot) statusDot.style.animation = '';
     log('Operation cancelled', 'info');
 }
 function runInBackground() {
     scanningInBackground = true;
     hideLoading();
     log('Scan running in background...', 'info');
-    // Show subtle indicator in header (with null checks)
-    const statusTextBg = document.getElementById('statusText');
-    const statusDotBg = document.getElementById('statusDot');
-    if (statusTextBg) statusTextBg.textContent = 'Scanning...';
-    if (statusDotBg) statusDotBg.style.animation = 'pulse 1s infinite';
+    // Show subtle indicator in header
+    const statusText = document.getElementById('statusText');
+    const statusDot = document.getElementById('statusDot');
+    if (statusText) statusText.textContent = 'Scanning...';
+    if (statusDot) statusDot.style.animation = 'pulse 1s infinite';
 }
 
 // ========== API ==========
@@ -1961,21 +1964,104 @@ async function scanAll() {
         }
     }
     
-    // All retries exhausted - HARD FAIL (no demo fallback)
+    // All retries exhausted - offer demo fallback
     hideLoading();
     setModeIndicator('error', 'API FAILED');
     
-    const errorHtml = showHardError(
-        'SAM.gov Opportunity Scanner',
-        url,
-        lastError?.message || 'Unknown error',
-        `Failed after ${MAX_RETRIES} attempts. Check backend connectivity.`,
-        requestId
-    );
+    const errorHtml = `
+        <div class="hard-error">
+            <div class="hard-error-title">🚫 HARD FAILURE: SAM.gov Opportunity Scanner</div>
+            <div class="hard-error-details">
+                <div class="hard-error-field"><label>Endpoint:</label><span>${url}</span></div>
+                <div class="hard-error-field"><label>Status:</label><span>${lastError?.message || 'Unknown error'}</span></div>
+                <div class="hard-error-field"><label>Error:</label><span>Failed after ${MAX_RETRIES} attempts. Check backend connectivity.</span></div>
+                <div class="hard-error-field"><label>Request ID:</label><span>${requestId}</span></div>
+            </div>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                <button class="btn btn-primary" onclick="scanAll()">🔄 Retry</button>
+                <button class="btn btn-secondary" onclick="loadDemoData()">📊 Load Demo Data</button>
+            </div>
+        </div>
+    `;
     
-    const oppListEl = document.getElementById('oppList');
-    if (oppListEl) oppListEl.innerHTML = errorHtml;
+    const oppList = document.getElementById('oppList');
+    if (oppList) oppList.innerHTML = errorHtml;
     log(`HARD FAILURE: Scanner failed after ${MAX_RETRIES} retries`, 'error');
+}
+
+// Demo data fallback for when API is unavailable
+function loadDemoData() {
+    const demoOpportunities = [
+        {
+            id: 'W911QY-25-R-0042',
+            title: 'Robotic Welding System for Defense Manufacturing',
+            agency: 'Department of Defense',
+            subAgency: 'Army Contracting Command',
+            value: 485000,
+            closeDate: '2025-02-14',
+            naicsCode: '333249',
+            setAside: 'Small Business',
+            solicitation: 'W911QY-25-R-0042',
+            description: 'Procurement of automated robotic welding systems for military vehicle manufacturing facility.',
+            source: 'SAM.gov'
+        },
+        {
+            id: 'SPE4A7-25-Q-0198',
+            title: 'PLC Modernization - Water Treatment Facility',
+            agency: 'Defense Logistics Agency',
+            subAgency: 'DLA Troop Support',
+            value: 175000,
+            closeDate: '2025-02-27',
+            naicsCode: '541512',
+            setAside: 'WOSB',
+            solicitation: 'SPE4A7-25-Q-0198',
+            description: 'Upgrade and modernization of PLC control systems at water treatment facility.',
+            source: 'SAM.gov'
+        },
+        {
+            id: 'NNX25-SBIR-0087',
+            title: 'SBIR Phase II - Advanced Vision Inspection',
+            agency: 'NASA',
+            subAgency: 'Goddard Space Flight Center',
+            value: 750000,
+            closeDate: '2025-01-30',
+            naicsCode: '541715',
+            setAside: 'SBIR',
+            solicitation: 'NNX25-SBIR-0087',
+            description: 'Development of AI-powered vision inspection system for aerospace manufacturing.',
+            source: 'SBIR/STTR'
+        },
+        {
+            id: 'DTFH61-25-P-00234',
+            title: 'Conveyor System Automation Upgrade',
+            agency: 'Department of Transportation',
+            subAgency: 'Federal Highway Administration',
+            value: 125000,
+            closeDate: '2025-03-14',
+            naicsCode: '333922',
+            setAside: 'SDB',
+            solicitation: 'DTFH61-25-P-00234',
+            description: 'Automation upgrade for material handling conveyor systems.',
+            source: 'SAM.gov'
+        },
+        {
+            id: 'SPE7M1-25-R-0056',
+            title: 'Collaborative Robot Integration - Manufacturing',
+            agency: 'Defense Logistics Agency',
+            subAgency: 'DLA Land and Maritime',
+            value: 320000,
+            closeDate: '2025-02-19',
+            naicsCode: '333249',
+            setAside: 'Small Business',
+            solicitation: 'SPE7M1-25-R-0056',
+            description: 'Integration of collaborative robots (cobots) into existing manufacturing lines.',
+            source: 'SAM.gov'
+        }
+    ];
+    
+    processOpportunities(demoOpportunities, 'Demo');
+    setModeIndicator('demo', 'DEMO DATA');
+    log('Loaded demo data - connect backend for live opportunities', 'info');
 }
 
 // Schema validation for opportunity data
@@ -2011,10 +2097,12 @@ function validateOpportunitySchema(opps) {
 function processOpportunities(rawOpps, source) {
     updateLoadingProgress(`Processing ${rawOpps.length} opportunities...`);
     
-    // PRODUCTION: Reject any demo data that somehow got through
-    const demoOpps = rawOpps.filter(o => o.id?.startsWith('DEMO-'));
-    if (demoOpps.length > 0) {
-        throw new Error(`FATAL: ${demoOpps.length} demo opportunities detected in production. IDs: ${demoOpps.map(o => o.id).join(', ')}`);
+    // PRODUCTION: Reject any demo data that somehow got through (unless explicitly loading demo)
+    if (source !== 'Demo') {
+        const demoOpps = rawOpps.filter(o => o.id?.startsWith('DEMO-'));
+        if (demoOpps.length > 0) {
+            throw new Error(`FATAL: ${demoOpps.length} demo opportunities detected in production. IDs: ${demoOpps.map(o => o.id).join(', ')}`);
+        }
     }
     
     opportunities = rawOpps.map(o => {
@@ -2031,18 +2119,16 @@ function processOpportunities(rawOpps, source) {
     
     // Track for recompete detection
     trackSeenOpportunities(rawOpps);
-
-    // Update status indicators (with null checks)
+    
+    // Update status indicators
     const statusDot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
     if (statusDot) {
         statusDot.className = 'status-dot live';
         statusDot.style.animation = '';
     }
-    if (statusText) {
-        statusText.textContent = source;
-    }
-
+    if (statusText) statusText.textContent = source;
+    
     // PRODUCTION: Always live mode
     setModeIndicator('live', 'LIVE DATA');
     
@@ -2372,11 +2458,9 @@ function renderTabs() {
     if (c.dibbs > 0) tabs += `<button class="tab ${currentTab==='dibbs'?'active':''}" data-tab="dibbs">DIBBS ${c.dibbs}</button>`;
     if (c.forecast > 0) tabs += `<button class="tab ${currentTab==='forecast'?'active':''}" data-tab="forecast">Forecast ${c.forecast}</button>`;
     tabs += `<button class="tab ${currentTab==='qualified'?'active':''}" data-tab="qualified">✅ Qualified ${c.qualified}</button>`;
-    
+
     const tabsContainer = document.getElementById('tabsContainer');
-    if (tabsContainer) {
-        tabsContainer.innerHTML = tabs;
-    }
+    if (tabsContainer) tabsContainer.innerHTML = tabs;
 }
 
 function renderOpps() {
@@ -2471,14 +2555,13 @@ function renderOpps() {
 function renderQualifiedList() {
     const list = document.getElementById('qualifiedList');
     if (!list) return;
-
     const qual = opportunities.filter(o => o.eligibility.ok).slice(0, 5);
 
     if (!qual.length) {
         list.innerHTML = '<div style="font-size: 0.75rem; color: var(--gray);">No qualified opportunities</div>';
         return;
     }
-
+    
     list.innerHTML = qual.map(o => {
         const status = pipeline[o.id]?.status;
         return `<div class="alert-item" onclick="showDetail('${o.id}')">
@@ -2501,7 +2584,6 @@ function updateStats() {
     const statUrgent = document.getElementById('statUrgent');
     const statValue = document.getElementById('statValue');
     const statMatch = document.getElementById('statMatch');
-
     if (statLive) statLive.textContent = opportunities.filter(o => o.isLive).length;
     if (statTotal) statTotal.textContent = opportunities.length;
     if (statQualified) statQualified.textContent = q.length;
@@ -2539,7 +2621,7 @@ function updatePipelineStats() {
     if (pipelineGoEl) pipelineGoEl.textContent = goCount;
     if (pipelineReviewEl) pipelineReviewEl.textContent = reviewCount;
     if (pipelineNoGoEl) pipelineNoGoEl.textContent = nogoCount;
-    
+
     // Update revenue calculator when pipeline changes
     updateRevenueCalculator();
 }
@@ -2547,7 +2629,6 @@ function updatePipelineStats() {
 function renderPipelinePage() {
     const container = document.getElementById('pipelineContent');
     if (!container) return;
-
     const pipelineEntries = Object.entries(pipeline);
 
     if (pipelineEntries.length === 0) {
@@ -2908,14 +2989,10 @@ function updateRevenueCalculator() {
     const percentComplete = pipelineNeeded > 0 ? Math.min(100, (currentValue / pipelineNeeded) * 100) : 0;
     
     // Update display
-    const pipelineNeededEl = document.getElementById('pipelineNeeded');
-    const currentPipelineEl = document.getElementById('currentPipeline');
-    if (pipelineNeededEl) pipelineNeededEl.textContent = fmtCurrency(pipelineNeeded);
-    if (currentPipelineEl) currentPipelineEl.textContent = fmtCurrency(currentValue);
-
+    document.getElementById('pipelineNeeded').textContent = fmtCurrency(pipelineNeeded);
+    document.getElementById('currentPipeline').textContent = fmtCurrency(currentValue);
+    
     const gapMsg = document.getElementById('pipelineGapMsg');
-    if (!gapMsg) return;
-
     if (gap <= 0) {
         gapMsg.innerHTML = `<span style="color: var(--green);">✅ Target met! ${Math.round(percentComplete)}% of goal</span>`;
     } else {
@@ -2931,39 +3008,32 @@ function updateRevenueCalculator() {
 function openNewProposal() {
     // Navigate to Agent page for proposal generation
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    const agentNav = document.querySelector('[data-page="agent"]');
-    if (agentNav) agentNav.classList.add('active');
+    document.querySelector('[data-page="agent"]').classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const agentPage = document.getElementById('page-agent');
-    if (agentPage) agentPage.classList.add('active');
+    document.getElementById('page-agent').classList.add('active');
 }
 
 function openFindPartners() {
     // Navigate to Subcontracting page
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    const subNav = document.querySelector('[data-page="subcontracting"]');
-    if (subNav) subNav.classList.add('active');
+    document.querySelector('[data-page="subcontracting"]').classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const subPage = document.getElementById('page-subcontracting');
-    if (subPage) subPage.classList.add('active');
+    document.getElementById('page-subcontracting').classList.add('active');
 }
 
 function openLessonsLearned() {
     // Navigate to Train Agent page
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    const trainNav = document.querySelector('[data-page="train"]');
-    if (trainNav) trainNav.classList.add('active');
+    document.querySelector('[data-page="train"]').classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const trainPage = document.getElementById('page-train');
-    if (trainPage) trainPage.classList.add('active');
+    document.getElementById('page-train').classList.add('active');
 }
 
 // ========== WIN/LOSS OUTCOME TRACKING ==========
 function openOutcomeModal() {
     const modal = document.getElementById('outcomeModal');
     const select = document.getElementById('outcomeOppSelect');
-    if (!modal || !select) return;
-
+    
     // Populate with GO opportunities
     const goOpps = Object.entries(pipeline)
         .filter(([id, p]) => p.status === 'go')
@@ -2972,37 +3042,28 @@ function openOutcomeModal() {
             return opp ? { id, title: opp.title, value: opp.value } : null;
         })
         .filter(Boolean);
-
+    
     select.innerHTML = '<option value="">-- Select GO opportunity --</option>' +
         goOpps.map(o => `<option value="${o.id}">${o.title.substring(0,40)}... | ${fmtCurrency(o.value)}</option>`).join('');
-
+    
     // Clear previous values
-    const outcomeResult = document.getElementById('outcomeResult');
-    const outcomeValue = document.getElementById('outcomeValue');
-    const outcomeLessons = document.getElementById('outcomeLessons');
-    if (outcomeResult) outcomeResult.value = '';
-    if (outcomeValue) outcomeValue.value = '';
-    if (outcomeLessons) outcomeLessons.value = '';
-
+    document.getElementById('outcomeResult').value = '';
+    document.getElementById('outcomeValue').value = '';
+    document.getElementById('outcomeLessons').value = '';
+    
     modal.style.display = 'flex';
 }
 
 function closeOutcomeModal() {
-    const modal = document.getElementById('outcomeModal');
-    if (modal) modal.style.display = 'none';
+    document.getElementById('outcomeModal').style.display = 'none';
 }
 
 function saveOutcome() {
-    const oppSelectEl = document.getElementById('outcomeOppSelect');
-    const resultEl = document.getElementById('outcomeResult');
-    const valueEl = document.getElementById('outcomeValue');
-    const lessonsEl = document.getElementById('outcomeLessons');
-
-    const oppId = oppSelectEl?.value || '';
-    const result = resultEl?.value || '';
-    const value = valueEl?.value || '';
-    const lessons = lessonsEl?.value || '';
-
+    const oppId = document.getElementById('outcomeOppSelect').value;
+    const result = document.getElementById('outcomeResult').value;
+    const value = document.getElementById('outcomeValue').value;
+    const lessons = document.getElementById('outcomeLessons').value;
+    
     if (!oppId || !result) {
         alert('Please select an opportunity and outcome.');
         return;
@@ -3032,29 +3093,24 @@ function updateWinLossStats() {
     const won = allOutcomes.filter(o => o.result === 'won').length;
     const lost = allOutcomes.filter(o => o.result === 'lost').length;
     const decided = won + lost; // Only count decided outcomes for win rate
-
-    const outcomeSubmittedEl = document.getElementById('outcomeSubmitted');
-    const outcomeWonEl = document.getElementById('outcomeWon');
-    const outcomeLostEl = document.getElementById('outcomeLost');
-    const actualWinRateEl = document.getElementById('actualWinRate');
-
-    if (outcomeSubmittedEl) outcomeSubmittedEl.textContent = submitted;
-    if (outcomeWonEl) outcomeWonEl.textContent = won;
-    if (outcomeLostEl) outcomeLostEl.textContent = lost;
-
+    
+    document.getElementById('outcomeSubmitted').textContent = submitted;
+    document.getElementById('outcomeWon').textContent = won;
+    document.getElementById('outcomeLost').textContent = lost;
+    
     const actualWinRate = decided > 0 ? Math.round((won / decided) * 100) : '--';
-    if (actualWinRateEl) actualWinRateEl.textContent = decided > 0 ? actualWinRate + '%' : '--';
-
+    document.getElementById('actualWinRate').textContent = decided > 0 ? actualWinRate + '%' : '--';
+    
     // If we have real data, suggest updating the win rate input
     if (decided >= 3) {
         const winRateInput = document.getElementById('winRate');
-        const currentRate = parseInt(winRateInput?.value) || 25;
-        if (Math.abs(currentRate - actualWinRate) > 10 && actualWinRateEl) {
+        const currentRate = parseInt(winRateInput.value) || 25;
+        if (Math.abs(currentRate - actualWinRate) > 10) {
             // Show hint that actual rate differs significantly
-            actualWinRateEl.innerHTML = `${actualWinRate}% <span style="font-size: 0.6rem; color: var(--orange);" title="Your actual win rate differs from your target. Consider updating.">⚠️</span>`;
+            document.getElementById('actualWinRate').innerHTML = `${actualWinRate}% <span style="font-size: 0.6rem; color: var(--orange);" title="Your actual win rate differs from your target. Consider updating.">⚠️</span>`;
         }
     }
-
+    
     // Calculate won revenue
     const wonRevenue = allOutcomes
         .filter(o => o.result === 'won' && o.value)
@@ -3065,9 +3121,9 @@ function updateWinLossStats() {
             if (v.includes('M')) n = parseFloat(v) * 1000000;
             return sum + (isNaN(n) ? 0 : n);
         }, 0);
-
-    if (wonRevenue > 0 && outcomeWonEl) {
-        outcomeWonEl.innerHTML = `${won} <span style="font-size: 0.6rem; color: var(--green);">(${fmtCurrency(wonRevenue)})</span>`;
+    
+    if (wonRevenue > 0) {
+        document.getElementById('outcomeWon').innerHTML = `${won} <span style="font-size: 0.6rem; color: var(--green);">(${fmtCurrency(wonRevenue)})</span>`;
     }
 }
 
@@ -3085,8 +3141,7 @@ function showDetail(id) {
     const canPursue = o.eligibility.canPursue;
     const canQuote = o.eligibility.canQuote;
     
-    const modalTitle = document.getElementById('modalTitle');
-    if (modalTitle) modalTitle.textContent = o.title;
+    document.getElementById('modalTitle').textContent = o.title;
     
     // Analyze Purchasing Eligibility
     const purchasingElig = analyzePurchasingEligibility(o);
@@ -3259,12 +3314,10 @@ function showDetail(id) {
         `;
     }
 
-    const modalBody = document.getElementById('modalBody');
-    if (modalBody) modalBody.innerHTML = body;
-
+    document.getElementById('modalBody').innerHTML = body;
+    
     // Simplified footer: Agent-focused with clear actions
-    const modalFooter = document.getElementById('modalFooter');
-    if (modalFooter) modalFooter.innerHTML = `
+    document.getElementById('modalFooter').innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 0.75rem; align-items: center;">
             <!-- Primary: Ask Agent (prominent) -->
             <button class="btn" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; padding: 0.75rem 2rem; font-size: 1rem; width: 100%; max-width: 300px;" onclick="agentReviewOpportunity('${o.id}')" data-testid="btn-agent-review">
@@ -3286,15 +3339,11 @@ function showDetail(id) {
             </div>
         </div>
     `;
-
-    const detailModal = document.getElementById('detailModal');
-    if (detailModal) detailModal.classList.add('active');
+    
+    document.getElementById('detailModal').classList.add('active');
 }
 
-function closeModal() {
-    const detailModal = document.getElementById('detailModal');
-    if (detailModal) detailModal.classList.remove('active');
-}
+function closeModal() { document.getElementById('detailModal').classList.remove('active'); }
 
 // Ask Agent_SAM about a specific opportunity from the modal
 function askAgentAboutOpp(id) {
@@ -3306,11 +3355,9 @@ function askAgentAboutOpp(id) {
     
     // Navigate to Agent_SAM page
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    const agentNavBtn = document.querySelector('[data-page="agent"]');
-    if (agentNavBtn) agentNavBtn.classList.add('active');
+    document.querySelector('[data-page="agent"]').classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const agentPageEl = document.getElementById('page-agent');
-    if (agentPageEl) agentPageEl.classList.add('active');
+    document.getElementById('page-agent').classList.add('active');
     
     // Set the context dropdown to this opportunity
     const select = document.getElementById('agentContext');
@@ -3350,8 +3397,7 @@ Give me:
 3. Major risks or concerns
 4. Recommended next steps`;
     
-    const agentInput = document.getElementById('agentInput');
-    if (agentInput) agentInput.value = question;
+    document.getElementById('agentInput').value = question;
     setTimeout(() => sendToAgent(), 300);
 }
 
@@ -3370,11 +3416,9 @@ function goToProposal(id) {
     
     // Navigate to Agent_SAM page
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    const agentNavBtn = document.querySelector('[data-page="agent"]');
-    if (agentNavBtn) agentNavBtn.classList.add('active');
+    document.querySelector('[data-page="agent"]').classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const agentPageEl = document.getElementById('page-agent');
-    if (agentPageEl) agentPageEl.classList.add('active');
+    document.getElementById('page-agent').classList.add('active');
     
     // Set Agent_SAM context to this opportunity
     const contextSelect = document.getElementById('agentContext');
@@ -3406,8 +3450,7 @@ async function generateProposalForId(id) {
     log(`Redirecting to Agent_SAM for: ${o.title}`, 'info');
     
     // Set context and navigate to Agent_SAM
-    const agentContextEl = document.getElementById('agentContext');
-    if (agentContextEl) agentContextEl.value = id;
+    document.getElementById('agentContext').value = id;
     agentContext = o;
     addAgentMessage(`📍 Context set to: <strong>${o.title}</strong>`, 'agent');
     askAgent('Help me create a winning proposal for this opportunity. What are the key discriminators and win themes?');
@@ -3598,21 +3641,16 @@ function updateAgentStats() {
         return days > 0 && days <= 14;
     }).length;
     
-    const agentGoCountEl = document.getElementById('agentGoCount');
-    const agentReviewCountEl = document.getElementById('agentReviewCount');
-    const agentTotalValueEl = document.getElementById('agentTotalValue');
-    const agentUrgentCountEl = document.getElementById('agentUrgentCount');
-    if (agentGoCountEl) agentGoCountEl.textContent = goCount;
-    if (agentReviewCountEl) agentReviewCountEl.textContent = reviewCount;
-    if (agentTotalValueEl) agentTotalValueEl.textContent = '$' + (totalValue / 1000000).toFixed(1) + 'M';
-    if (agentUrgentCountEl) agentUrgentCountEl.textContent = urgentCount;
+    document.getElementById('agentGoCount').textContent = goCount;
+    document.getElementById('agentReviewCount').textContent = reviewCount;
+    document.getElementById('agentTotalValue').textContent = '$' + (totalValue / 1000000).toFixed(1) + 'M';
+    document.getElementById('agentUrgentCount').textContent = urgentCount;
 }
 
 function updateAgentContextDropdown() {
     const select = document.getElementById('agentContext');
-    if (!select) return;
     const goOpps = opportunities.filter(o => pipeline[o.id]?.status === 'go' || o.matchScore >= 60);
-
+    
     select.innerHTML = '<option value="">General - All Opportunities</option>' +
         goOpps.sort((a, b) => b.matchScore - a.matchScore)
             .slice(0, 20)
@@ -3621,13 +3659,12 @@ function updateAgentContextDropdown() {
 }
 
 function updateAgentContext() {
-    const selectEl = document.getElementById('agentContext');
-    const id = selectEl?.value || '';
+    const id = document.getElementById('agentContext').value;
     const infoEl = document.getElementById('selectedOppInfo');
     
     if (id) {
         agentContext = opportunities.find(o => o.id === id);
-        if (agentContext && infoEl) {
+        if (agentContext) {
             // Show opportunity info
             infoEl.innerHTML = `
                 <div style="background: #0a0a0a; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">
@@ -3640,14 +3677,13 @@ function updateAgentContext() {
         }
     } else {
         agentContext = null;
-        if (infoEl) infoEl.innerHTML = '<span style="color: var(--gray);">Select an opportunity to analyze</span>';
+        infoEl.innerHTML = '<span style="color: var(--gray);">Select an opportunity to analyze</span>';
         addAgentMessage('📍 Context cleared. I\'ll provide general pipeline advice.', 'agent');
     }
 }
 
 function addAgentMessage(content, type = 'agent') {
     const chat = document.getElementById('agentChat');
-    if (!chat) return;
     const div = document.createElement('div');
     div.className = type === 'user' ? 'user-message' : 'agent-message';
     
@@ -3779,8 +3815,7 @@ async function sendToAgent() {
 }
 
 function askAgent(question) {
-    const agentInputEl = document.getElementById('agentInput');
-    if (agentInputEl) agentInputEl.value = question;
+    document.getElementById('agentInput').value = question;
     sendToAgent();
 }
 
@@ -4539,7 +4574,6 @@ let currentPurchFilter = 'all';
 
 async function loadPurchasing() {
     const list = document.getElementById('purchasingList');
-    if (!list) return;
     list.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--gray);"><div class="spinner"></div><p>Analyzing opportunities...</p></div>';
     
     // If no opportunities loaded, scan first
@@ -4567,16 +4601,11 @@ function updatePurchasingStats() {
     const vision = purchasingOpportunities.filter(o => o.purchasing.category === 'Vision/Sensors').length;
     const motion = purchasingOpportunities.filter(o => o.purchasing.category === 'Motion/VFD').length;
     
-    const purchTotalEl = document.getElementById('purchTotal');
-    const purchPLCEl = document.getElementById('purchPLC');
-    const purchRoboticsEl = document.getElementById('purchRobotics');
-    const purchVisionEl = document.getElementById('purchVision');
-    const purchMotionEl = document.getElementById('purchMotion');
-    if (purchTotalEl) purchTotalEl.textContent = total;
-    if (purchPLCEl) purchPLCEl.textContent = plc;
-    if (purchRoboticsEl) purchRoboticsEl.textContent = robotics;
-    if (purchVisionEl) purchVisionEl.textContent = vision;
-    if (purchMotionEl) purchMotionEl.textContent = motion;
+    document.getElementById('purchTotal').textContent = total;
+    document.getElementById('purchPLC').textContent = plc;
+    document.getElementById('purchRobotics').textContent = robotics;
+    document.getElementById('purchVision').textContent = vision;
+    document.getElementById('purchMotion').textContent = motion;
 }
 
 function filterPurchasing(filter, btn) {
@@ -4588,8 +4617,7 @@ function filterPurchasing(filter, btn) {
 
 function renderPurchasing() {
     const list = document.getElementById('purchasingList');
-    if (!list) return;
-
+    
     let filtered = purchasingOpportunities;
     if (currentPurchFilter !== 'all') {
         filtered = purchasingOpportunities.filter(o => o.purchasing.category === currentPurchFilter);
@@ -4642,8 +4670,7 @@ function renderPurchasing() {
 async function loadSubcontracting() {
     const list = document.getElementById('subList');
     const demoBanner = document.getElementById('subDemoBanner');
-    const subSource = document.getElementById('subSource');
-    if (list) list.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--gray);"><div class="loading-spinner"></div><p>Loading opportunities...</p></div>';
+    list.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--gray);"><div class="loading-spinner"></div><p>Loading opportunities...</p></div>';
 
     try {
         const response = await fetch('/api/subcontracting');
@@ -4651,10 +4678,8 @@ async function loadSubcontracting() {
             const data = await response.json();
             if (data.success && data.opportunities?.length > 0) {
                 subOpportunities = data.opportunities;
-                if (subSource) {
-                    subSource.innerHTML = '🟢 Live';
-                    subSource.style.color = 'var(--green)';
-                }
+                document.getElementById('subSource').innerHTML = '🟢 Live';
+                document.getElementById('subSource').style.color = 'var(--green)';
                 if (demoBanner) demoBanner.style.display = 'none'; // Hide demo warning for live data
                 renderSubOpportunities();
                 return;
@@ -4666,10 +4691,8 @@ async function loadSubcontracting() {
 
     // Fallback to demo data - show prominent warning
     subOpportunities = getSubDemoData();
-    if (subSource) {
-        subSource.innerHTML = '📊 Demo';
-        subSource.style.color = 'var(--orange)';
-    }
+    document.getElementById('subSource').innerHTML = '📊 Demo';
+    document.getElementById('subSource').style.color = 'var(--orange)';
     if (demoBanner) demoBanner.style.display = 'flex'; // Show demo warning
     renderSubOpportunities();
 }
@@ -4694,7 +4717,6 @@ function getSubDemoData() {
 
 function renderSubOpportunities() {
     const list = document.getElementById('subList');
-    if (!list) return;
     let filtered = subOpportunities;
     
     if (currentSubFilter !== 'all') {
@@ -4933,11 +4955,9 @@ function askAgentAboutOutreach(idx) {
     
     // Navigate to Agent_SAM page
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    const agentNavBtn = document.querySelector('[data-page="agent"]');
-    if (agentNavBtn) agentNavBtn.classList.add('active');
+    document.querySelector('[data-page="agent"]').classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const agentPageEl = document.getElementById('page-agent');
-    if (agentPageEl) agentPageEl.classList.add('active');
+    document.getElementById('page-agent').classList.add('active');
     
     // Store the outreach context
     window.currentOutreach = { opp, subject, body };
@@ -4953,9 +4973,8 @@ ${body}
 
 ---
 Give me specific suggestions to make this more compelling and increase response rate. Also suggest any personalization based on their contract.`;
-
-    const agentInputEl = document.getElementById('agentInput');
-    if (agentInputEl) agentInputEl.value = question;
+    
+    document.getElementById('agentInput').value = question;
     setTimeout(() => sendToAgent(), 300);
 }
 
@@ -5117,11 +5136,9 @@ function agentReviewOpportunity(id) {
 
     // Navigate to Agent_SAM page
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    const agentNavBtn = document.querySelector('[data-page="agent"]');
-    if (agentNavBtn) agentNavBtn.classList.add('active');
+    document.querySelector('[data-page="agent"]').classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const agentPageEl = document.getElementById('page-agent');
-    if (agentPageEl) agentPageEl.classList.add('active');
+    document.getElementById('page-agent').classList.add('active');
 
     // Set the context
     const select = document.getElementById('agentContext');
@@ -5179,8 +5196,7 @@ ${(o.description || 'No description available').substring(0, 800)}
    - What do we need to do in the next 48 hours?
    - Who needs to be involved?`;
 
-    const agentInputEl = document.getElementById('agentInput');
-    if (agentInputEl) agentInputEl.value = reviewRequest;
+    document.getElementById('agentInput').value = reviewRequest;
     setTimeout(() => sendToAgent(), 300);
 }
 

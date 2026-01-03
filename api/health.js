@@ -9,10 +9,12 @@ export default async function handler(req, res) {
         console.log(JSON.stringify({ level, requestId, timestamp: new Date().toISOString(), message, ...data }));
     };
     
-    // CORS - Restrict to allowed origins
+    // CORS - Allow production, preview deployments, and local development
     const allowedOrigins = ['https://singh-automation.vercel.app', 'https://singhautomation.com', 'http://localhost:3000', 'http://localhost:5173'];
     const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
+    const isAllowed = allowedOrigins.includes(origin) ||
+        (origin && origin.endsWith('.vercel.app') && origin.includes('singh-automation'));
+    if (isAllowed) {
         res.setHeader('Access-Control-Allow-Origin', origin);
     }
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');

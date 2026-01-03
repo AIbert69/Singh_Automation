@@ -1854,18 +1854,22 @@ function cancelScan() {
         proposalController = null;
     }
     hideLoading();
-    // Reset status indicator
-    document.getElementById('statusText').textContent = 'Ready';
-    document.getElementById('statusDot').style.animation = '';
+    // Reset status indicator (with null checks)
+    const statusTextCancel = document.getElementById('statusText');
+    const statusDotCancel = document.getElementById('statusDot');
+    if (statusTextCancel) statusTextCancel.textContent = 'Ready';
+    if (statusDotCancel) statusDotCancel.style.animation = '';
     log('Operation cancelled', 'info');
 }
 function runInBackground() {
     scanningInBackground = true;
     hideLoading();
     log('Scan running in background...', 'info');
-    // Show subtle indicator in header
-    document.getElementById('statusText').textContent = 'Scanning...';
-    document.getElementById('statusDot').style.animation = 'pulse 1s infinite';
+    // Show subtle indicator in header (with null checks)
+    const statusTextBg = document.getElementById('statusText');
+    const statusDotBg = document.getElementById('statusDot');
+    if (statusTextBg) statusTextBg.textContent = 'Scanning...';
+    if (statusDotBg) statusDotBg.style.animation = 'pulse 1s infinite';
 }
 
 // ========== API ==========
@@ -2018,12 +2022,18 @@ function processOpportunities(rawOpps, source) {
     
     // Track for recompete detection
     trackSeenOpportunities(rawOpps);
-    
-    // Update status indicators
-    document.getElementById('statusDot').className = 'status-dot live';
-    document.getElementById('statusDot').style.animation = '';
-    document.getElementById('statusText').textContent = source;
-    
+
+    // Update status indicators (with null checks)
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    if (statusDot) {
+        statusDot.className = 'status-dot live';
+        statusDot.style.animation = '';
+    }
+    if (statusText) {
+        statusText.textContent = source;
+    }
+
     // PRODUCTION: Always live mode
     setModeIndicator('live', 'LIVE DATA');
     

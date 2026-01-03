@@ -1,404 +1,410 @@
-# WinScope Integration Guide
-## Adding WinScope to Your Existing Platform
+# Singh Automation Platform - Integration Guide
 
-**Goal:** Keep your beautiful frontend UI, upgrade the backend intelligence.
+## Version 2.0.0 - Architecture Overview
+
+This guide explains the Singh Automation platform architecture, setup, and API usage.
 
 ---
 
-## 📁 File Structure After Integration
+## 📁 Project Structure
 
 ```
-Singh_Automation_Agent/
-├── api/
-│   └── [your existing Vercel API routes]
-├── agent.js                    # Your existing agent
-├── sam.js                      # Your existing SAM integration
-├── index.html                  # Your existing frontend
-├── proposal-editor.html        # Your existing editor
+Singh_Automation/
+├── api/                        # Vercel serverless functions
+│   ├── v1/                     # API v1 endpoints
+│   │   └── scan.js             # Multi-portal scanner
+│   ├── generate.js             # Context generation
+│   ├── generate-proposal.js    # Proposal generation
+│   ├── health.js               # Health check
+│   ├── sam.js                  # Legacy SAM endpoint
+│   └── validate.js             # Opportunity validation
 │
-└── winscope/                   # NEW - WinScope backend
-    ├── winscope_api.py         # Main API server
-    ├── winscope-integration.js # Frontend connector
-    ├── winscope_intelligence_network.py
-    ├── winscope_document_intelligence.py
-    ├── winscope_master_orchestrator.py
-    ├── requirements.txt
-    └── .env                    # API keys
+├── lib/                        # Shared libraries
+│   ├── config.js               # Configuration management
+│   ├── errors.js               # Error handling utilities
+│   ├── qualification.js        # Opportunity scoring logic
+│   └── validation.js           # Input validation (Zod)
+│
+├── middleware/                 # Express/Vercel middleware
+│   ├── cors.js                 # CORS handling
+│   ├── rate-limit.js           # Rate limiting
+│   └── security.js             # Security utilities
+│
+├── tests/                      # Jest test suites
+│   ├── qualification.test.js
+│   ├── validation.test.js
+│   └── errors.test.js
+│
+├── agent.js                    # Frontend agent
+├── index.html                  # Main dashboard
+├── proposal-editor.html        # Proposal editor
+├── winscope-integration.js     # WinScope connector
+├── winscope_api.py             # Python backend (optional)
+│
+├── package.json                # Dependencies
+├── jest.config.js              # Test configuration
+├── vercel.json                 # Deployment config
+├── .env.example                # Environment template
+└── .gitignore                  # Git ignore rules
 ```
 
 ---
 
-## 🚀 Step-by-Step Integration
+## 🚀 Quick Start
 
-### Step 1: Add WinScope Files to Your Repo
-
-```bash
-cd Singh_Automation_Agent
-
-# Create winscope directory
-mkdir winscope
-cd winscope
-
-# Copy all WinScope files here:
-# - winscope_api.py
-# - winscope-integration.js
-# - winscope_intelligence_network.py
-# - winscope_document_intelligence.py
-# - winscope_master_orchestrator.py
-# - requirements.txt
-```
-
-### Step 2: Configure Environment Variables
-
-Create `winscope/.env`:
+### 1. Install Dependencies
 
 ```bash
-# WinScope Configuration
-ANTHROPIC_API_KEY=your-anthropic-key-here
-SAM_GOV_API_KEY=your-sam-api-key-here
-
-# Company Profile
-COMPANY_NAME=Singh Automation
-COMPANY_UEI=GJ1DPYQ3X8K5
-COMPANY_CAGE=86VF7
-COMPANY_CONTACT=Albert Mizuno
-COMPANY_PHONE=786-344-8955
-COMPANY_EMAIL=albert@singhautomation.com
-
-# NAICS Codes
-NAICS_CODES=333249,541330,541512,541715,237130,333922
+npm install
 ```
 
-### Step 3: Deploy WinScope Backend
-
-**Option A: Deploy to Same VPS as Frontend (Recommended)**
+### 2. Configure Environment
 
 ```bash
-# SSH into your server
-cd /path/to/Singh_Automation_Agent/winscope
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Install Playwright browsers
-playwright install chromium
-
-# Run WinScope API (production)
-uvicorn winscope_api:app --host 0.0.0.0 --port 8000 --workers 2
-
-# Or run with PM2 for auto-restart
-pm2 start "uvicorn winscope_api:app --host 0.0.0.0 --port 8000" --name winscope-api
-pm2 save
+cp .env.example .env
+# Edit .env with your API keys
 ```
 
-**Option B: Deploy to Separate VPS**
+**Required:**
+- `SAM_API_KEY` - Get from https://api.sam.gov/
+
+**Optional:**
+- `ANTHROPIC_API_KEY` - For AI-powered proposal generation
+- `WINSCOPE_API_URL` - Custom backend URL
+
+### 3. Run Development Server
 
 ```bash
-# On a new VPS (DigitalOcean $20/month droplet)
-git clone https://github.com/Albert69/Singh_Automation_Agent.git
-cd Singh_Automation_Agent/winscope
-
-# Same installation steps as above
-pip install -r requirements.txt
-playwright install chromium
-uvicorn winscope_api:app --host 0.0.0.0 --port 8000
-
-# Note the server IP address for frontend configuration
+npm run dev
+# Opens at http://localhost:3000
 ```
 
-### Step 4: Update Your Frontend
+### 4. Run Tests
 
-**A) Add WinScope Integration Script to index.html**
-
-In your `index.html`, before the closing `</head>` tag:
-
-```html
-<!-- WinScope Integration -->
-<script src="winscope/winscope-integration.js"></script>
-<script>
-    // Configure WinScope API URL
-    WinScope.config.apiUrl = 'http://YOUR_SERVER_IP:8000';
-    // For production: 'https://api.your-domain.com'
-</script>
+```bash
+npm test
+npm run test:coverage
 ```
 
-**B) Modify Your "Scan Live Data" Button Handler**
+---
 
-In your existing `agent.js` or wherever you handle the scan button:
+## 🔌 API Reference
 
-**OLD CODE:**
-```javascript
-async function handleScanClick() {
-    // Your current scraping logic
-    const opportunities = await scrapeSAM();
-    displayOpportunities(opportunities);
-}
+### API Versioning
+
+All APIs are versioned. Current version: **v1**
+
+| Endpoint | Description |
+|----------|-------------|
+| `/api/v1/scan` | Scan procurement portals |
+| `/api/v1/validate` | Validate opportunities |
+| `/api/v1/generate` | Generate proposal context |
+| `/api/v1/rfq` | Generate RFQ documents |
+| `/api/v1/health` | Health check |
+
+### Scan Portals
+
+```http
+GET /api/v1/scan
 ```
 
-**NEW CODE:**
-```javascript
-async function handleScanClick() {
-    try {
-        showLoadingIndicator('Scanning 50+ portals...');
-        
-        // Use WinScope instead of your old scraper
-        const scanResult = await WinScope.scanPortals();
-        
-        // Get discovered opportunities
-        const opportunities = await WinScope.getOpportunities({
-            minScore: 50,  // Only show matches >=50%
-            limit: 100
-        });
-        
-        hideLoadingIndicator();
-        displayOpportunities(opportunities);
-        
-        // Update stats
-        updateStats({
-            total: opportunities.length,
-            qualified: opportunities.filter(o => o.match_score >= 65).length,
-            highScore: opportunities.filter(o => o.match_score >= 80).length
-        });
-        
-    } catch (error) {
-        console.error('Scan failed:', error);
-        showError('Scan failed. Please try again.');
+**Response:**
+```json
+{
+  "success": true,
+  "count": 47,
+  "stats": {
+    "total": 47,
+    "federal": 12,
+    "sbir": 8,
+    "grants": 5,
+    "state": 3,
+    "county": 18,
+    "go": 15,
+    "review": 20,
+    "nogo": 12
+  },
+  "opportunities": [
+    {
+      "id": "abc123",
+      "title": "Robotic Welding System",
+      "agency": "US Navy",
+      "naicsCode": "333249",
+      "value": 2500000,
+      "status": "GO",
+      "qualification": {
+        "status": "GO",
+        "score": 75,
+        "reason": "Strong match: robotic/welding"
+      }
     }
+  ],
+  "requestId": "req_abc123",
+  "apiVersion": "v1"
 }
 ```
 
-**C) Modify Your "Request Distributor Quote" Button Handler**
+### Email Subscription
 
-**OLD CODE:**
-```javascript
-async function handleQuoteRequest(opportunityId) {
-    // Your current RFQ generation
-    const rfq = generateBasicRFQ(opportunity);
-    // Returns RFQ with "TBD" fields
-}
-```
+```http
+POST /api/v1/scan
+Content-Type: application/json
 
-**NEW CODE:**
-```javascript
-async function handleQuoteRequest(opportunityId) {
-    try {
-        showLoadingIndicator('Processing documents and generating RFQ...');
-        
-        // Use WinScope to get REAL data
-        const rfq = await WinScope.completeWorkflow(opportunityId);
-        
-        hideLoadingIndicator();
-        
-        // Display RFQ (with real data, no TBDs!)
-        displayRFQ({
-            document: rfq.rfqDocument,
-            confidence: rfq.fulfillmentConfidence,
-            lineItems: rfq.lineItemsCount
-        });
-        
-    } catch (error) {
-        console.error('RFQ generation failed:', error);
-        showError('Could not generate RFQ. Please try again.');
-    }
-}
-```
-
-**D) Update Your Opportunity Display**
-
-Modify your opportunity card renderer to show WinScope data:
-
-```javascript
-function renderOpportunityCard(opp) {
-    return `
-        <div class="opportunity-card" data-score="${opp.match_score}">
-            <div class="score-badge">${opp.match_score}%</div>
-            <h3>${opp.title}</h3>
-            <p class="agency">${opp.agency}</p>
-            <p class="portal-badge">${opp.source_portal}</p>
-            
-            <div class="metadata">
-                <span>Value: ${opp.estimated_value ? '$' + (opp.estimated_value/1000000).toFixed(1) + 'M' : 'TBD'}</span>
-                <span>Due: ${formatDate(opp.due_date)}</span>
-                <span>${opp.set_aside || 'Unrestricted'}</span>
-            </div>
-            
-            ${opp.match_score >= 65 ? `
-                <button onclick="requestQuote('${opp.id}')" class="quote-btn">
-                    📋 Request Distributor Quote
-                </button>
-            ` : ''}
-        </div>
-    `;
+{
+  "email": "user@example.com",
+  "frequency": "daily"  // daily | weekly | immediate
 }
 ```
 
 ---
 
-## 🔄 What Changes
+## 🎯 Qualification Logic
 
-### Before WinScope:
-```
-User clicks "Scan" 
-  → Scrapes SAM.gov only
-  → Shows basic opportunities
-  → User clicks "Request Quote"
-  → Gets RFQ with "TBD" everywhere
+Opportunities are scored using the following algorithm:
+
+### Scoring Points
+
+| Factor | Points | Description |
+|--------|--------|-------------|
+| NAICS Match | 30 | Primary NAICS code matches company |
+| Keyword Match | 5 each | Title/description contains keywords |
+| Set-Aside | 20 | Compatible set-aside type |
+
+### Thresholds
+
+| Score | Status | Action |
+|-------|--------|--------|
+| ≥50 | GO | Recommend pursuing |
+| 25-49 | Review | Manual review needed |
+| <25 | Review | Low match, review for fit |
+
+### Automatic Disqualifications
+
+- SDVOSB set-asides
+- 8(a) program requirements
+- HUBZone set-asides
+- Contract vehicle restrictions (SeaPort, OASIS, GSA MAS, etc.)
+
+---
+
+## 🔒 Security Features
+
+### Rate Limiting
+
+- Default: 60 requests/minute per IP
+- Scan endpoint: 5 requests/minute
+- Configurable via environment variables
+
+### CORS
+
+Origins are validated against an allowlist. Configure in `.env`:
+
+```bash
+ALLOWED_ORIGINS=https://yourapp.com,https://staging.yourapp.com
 ```
 
-### After WinScope:
-```
-User clicks "Scan"
-  → WinScope scans 50+ portals simultaneously
-  → AI scores each opportunity (0-100)
-  → Shows high-quality matches
+### Input Validation
 
-User clicks "Request Quote"
-  → WinScope downloads actual solicitation docs
-  → Extracts BOMs, quantities, delivery location
-  → Generates RFQ with REAL data
-  → No more "TBD" fields!
+All inputs are validated using Zod schemas. Invalid inputs return 400 errors:
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Validation failed",
+    "errors": ["email: Invalid email address"]
+  }
+}
+```
+
+### XSS Prevention
+
+- Frontend uses DOM manipulation (no innerHTML with user data)
+- Event delegation instead of inline onclick handlers
+- All IDs validated with regex: `/^[a-zA-Z0-9_-]+$/`
+
+---
+
+## 🧪 Testing
+
+### Run All Tests
+
+```bash
+npm test
+```
+
+### Run with Coverage
+
+```bash
+npm run test:coverage
+```
+
+### Test Structure
+
+```
+tests/
+├── qualification.test.js   # Scoring logic tests
+├── validation.test.js      # Input validation tests
+└── errors.test.js          # Error handling tests
+```
+
+### Coverage Thresholds
+
+- Branches: 70%
+- Functions: 70%
+- Lines: 70%
+- Statements: 70%
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `SAM_API_KEY` | Yes | - | SAM.gov API key |
+| `ANTHROPIC_API_KEY` | No | - | Claude API key |
+| `WINSCOPE_API_URL` | No | localhost:8000 | Backend URL |
+| `ALLOWED_ORIGINS` | No | localhost:3000 | CORS origins |
+| `RATE_LIMIT_MAX` | No | 60 | Max requests/min |
+| `FETCH_TIMEOUT_MS` | No | 8000 | API timeout |
+| `DEBUG_MODE` | No | false | Enable debug logs |
+
+### Company Profile
+
+Edit `lib/config.js` to customize:
+
+```javascript
+companyProfile: {
+    naicsCodes: ['333249', '333922', '541330'],
+    keywords: ['robotic', 'welding', 'automation'],
+    certifications: ['Small Business', 'MBE'],
+    // ...
+}
 ```
 
 ---
 
-## 🎯 Quick Test
+## 🚀 Deployment
 
-After integration, test the workflow:
+### Vercel (Recommended)
 
-```javascript
-// In browser console:
+```bash
+# Install Vercel CLI
+npm i -g vercel
 
-// 1. Scan portals
-await WinScope.scanPortals();
+# Deploy
+vercel
 
-// 2. Get opportunities
-const opps = await WinScope.getOpportunities();
-console.log(`Found ${opps.length} opportunities`);
-
-// 3. Generate RFQ for top opportunity
-const topOpp = opps[0];
-const rfq = await WinScope.completeWorkflow(topOpp.id);
-console.log(rfq.rfqDocument);
-// Should show RFQ with real data!
+# Set environment variables
+vercel env add SAM_API_KEY
 ```
 
----
+### Manual Deployment
 
-## 🔧 Configuration Options
-
-### Customize Scoring Thresholds
-
-In `winscope-integration.js`:
-
-```javascript
-WinScope.config.minMatchScore = 60;  // Only show opps >= 60%
-WinScope.config.autoProcessThreshold = 85;  // Auto-process >= 85%
-```
-
-### Add Custom Portals
-
-In `winscope_intelligence_network.py`, add to `PortalRegistry.get_all_portals()`:
-
-```python
-PortalConfig(
-    name="Your Custom Portal",
-    url="https://customportal.gov",
-    portal_type=PortalType.STATE_WEB,
-    strategy=ScrapingStrategy.PLAYWRIGHT,
-    scrape_frequency_hours=12,
-    naics_codes=["333249"],
-    keywords=["automation"],
-    selectors={
-        "opportunity_list": "div.opp-card",
-        "title": "h3.title"
-    }
-)
-```
+1. Build: `npm run build`
+2. Upload to your hosting provider
+3. Set environment variables
+4. Configure CORS for your domain
 
 ---
 
 ## 📊 Monitoring
 
-View WinScope status and metrics:
+### Health Check
 
-```javascript
-// Get platform stats
-const stats = await WinScope.getStats();
-console.log(stats);
-// {
-//   total_opportunities: 41,
-//   high_score_count: 12,
-//   qualified_count: 22,
-//   portals_monitored: 50,
-//   backend_status: "connected"
-// }
+```http
+GET /api/v1/health
+```
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-12-31T21:00:00.000Z",
+  "services": {
+    "sam": "configured",
+    "anthropic": "configured"
+  }
+}
+```
+
+### Request Tracing
+
+All API responses include a `requestId` for correlation:
+
+```json
+{
+  "requestId": "req_1234567_abc123xyz",
+  "timestamp": "2024-12-31T21:00:00.000Z"
+}
 ```
 
 ---
 
-## 🚨 Troubleshooting
+## 🔄 Migration from v1.x
 
-### Backend Not Connecting
+### Breaking Changes
 
-```javascript
-// Check if WinScope API is running
-fetch('http://YOUR_SERVER_IP:8000/')
-    .then(r => r.json())
-    .then(console.log);
+1. **API Key Required**: `SAM_API_KEY` environment variable is now required. Hardcoded fallback removed.
 
-// Should return: { status: "online", service: "WinScope API", ... }
-```
+2. **API Versioning**: New endpoints use `/api/v1/` prefix. Legacy endpoints (`/api/sam`) still work but are deprecated.
 
-### CORS Errors
+3. **CORS**: Wildcard CORS removed. Configure `ALLOWED_ORIGINS` for your domains.
 
-In `winscope_api.py`, add your frontend URL to allowed origins:
+### Migration Steps
 
-```python
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://singh-automation.vercel.app",
-        "https://your-custom-domain.com"  # Add this
-    ],
-    ...
-)
-```
-
-### Scraping Failures
-
-Check WinScope logs:
-
-```bash
-# View API logs
-pm2 logs winscope-api
-
-# Or if running directly:
-tail -f winscope.log
-```
+1. Set `SAM_API_KEY` environment variable
+2. Update frontend to use `/api/v1/scan` endpoint
+3. Configure `ALLOWED_ORIGINS` for production domain
+4. Test all functionality
 
 ---
 
-## 🎉 You're Done!
+## 🤝 Contributing
 
-Your platform now has:
-
-✅ **50+ portal monitoring** (vs. just SAM.gov)  
-✅ **AI-powered scoring** (0-100 match quality)  
-✅ **Real document extraction** (no more TBDs)  
-✅ **Complete RFQ generation** (with actual data)  
-✅ **Continuous learning** (gets smarter over time)
-
-**Same beautiful UI. Much more powerful backend.**
+1. Fork the repository
+2. Create a feature branch
+3. Write tests for new functionality
+4. Ensure all tests pass: `npm test`
+5. Submit a pull request
 
 ---
 
-## 📞 Need Help?
+## 📞 Support
 
-If something isn't working:
+- **Documentation**: This guide
+- **Issues**: https://github.com/AIbert69/Singh_Automation/issues
+- **Email**: albert@singhautomation.com
 
-1. Check WinScope API status: `curl http://localhost:8000/`
-2. Check browser console for errors
-3. Review API logs: `pm2 logs winscope-api`
-4. Test individual functions in browser console
+---
 
-Contact: albert@singhautomation.com
+## 📋 Changelog
+
+### v2.0.0 (2024-12-31)
+
+**Security**
+- Removed hardcoded API keys
+- Fixed XSS vulnerabilities in agent.js
+- Fixed race condition in scan processing
+- Added input validation with Zod
+- Restricted CORS to allowlisted origins
+
+**Features**
+- Added API versioning (v1)
+- Added rate limiting middleware
+- Added comprehensive error handling with retry logic
+- Added Jest test suite
+
+**Architecture**
+- Created shared lib/ modules
+- Added middleware layer
+- Improved code organization
+- Added JSDoc documentation
+
+**DevOps**
+- Added package.json
+- Added .env.example
+- Added .gitignore
+- Added jest.config.js

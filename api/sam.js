@@ -12,16 +12,39 @@ export default async function handler(req, res) {
     
     log('info', 'SAM.gov scan started');
     
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // CORS - Restrict to allowed origins only
+    const allowedOrigins = [
+        'https://singh-automation.vercel.app',
+        'https://singhautomation.com',
+        'http://localhost:3000',
+        'http://localhost:5173'
+    ];
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     if (req.method === 'OPTIONS') return res.status(200).end();
-    
+
     if (req.method === 'POST') {
         return handleEmailSubscription(req, res, requestId, log);
     }
-    
-    const SAM_KEY = process.env.SAM_API_KEY || 'SAM-747578b6-9d9c-4787-acd6-7e17dae04795';
+
+    // REQUIRED: SAM API key from environment - no hardcoded fallback
+    const SAM_KEY = process.env.SAM_API_KEY;
+    if (!SAM_KEY) {
+        log('error', 'SAM_API_KEY not configured');
+        return res.status(503).json({
+            success: false,
+            error: {
+                message: 'Service unavailable: SAM.gov API key not configured',
+                code: 'API_KEY_MISSING'
+            },
+            requestId
+        });
+    }
     const today = new Date();
     const ago = new Date(today); ago.setDate(ago.getDate() - 60);
     const fmt = d => `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;

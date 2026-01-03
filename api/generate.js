@@ -10,9 +10,15 @@ export default async function handler(req, res) {
         console.log(JSON.stringify({ level, requestId, timestamp: new Date().toISOString(), message, ...data }));
     };
     
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // CORS - Restrict to allowed origins
+    const allowedOrigins = ['https://singh-automation.vercel.app', 'https://singhautomation.com', 'http://localhost:3000', 'http://localhost:5173'];
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     // HARD REQUIREMENT: Server-side API key only

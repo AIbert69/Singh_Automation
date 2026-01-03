@@ -3405,7 +3405,8 @@ async function generateProposalForId(id) {
     log(`Redirecting to Agent_SAM for: ${o.title}`, 'info');
     
     // Set context and navigate to Agent_SAM
-    document.getElementById('agentContext').value = id;
+    const agentContextEl = document.getElementById('agentContext');
+    if (agentContextEl) agentContextEl.value = id;
     agentContext = o;
     addAgentMessage(`📍 Context set to: <strong>${o.title}</strong>`, 'agent');
     askAgent('Help me create a winning proposal for this opportunity. What are the key discriminators and win themes?');
@@ -3777,7 +3778,8 @@ async function sendToAgent() {
 }
 
 function askAgent(question) {
-    document.getElementById('agentInput').value = question;
+    const agentInputEl = document.getElementById('agentInput');
+    if (agentInputEl) agentInputEl.value = question;
     sendToAgent();
 }
 
@@ -4947,8 +4949,9 @@ ${body}
 
 ---
 Give me specific suggestions to make this more compelling and increase response rate. Also suggest any personalization based on their contract.`;
-    
-    document.getElementById('agentInput').value = question;
+
+    const agentInputEl = document.getElementById('agentInput');
+    if (agentInputEl) agentInputEl.value = question;
     setTimeout(() => sendToAgent(), 300);
 }
 
@@ -5172,7 +5175,8 @@ ${(o.description || 'No description available').substring(0, 800)}
    - What do we need to do in the next 48 hours?
    - Who needs to be involved?`;
 
-    document.getElementById('agentInput').value = reviewRequest;
+    const agentInputEl = document.getElementById('agentInput');
+    if (agentInputEl) agentInputEl.value = reviewRequest;
     setTimeout(() => sendToAgent(), 300);
 }
 

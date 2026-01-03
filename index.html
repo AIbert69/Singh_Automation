@@ -2143,10 +2143,7 @@ function processOpportunities(rawOpps, source) {
     initAgent();
 }
 
-// PRODUCTION: Demo data removed - all data must come from live sources
-function loadDemoData() {
-    throw new Error('FATAL: loadDemoData called in production mode. Demo functions are disabled.');
-}
+// Note: loadDemoData() is defined above as fallback when API is unavailable
 
 // Generate proper source link from opportunity data
 function getSamLink(o) {
@@ -4556,9 +4553,10 @@ document.addEventListener('click', e => {
         e.target.classList.add('active');
         renderOpps();
     }
-    if (e.target.closest('.opp-card')) {
-        const card = e.target.closest('.opp-card');
-        if (card.dataset.id) showDetail(card.dataset.id);
+    // Handle clicks on opportunity rows/cards (supports both .opp-row and .opp-card)
+    const oppElement = e.target.closest('.opp-row') || e.target.closest('.opp-card');
+    if (oppElement && oppElement.dataset.id) {
+        showDetail(oppElement.dataset.id);
     }
 });
 

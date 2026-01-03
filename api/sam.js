@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     
     log('info', 'SAM.gov scan started');
     
-    // CORS - Restrict to allowed origins only
+    // CORS - Allow production, preview deployments, and local development
     const allowedOrigins = [
         'https://singh-automation.vercel.app',
         'https://singhautomation.com',
@@ -20,7 +20,10 @@ export default async function handler(req, res) {
         'http://localhost:5173'
     ];
     const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
+    // Check exact match or Vercel preview deployments
+    const isAllowed = allowedOrigins.includes(origin) ||
+        (origin && origin.endsWith('.vercel.app') && origin.includes('singh-automation'));
+    if (isAllowed) {
         res.setHeader('Access-Control-Allow-Origin', origin);
     }
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');

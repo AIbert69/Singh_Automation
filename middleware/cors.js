@@ -24,6 +24,11 @@ function isOriginAllowed(origin) {
     // Exact match
     if (allowed.includes(origin)) return true;
 
+    // Check for Vercel preview deployment pattern
+    if (config.cors.allowedOriginPattern && config.cors.allowedOriginPattern.test(origin)) {
+        return true;
+    }
+
     // Check for wildcard patterns (e.g., *.vercel.app)
     for (const pattern of allowed) {
         if (pattern.startsWith('*.')) {

@@ -287,9 +287,7 @@ export default async function handler(req, res) {
               new TextRun({ text: title, bold: true, size: 22 }),
               new TextRun({ text: `. As a `, size: 22 }),
               new TextRun({ text: "FANUC Authorized System Integrator", bold: true, size: 22, color: "1B4F72" }),
-              new TextRun({ text: " and ", size: 22 }),
-              new TextRun({ text: "Universal Robots Certified Systems Partner", bold: true, size: 22, color: "1B4F72" }),
-              new TextRun({ text: ", Singh Automation offers a proven, technically excellent solution backed by direct OEM relationships.", size: 22 })
+              new TextRun({ text: " and certified Small Business, Singh Automation offers a proven, technically excellent solution backed by direct OEM partnership.", size: 22 })
             ]
           }),
           
@@ -636,9 +634,6 @@ export default async function handler(req, res) {
           
           new Paragraph({ spacing: { before: 200 }, children: [new TextRun({ text: "☐  FANUC ASI Certificate", size: 22 })] }),
           actionRequired("Attach current FANUC Authorized System Integrator certificate"),
-          
-          new Paragraph({ spacing: { before: 200 }, children: [new TextRun({ text: "☐  Universal Robots CSP Certificate", size: 22 })] }),
-          actionRequired("Attach current UR Certified Systems Partner certificate"),
           
           new Paragraph({ spacing: { before: 200 }, children: [new TextRun({ text: "☐  SAM.gov Registration", size: 22 })] }),
           para("     Verify registration is current and active"),

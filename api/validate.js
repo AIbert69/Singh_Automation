@@ -7,7 +7,7 @@ const SINGH_PROFILE = {
     cage: '86VF7',
     uei: 'GJ1DPYQ3X8K5',
     naics: ['333249', '333922', '541330', '541512', '541715', '238210'],
-    certifications: ['Small Business', 'MBE', 'WBENC', 'FANUC ASI', 'UR CSP'],
+    certifications: ['Small Business', 'MBE', 'WBENC', 'FANUC ASI'],
     locations: ['Kalamazoo, MI', 'Irvine, CA'],
     capabilities: [
         'FANUC robotic integration',

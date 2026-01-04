@@ -123,7 +123,6 @@ California Office: 300 Spectrum Center Dr, Suite 400, Irvine, CA 92618
 
 CAPABILITIES:
 - FANUC Authorized System Integrator (robotics, welding, material handling)
-- Universal Robots Certified Systems Partner (collaborative robots)
 - PLC/SCADA Controls (Allen-Bradley, Siemens)
 - Machine Vision Systems & AI
 - Conveyor Systems & Material Handling
@@ -139,7 +138,7 @@ KEY PERSONNEL:
 
 NAICS CODES: 333249, 333922, 541330, 541512, 541715, 238210
 
-CERTIFICATIONS: Small Business, MBE, WBENC, FANUC ASI, Universal Robots CSP
+CERTIFICATIONS: Small Business, MBE, WBENC, FANUC ASI
 
 ═══════════════════════════════════════════════════════════════════════════════
 🧠 AGENT MEMORY - TRAINING DATA (IMPORTANT!)

@@ -425,9 +425,7 @@ export default async function handler(req, res) {
               new TextRun({ text: title, bold: true, size: 22, font: "Times New Roman" }),
               new TextRun({ text: `. As a `, size: 22, font: "Times New Roman" }),
               new TextRun({ text: "FANUC Authorized System Integrator", bold: true, size: 22, font: "Times New Roman", color: navy }),
-              new TextRun({ text: " and ", size: 22, font: "Times New Roman" }),
-              new TextRun({ text: "Universal Robots Certified Systems Partner", bold: true, size: 22, font: "Times New Roman", color: navy }),
-              new TextRun({ text: ", we offer proven technical excellence backed by direct OEM partnerships.", size: 22, font: "Times New Roman" })
+              new TextRun({ text: ", we offer proven technical excellence backed by direct OEM partnership and certified Small Business status.", size: 22, font: "Times New Roman" })
             ]
           }),
 
@@ -957,14 +955,9 @@ export default async function handler(req, res) {
                 new TableCell({ borders: cellBorders, shading: altRowShading, width: { size: 2100, type: WidthType.DXA }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Operations", size: 18 })] })] })
               ]}),
               new TableRow({ children: [
-                new TableCell({ borders: cellBorders, width: { size: 5460, type: WidthType.DXA }, children: [para("Universal Robots CSP Certificate")] }),
-                new TableCell({ borders: cellBorders, width: { size: 1800, type: WidthType.DXA }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "☐ Pending", size: 18 })] })] }),
-                new TableCell({ borders: cellBorders, width: { size: 2100, type: WidthType.DXA }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Operations", size: 18 })] })] })
-              ]}),
-              new TableRow({ children: [
-                new TableCell({ borders: cellBorders, shading: altRowShading, width: { size: 5460, type: WidthType.DXA }, children: [para("SAM.gov Registration (Active)")] }),
-                new TableCell({ borders: cellBorders, shading: altRowShading, width: { size: 1800, type: WidthType.DXA }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "☑ Complete", size: 18, color: "2E7D32" })] })] }),
-                new TableCell({ borders: cellBorders, shading: altRowShading, width: { size: 2100, type: WidthType.DXA }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Compliance", size: 18 })] })] })
+                new TableCell({ borders: cellBorders, width: { size: 5460, type: WidthType.DXA }, children: [para("SAM.gov Registration (Active)")] }),
+                new TableCell({ borders: cellBorders, width: { size: 1800, type: WidthType.DXA }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "☑ Complete", size: 18, color: "2E7D32" })] })] }),
+                new TableCell({ borders: cellBorders, width: { size: 2100, type: WidthType.DXA }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Compliance", size: 18 })] })] })
               ]}),
               new TableRow({ children: [
                 new TableCell({ borders: cellBorders, width: { size: 5460, type: WidthType.DXA }, children: [para("W-9 Form (Current)")] }),

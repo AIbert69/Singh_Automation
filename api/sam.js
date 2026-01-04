@@ -658,14 +658,29 @@ export default async function handler(req, res) {
         });
     }
 
-    // ========== 8. FORECAST OPPORTUNITIES ==========
+    // ========== 8. AUTOMATED STATE/LOCAL SCRAPING ==========
+    // Scrape PublicPurchase.com for CA and MI opportunities
+    try {
+        const stateLocalOpps = await scrapeStateLocalPortals(log, seenIds);
+        for (const opp of stateLocalOpps) {
+            if (!seenIds.has(opp.id)) {
+                seenIds.add(opp.id);
+                allOpps.push(opp);
+            }
+        }
+        log('info', 'State/local scraping complete', { count: stateLocalOpps.length });
+    } catch (e) {
+        log('warn', 'State/local scraping failed', { error: e.message });
+    }
+
+    // ========== 9. FORECAST OPPORTUNITIES ==========
     const forecastOpps = [
-        { id: 'fc-1', title: 'Navy Shipyard Automation Program (Forecast)', agency: 'NAVSEA', 
-          solicitation: 'NAVSEA-FY25-AUTO', value: 2500000, closeDate: '2025-06-01', 
+        { id: 'fc-1', title: 'Navy Shipyard Automation Program (Forecast)', agency: 'NAVSEA',
+          solicitation: 'NAVSEA-FY25-AUTO', value: 2500000, closeDate: '2026-06-01',
           description: 'Upcoming automation and robotics modernization for naval shipyards. Pre-RFP stage.',
           link: 'https://sam.gov', setAside: 'Full & Open' },
-        { id: 'fc-2', title: 'Army Depot Welding Cells (Forecast)', agency: 'US Army TACOM', 
-          solicitation: 'TACOM-FY25-WELD', value: 1800000, closeDate: '2025-04-15', 
+        { id: 'fc-2', title: 'Army Depot Welding Cells (Forecast)', agency: 'US Army TACOM',
+          solicitation: 'TACOM-FY25-WELD', value: 1800000, closeDate: '2026-04-15',
           description: 'Multiple robotic welding cells for vehicle repair depots. Sources sought expected Q1.',
           link: 'https://sam.gov', setAside: 'Small Business' },
     ];
@@ -725,6 +740,7 @@ export default async function handler(req, res) {
         grants: allOpps.filter(o => o.type === 'grant').length,
         state: allOpps.filter(o => o.type === 'state').length,
         county: allOpps.filter(o => o.type === 'county').length,
+        stateLocal: allOpps.filter(o => o.type === 'state-local').length,  // Scraped from aggregators
         dibbs: allOpps.filter(o => o.type === 'dibbs').length,
         forecast: allOpps.filter(o => o.type === 'forecast').length,
         qualified: allOpps.filter(o => o.status === 'GO' || o.status === 'Review').length,
@@ -732,7 +748,8 @@ export default async function handler(req, res) {
         review: allOpps.filter(o => o.status === 'Review').length,
         nogo: allOpps.filter(o => o.status === 'NO-GO').length,
         totalValue: allOpps.filter(o => o.value).reduce((sum, o) => sum + (o.value || 0), 0),
-        portals: allOpps.filter(o => o.isPortal).length
+        portals: allOpps.filter(o => o.isPortal).length,
+        sources: ['SAM.gov', 'SBIR.gov', 'Grants.gov', 'PublicPurchase', 'BidNet', 'GovBids']
     };
     
     const totalTime = Date.now() - startTime;
@@ -807,4 +824,237 @@ function handleEmailSubscription(req, res, requestId, log) {
     }
     log('info', 'Email subscription', { email, frequency });
     return res.status(200).json({ success: true, message: `Subscribed ${email}`, requestId });
+}
+
+// ========== STATE/LOCAL PROCUREMENT SCRAPERS ==========
+// Automated scraping of PublicPurchase, BidNet, and other aggregators
+
+async function scrapeStateLocalPortals(log, seenIds) {
+    const opportunities = [];
+    const keywords = ['automation', 'robotic', 'welding', 'PLC', 'SCADA', 'conveyor', 'controls', 'manufacturing'];
+
+    // 1. PublicPurchase.com - Covers many CA and MI agencies
+    try {
+        const ppOpps = await scrapePublicPurchase(keywords, log);
+        opportunities.push(...ppOpps);
+    } catch (e) {
+        log('warn', 'PublicPurchase scrape failed', { error: e.message });
+    }
+
+    // 2. BidNet Direct - State/local aggregator
+    try {
+        const bnOpps = await scrapeBidNet(keywords, log);
+        opportunities.push(...bnOpps);
+    } catch (e) {
+        log('warn', 'BidNet scrape failed', { error: e.message });
+    }
+
+    // 3. GovBids - Another aggregator
+    try {
+        const gbOpps = await scrapeGovBids(keywords, log);
+        opportunities.push(...gbOpps);
+    } catch (e) {
+        log('warn', 'GovBids scrape failed', { error: e.message });
+    }
+
+    return opportunities;
+}
+
+async function scrapePublicPurchase(keywords, log) {
+    const opportunities = [];
+    const regions = ['CA', 'MI'];
+
+    for (const region of regions) {
+        for (const keyword of keywords.slice(0, 3)) {
+            try {
+                const searchUrl = `https://www.publicpurchase.com/gems/browse/browseByAdvanced.html?state=${region}&keyword=${encodeURIComponent(keyword)}&status=O`;
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+                const response = await fetch(searchUrl, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                    },
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) continue;
+
+                const html = await response.text();
+
+                // Parse bid listings from HTML
+                const bidPattern = /<a\s+href="[^"]*bidView\.html\?bidId=(\d+)"[^>]*>\s*([^<]+)/gi;
+                let match;
+
+                while ((match = bidPattern.exec(html)) !== null) {
+                    const bidId = match[1];
+                    const title = match[2].trim();
+
+                    const titleLower = title.toLowerCase();
+                    const isRelevant = keywords.some(kw => titleLower.includes(kw.toLowerCase()));
+
+                    if (isRelevant) {
+                        opportunities.push({
+                            id: `pp-${region}-${bidId}`,
+                            noticeId: `pp-${region}-${bidId}`,
+                            title: title,
+                            agency: `${region} Agency via PublicPurchase`,
+                            link: `https://www.publicpurchase.com/gems/bid/bidView.html?bidId=${bidId}`,
+                            source: 'PublicPurchase',
+                            type: 'state-local',
+                            category: region === 'CA' ? 'California' : 'Michigan',
+                            state: region,
+                            isLive: true,
+                            postedDate: new Date().toISOString().split('T')[0],
+                            status: 'Review',
+                            statusReason: `${region} state/local opportunity`,
+                            qualification: { status: 'Review', reason: `PublicPurchase ${region} - matched: ${keyword}` }
+                        });
+                    }
+                }
+
+            } catch (e) {
+                // Continue on individual failures
+            }
+        }
+    }
+
+    log('info', 'PublicPurchase scrape done', { count: opportunities.length });
+    return opportunities;
+}
+
+async function scrapeBidNet(keywords, log) {
+    const opportunities = [];
+
+    // BidNet Direct public search pages
+    const states = [
+        { code: 'california', name: 'CA' },
+        { code: 'michigan', name: 'MI' }
+    ];
+
+    for (const state of states) {
+        try {
+            const searchUrl = `https://www.bidnetdirect.com/browse/${state.code}`;
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+            const response = await fetch(searchUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'text/html'
+                },
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) continue;
+
+            const html = await response.text();
+
+            // Parse bid listings
+            const bidPattern = /href="\/[^"]*?\/bids?\/([^"\/]+)"[^>]*>\s*([^<]+)/gi;
+            let match;
+
+            while ((match = bidPattern.exec(html)) !== null) {
+                const bidId = match[1];
+                const title = match[2].trim();
+
+                if (!title || title.length < 10) continue;
+
+                const titleLower = title.toLowerCase();
+                const isRelevant = keywords.some(kw => titleLower.includes(kw.toLowerCase()));
+
+                if (isRelevant) {
+                    opportunities.push({
+                        id: `bn-${state.name}-${bidId}`,
+                        noticeId: `bn-${state.name}-${bidId}`,
+                        title: title,
+                        agency: `${state.code.charAt(0).toUpperCase() + state.code.slice(1)} via BidNet`,
+                        link: `https://www.bidnetdirect.com/${state.code}/bids/${bidId}`,
+                        source: 'BidNet',
+                        type: 'state-local',
+                        category: state.name === 'CA' ? 'California' : 'Michigan',
+                        state: state.name,
+                        isLive: true,
+                        postedDate: new Date().toISOString().split('T')[0],
+                        status: 'Review',
+                        statusReason: `${state.name} opportunity via BidNet`,
+                        qualification: { status: 'Review', reason: 'BidNet state/local opportunity' }
+                    });
+                }
+            }
+
+        } catch (e) {
+            // Continue on failures
+        }
+    }
+
+    log('info', 'BidNet scrape done', { count: opportunities.length });
+    return opportunities;
+}
+
+async function scrapeGovBids(keywords, log) {
+    const opportunities = [];
+
+    // GovBids.com - another free aggregator
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+        const response = await fetch('https://www.govbids.com/scripts/bids/search.aspx?cat=Manufacturing', {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'text/html'
+            },
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            const html = await response.text();
+
+            // Parse any automation-related bids
+            const bidPattern = /bid\.aspx\?id=(\d+)[^>]*>\s*([^<]+)/gi;
+            let match;
+
+            while ((match = bidPattern.exec(html)) !== null) {
+                const bidId = match[1];
+                const title = match[2].trim();
+
+                const titleLower = title.toLowerCase();
+                const isRelevant = keywords.some(kw => titleLower.includes(kw.toLowerCase()));
+
+                if (isRelevant) {
+                    opportunities.push({
+                        id: `gb-${bidId}`,
+                        noticeId: `gb-${bidId}`,
+                        title: title,
+                        agency: 'State/Local via GovBids',
+                        link: `https://www.govbids.com/scripts/bids/bid.aspx?id=${bidId}`,
+                        source: 'GovBids',
+                        type: 'state-local',
+                        category: 'State/Local',
+                        isLive: true,
+                        postedDate: new Date().toISOString().split('T')[0],
+                        status: 'Review',
+                        statusReason: 'GovBids opportunity',
+                        qualification: { status: 'Review', reason: 'GovBids state/local opportunity' }
+                    });
+                }
+            }
+        }
+
+    } catch (e) {
+        // Continue on failure
+    }
+
+    log('info', 'GovBids scrape done', { count: opportunities.length });
+    return opportunities;
 }

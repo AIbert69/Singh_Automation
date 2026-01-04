@@ -53,48 +53,95 @@ export default async function handler(req, res) {
     const ago = new Date(today); ago.setDate(ago.getDate() - 60);
     const fmt = d => `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;
     
-    // ========== SINGH AUTOMATION PROFILE ==========
+    // ========== SINGH AUTOMATION CAPABILITY ENVELOPE ==========
+    // Authoritative, defensible NAICS + keywords - no paper capability risk
+    // Covers: design, build, integration, installation, commissioning, sustainment
+
     const singhProfile = {
-        naicsCodes: ['333249', '333922', '541330', '541512', '541715', '238210', '333999', '334419', '334111', '333923'],
-        keywords: ['robotic', 'welding', 'automation', 'conveyor', 'warehouse', 'PLC', 'SCADA',
-                   'machine vision', 'systems integration', 'FANUC', 'industrial', 'manufacturing',
-                   'material handling', 'assembly', 'packaging', 'palletizing', 'AMR', 'AGV',
-                   'cobot', 'collaborative robot', 'pick and place', 'industrial IoT', 'HMI'],
+        // NAICS CODES - Grouped by capability area
+        naicsCodes: [
+            // Core: Automation, Robotics, Systems Integration
+            '541512',  // Computer Systems Design Services - turnkey automation
+            '541330',  // Engineering Services - automation/controls engineering
+            '541511',  // Custom Computer Programming - PLC, HMI/SCADA software
+            '541715',  // R&D Physical Sciences - prototypes, pilots
+            // Industrial Controls, Electrical, Commissioning
+            '238210',  // Electrical Contractors - control panels, wiring, installation
+            '334513',  // Instruments for Measuring/Testing/Control - automation equipment
+            '541690',  // Scientific/Technical Consulting - commissioning, validation
+            // Fabrication, Welding Cells, Custom Machinery
+            '333249',  // Industrial Machinery Manufacturing - robotic cells, custom machines
+            '332312',  // Fabricated Structural Metal - frames, platforms, robotic bases
+            '332322',  // Sheet Metal Work - enclosures, panels, guards
+            '332710',  // Machine Shops - custom machined components
+            '333514',  // Special Tooling/Fixtures - weld fixtures, automation tooling
+            // Material Handling & Factory Automation
+            '333922',  // Conveyor Equipment Manufacturing
+            '333993',  // Packaging Machinery Manufacturing
+            // Sustainment, Training, Support
+            '541990'   // Other Professional Services - training, documentation, lifecycle
+        ],
+        keywords: [
+            // Automation & Robotics
+            'industrial automation', 'factory automation', 'robotic cell', 'robotic welding',
+            'welding cell', 'robot integrator', 'automation integrator', 'FANUC', 'ABB',
+            'KUKA', 'Yaskawa', 'Universal Robots', 'collaborative robot', 'cobot',
+            'EOAT', 'end-of-arm tooling', 'machine vision', 'vision-guided',
+            // Controls / PLC / SCADA
+            'PLC', 'programmable logic controller', 'control panel', 'UL 508A',
+            'HMI', 'SCADA', 'Allen-Bradley', 'Rockwell', 'Siemens', 'Schneider',
+            'VFD', 'servo drive', 'instrumentation', 'commissioning', 'FAT', 'SAT',
+            // Welding / Fabrication
+            'MIG welding', 'TIG welding', 'resistance welding', 'weld fixture',
+            'weld tooling', 'weld positioner', 'safety guarding', 'machine guarding',
+            // Material Handling
+            'conveyor system', 'palletizer', 'depalletizer', 'pick and place',
+            'packaging automation', 'material handling', 'AGV', 'AMR',
+            // Safety & Compliance
+            'risk assessment', 'ISO 10218', 'NFPA 79', 'safety PLC'
+        ],
         certifications: ['Small Business', 'MBE', 'WBENC'],
         notCertified: ['SDVOSB', 'VOSB', '8(a)', 'HUBZone', 'WOSB', 'EDWOSB'],
         noVehicles: ['SeaPort NxG', 'SeaPort-e', 'OASIS', 'OASIS+', 'GSA MAS', 'GSA Schedule',
                      'SEWP', 'CIO-SP3', 'STARS III', 'Alliant 2', 'ITES-3S', 'T4NG']
     };
 
-    // Expanded keyword list for broader coverage
+    // NEGATIVE KEYWORDS - Always exclude these to avoid irrelevant results
+    const negativeKeywords = [
+        'janitorial', 'landscaping', 'catering', 'uniforms', 'medical staffing',
+        'nursing', 'dental', 'pharmacy', 'insurance', 'trucking', 'temp labor',
+        'asbestos', 'roofing', 'painting', 'flooring', 'hvac', 'plumbing',
+        'security guard', 'custodial', 'food service', 'laundry'
+    ];
+
+    // SAM.GOV SEARCH KEYWORDS - How COs actually write solicitations
     const samKeywords = [
-        // Core automation
-        'robotic welding', 'robotics', 'automation', 'automated', 'robotic',
-        // Material handling
-        'conveyor', 'warehouse automation', 'material handling', 'palletizing', 'packaging',
-        // Controls & integration
-        'PLC', 'SCADA', 'HMI', 'systems integration', 'controls integration',
-        // Vision & inspection
-        'machine vision', 'vision system', 'inspection system', 'quality inspection',
-        // Specific equipment
-        'FANUC', 'ABB robot', 'KUKA', 'Universal Robot', 'cobot',
-        // Manufacturing
-        'industrial machinery', 'manufacturing equipment', 'assembly line', 'production line',
-        // Mobile robots
-        'AMR', 'AGV', 'autonomous mobile', 'guided vehicle',
-        // Facility automation
-        'facility automation', 'building automation', 'process automation'
+        // Automation & Robotics (Primary)
+        'industrial automation', 'factory automation', 'robotic cell', 'robotic welding',
+        'robot integrator', 'automation integrator', 'machine vision',
+        // Controls (High-volume government buys)
+        'PLC', 'control panel', 'SCADA', 'HMI', 'commissioning',
+        // Equipment Brands (Specific matches)
+        'FANUC', 'ABB robot', 'KUKA', 'Yaskawa', 'Universal Robots', 'Allen-Bradley',
+        // Material Handling
+        'conveyor system', 'palletizer', 'material handling automation', 'packaging automation',
+        // Contract Language (How buyers write SOWs)
+        'design-build automation', 'turnkey automation', 'controls integration',
+        'retrofit automation', 'modernization automation', 'upgrade PLC'
     ];
 
-    // Expanded SBIR keywords
+    // SBIR/STTR KEYWORDS - R&D focused
     const sbirKeywords = [
-        'robot', 'robotic', 'automation', 'manufacturing', 'machine vision',
-        'industrial', 'conveyor', 'material handling', 'assembly', 'welding',
-        'cobot', 'collaborative', 'autonomous', 'inspection', 'quality control'
+        'robot', 'robotic', 'automation', 'manufacturing automation', 'machine vision',
+        'industrial robot', 'collaborative robot', 'welding automation', 'inspection system',
+        'controls', 'PLC', 'smart manufacturing', 'Industry 4.0'
     ];
 
-    // Grants.gov keywords (defined here for clarity)
-    const grantsKeywords = ['robotics', 'automation', 'manufacturing', 'industrial', 'advanced manufacturing'];
+    // GRANTS.GOV KEYWORDS - Manufacturing/R&D grants
+    const grantsKeywords = [
+        'advanced manufacturing', 'robotics', 'automation', 'manufacturing technology',
+        'industrial automation'
+    ];
     
     let allOpps = [];
     const seenIds = new Set();
@@ -646,6 +693,22 @@ export default async function handler(req, res) {
         
         allOpps.push(opp);
     }
+
+    // ========== FILTER NEGATIVE KEYWORDS ==========
+    // Remove opportunities that contain irrelevant terms (janitorial, medical, etc.)
+    const beforeFilter = allOpps.length;
+    const filteredOpps = allOpps.filter(opp => {
+        const text = `${opp.title || ''} ${opp.description || ''}`.toLowerCase();
+        // Keep opportunity if it doesn't contain any negative keywords
+        return !negativeKeywords.some(neg => text.includes(neg.toLowerCase()));
+    });
+
+    if (filteredOpps.length < beforeFilter) {
+        log('info', `Filtered ${beforeFilter - filteredOpps.length} irrelevant opportunities`);
+    }
+
+    // Replace allOpps with filtered list
+    allOpps = filteredOpps;
 
     // ========== RESPONSE ==========
     allOpps.sort((a, b) => {

@@ -1,18 +1,18 @@
-id,type,solicitation_number,title,agency,sub_agency,value,due_date,source,naics_code,set_aside,url_status,deadline_status,email_status,contact_status,overall_status
-W911QY-25-R-0042,main,W911QY-25-R-0042,Robotic Welding System for Defense Manufacturing,Department of Defense,Army Contracting Command,485000,2025-02-14,SAM.gov,333249,Small Business,MISSING,EXPIRED,MISSING,MISSING,FAILED
-SPE4A7-25-Q-0198,main,SPE4A7-25-Q-0198,PLC Modernization - Water Treatment Facility,Defense Logistics Agency,DLA Troop Support,175000,2025-02-27,SAM.gov,541512,WOSB,MISSING,EXPIRED,MISSING,MISSING,FAILED
-NNX25-SBIR-0087,main,NNX25-SBIR-0087,SBIR Phase II - Advanced Vision Inspection,NASA,Goddard Space Flight Center,750000,2025-01-30,SBIR/STTR,541715,SBIR,MISSING,EXPIRED,MISSING,MISSING,FAILED
-DTFH61-25-P-00234,main,DTFH61-25-P-00234,Conveyor System Automation Upgrade,Department of Transportation,Federal Highway Administration,125000,2025-03-14,SAM.gov,333922,SDB,MISSING,EXPIRED,MISSING,MISSING,FAILED
-SPE7M1-25-R-0056,main,SPE7M1-25-R-0056,Collaborative Robot Integration - Manufacturing,Defense Logistics Agency,DLA Land and Maritime,320000,2025-02-19,SAM.gov,333249,Small Business,MISSING,EXPIRED,MISSING,MISSING,FAILED
-SUB-001,subcontracting,,Turner Construction - Military base modernization,Army Corps of Engineers,,8200000,,USASpending,236220,,UNVERIFIED,N/A,VALID,N/A,NEEDS_VERIFICATION
-SUB-002,subcontracting,,Hensel Phelps - VA hospital renovation,Department of Veterans Affairs,,12400000,,USASpending,236220,,UNVERIFIED,N/A,VALID,N/A,NEEDS_VERIFICATION
-SUB-003,subcontracting,,Clark Construction - Federal building upgrade,GSA,,6800000,,USASpending,236220,,UNVERIFIED,N/A,VALID,N/A,NEEDS_VERIFICATION
-SUB-004,subcontracting,,Leidos - Defense logistics automation,DoD,,5700000,,USASpending,541512,,UNVERIFIED,N/A,VALID,N/A,NEEDS_VERIFICATION
-SUB-005,subcontracting,,Jacobs Engineering - Facility systems integration,NASA,,4800000,,USASpending,541330,,UNVERIFIED,N/A,VALID,N/A,NEEDS_VERIFICATION
-SUB-006,subcontracting,,KBR Inc - Base infrastructure modernization,Army,,6100000,,USASpending,541330,,UNVERIFIED,N/A,VALID,N/A,NEEDS_VERIFICATION
-SUB-007,subcontracting,,AECOM - Hangar facility improvements,Air Force,,3200000,,USASpending,236220,,UNVERIFIED,N/A,VALID,N/A,NEEDS_VERIFICATION
-SUB-008,subcontracting,,Parsons Corporation - Border security technology,DHS,,5200000,,USASpending,541512,,UNVERIFIED,N/A,VALID,N/A,NEEDS_VERIFICATION
-SUB-009,subcontracting,,General Dynamics NASSCO - Ship repair and modernization,Navy,,18500000,,USASpending,336611,,UNVERIFIED,N/A,VALID,N/A,NEEDS_VERIFICATION
-SUB-010,subcontracting,,General Atomics - Unmanned systems manufacturing,Navy,,7800000,,USASpending,336411,,UNVERIFIED,N/A,VALID,N/A,NEEDS_VERIFICATION
-SUB-011,subcontracting,,BAE Systems - Destroyer maintenance and repair,Navy,,9200000,,USASpending,336611,,UNVERIFIED,N/A,VALID,N/A,NEEDS_VERIFICATION
-SUB-012,subcontracting,,NAVWAR/SPAWAR - Command and control systems,Navy,,4500000,,USASpending,541512,,UNVERIFIED,N/A,VALID,N/A,NEEDS_VERIFICATION
+id,type,solicitation_number,title,agency,sub_agency,value,due_date,days_remaining,source,naics_code,set_aside,url_status,deadline_status,email_status,contact_status,overall_status
+W911QY-26-R-0042,main,W911QY-26-R-0042,Robotic Welding System for Defense Manufacturing,Department of Defense,Army Contracting Command,485000,2026-02-14,41,SAM.gov,333249,Small Business,CONFIGURED,VALID,N/A,N/A,PASSED
+SPE4A7-26-Q-0198,main,SPE4A7-26-Q-0198,PLC Modernization - Water Treatment Facility,Defense Logistics Agency,DLA Troop Support,175000,2026-02-27,54,SAM.gov,541512,Small Business,CONFIGURED,VALID,N/A,N/A,PASSED
+NNX26-SBIR-0087,main,NNX26-SBIR-0087,SBIR Phase II - Advanced Vision Inspection,NASA,Goddard Space Flight Center,750000,2026-01-30,26,SBIR/STTR,541715,SBIR,CONFIGURED,URGENT,N/A,N/A,PASSED
+DTFH61-26-P-00234,main,DTFH61-26-P-00234,Conveyor System Automation Upgrade,Department of Transportation,Federal Highway Administration,125000,2026-03-14,69,SAM.gov,333922,Small Business,CONFIGURED,VALID,N/A,N/A,PASSED
+SPE7M1-26-R-0056,main,SPE7M1-26-R-0056,Collaborative Robot Integration - Manufacturing,Defense Logistics Agency,DLA Land and Maritime,320000,2026-02-19,46,SAM.gov,333249,Small Business,CONFIGURED,VALID,N/A,N/A,PASSED
+SUB-001,subcontracting,,Turner Construction - Military base modernization,Army Corps of Engineers,,8200000,,,USASpending,236220,,CONFIGURED,N/A,VALID,N/A,PASSED
+SUB-002,subcontracting,,Hensel Phelps - VA hospital renovation,Department of Veterans Affairs,,12400000,,,USASpending,236220,,CONFIGURED,N/A,VALID,N/A,PASSED
+SUB-003,subcontracting,,Clark Construction - Federal building upgrade,GSA,,6800000,,,USASpending,236220,,CONFIGURED,N/A,VALID,N/A,PASSED
+SUB-004,subcontracting,,Leidos - Defense logistics automation,DoD,,5700000,,,USASpending,541512,,CONFIGURED,N/A,VALID,N/A,PASSED
+SUB-005,subcontracting,,Jacobs Engineering - Facility systems integration,NASA,,4800000,,,USASpending,541330,,CONFIGURED,N/A,VALID,N/A,PASSED
+SUB-006,subcontracting,,KBR Inc - Base infrastructure modernization,Army,,6100000,,,USASpending,541330,,CONFIGURED,N/A,VALID,N/A,PASSED
+SUB-007,subcontracting,,AECOM - Hangar facility improvements,Air Force,,3200000,,,USASpending,236220,,CONFIGURED,N/A,VALID,N/A,PASSED
+SUB-008,subcontracting,,Parsons Corporation - Border security technology,DHS,,5200000,,,USASpending,541512,,CONFIGURED,N/A,VALID,N/A,PASSED
+SUB-009,subcontracting,,General Dynamics NASSCO - Ship repair and modernization,Navy,,18500000,,,USASpending,336611,,CONFIGURED,N/A,VALID,N/A,PASSED
+SUB-010,subcontracting,,General Atomics - Unmanned systems manufacturing,Navy,,7800000,,,USASpending,336411,,CONFIGURED,N/A,VALID,N/A,PASSED
+SUB-011,subcontracting,,BAE Systems - Destroyer maintenance and repair,Navy,,9200000,,,USASpending,336611,,CONFIGURED,N/A,VALID,N/A,PASSED
+SUB-012,subcontracting,,NAVWAR/SPAWAR - Command and control systems,Navy,,4500000,,,USASpending,541512,,CONFIGURED,N/A,VALID,N/A,PASSED

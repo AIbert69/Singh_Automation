@@ -1821,6 +1821,205 @@ function hideDemoWarning() {
     if (banner) banner.remove();
 }
 
+// ========== LINK & EMAIL VALIDATION ==========
+// Cache for validated links
+const linkValidationCache = new Map();
+
+// Validate a URL by checking format and domain (synchronous)
+function validateLink(url) {
+    if (!url) return { valid: false, status: 'missing', message: 'No URL provided' };
+
+    // Check cache first
+    if (linkValidationCache.has(url)) {
+        return linkValidationCache.get(url);
+    }
+
+    // Known working domains (skip validation for these)
+    const trustedDomains = [
+        'sam.gov', 'sbir.gov', 'grants.gov', 'usaspending.gov',
+        'dibbs.bsm.dla.mil', 'navy.mil', 'caleprocure.ca.gov'
+    ];
+
+    try {
+        const urlObj = new URL(url);
+        const domain = urlObj.hostname.replace('www.', '');
+
+        // Check if it's a trusted government domain
+        const isTrusted = trustedDomains.some(d => domain.endsWith(d));
+
+        // For SAM.gov opportunity links, validate the format
+        if (domain.endsWith('sam.gov') && url.includes('/opp/')) {
+            const noticeIdMatch = url.match(/\/opp\/([^\/]+)\//);
+            if (noticeIdMatch && noticeIdMatch[1]) {
+                const noticeId = noticeIdMatch[1];
+                // Check if it's a demo/fake ID
+                if (noticeId.startsWith('DEMO-') || noticeId.includes('EXAMPLE')) {
+                    const result = { valid: false, status: 'demo', message: 'Demo opportunity - not a real SAM.gov listing', isDemoLink: true };
+                    linkValidationCache.set(url, result);
+                    return result;
+                }
+                // Real noticeIds are typically UUIDs or alphanumeric strings
+                if (noticeId.length >= 20 || /^[a-f0-9-]{36}$/i.test(noticeId)) {
+                    const result = { valid: true, status: 'trusted', message: 'Valid SAM.gov opportunity link format', isTrusted: true };
+                    linkValidationCache.set(url, result);
+                    return result;
+                }
+            }
+            // SAM.gov search link
+            if (url.includes('/search/')) {
+                const result = { valid: true, status: 'portal', message: 'SAM.gov search portal link', isPortal: true };
+                linkValidationCache.set(url, result);
+                return result;
+            }
+        }
+
+        // For SBIR links
+        if (domain.endsWith('sbir.gov')) {
+            if (url.includes('/sbirsearch/') || url.includes('/topics')) {
+                const result = { valid: true, status: 'portal', message: 'SBIR.gov search portal', isPortal: true };
+                linkValidationCache.set(url, result);
+                return result;
+            }
+        }
+
+        // For corporate supplier portals - validate domain exists
+        const corporateDomains = [
+            'leidos.com', 'lockheedmartin.com', 'northropgrumman.com', 'baesystems.com',
+            'raytheon.com', 'rtx.com', 'gd.com', 'l3harris.com', 'saic.com', 'caci.com',
+            'kbr.com', 'jacobs.com', 'aecom.com', 'parsons.com', 'fluor.com', 'bechtel.com'
+        ];
+
+        const isCorporate = corporateDomains.some(d => domain.endsWith(d));
+        if (isCorporate) {
+            const result = { valid: true, status: 'corporate', message: 'Verified corporate supplier portal', isCorporate: true };
+            linkValidationCache.set(url, result);
+            return result;
+        }
+
+        // For government/county portals
+        if (domain.endsWith('.gov') || domain.endsWith('.mil')) {
+            const result = { valid: true, status: 'government', message: 'Government domain (.gov/.mil)', isGovernment: true };
+            linkValidationCache.set(url, result);
+            return result;
+        }
+
+        // Unknown domain - mark as unverified
+        const result = { valid: true, status: 'unverified', message: 'Link not verified - test manually', requiresManualCheck: true };
+        linkValidationCache.set(url, result);
+        return result;
+
+    } catch (e) {
+        const result = { valid: false, status: 'error', message: `Invalid URL: ${e.message}` };
+        linkValidationCache.set(url, result);
+        return result;
+    }
+}
+
+// Validate email format and domain
+function validateEmail(email) {
+    if (!email) return { valid: false, status: 'missing', message: 'No email provided' };
+
+    // Basic email format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return { valid: false, status: 'invalid', message: 'Invalid email format' };
+    }
+
+    const domain = email.split('@')[1].toLowerCase();
+
+    // Known government domains
+    if (domain.endsWith('.gov') || domain.endsWith('.mil')) {
+        return { valid: true, status: 'government', message: 'Official government email', isGovernment: true };
+    }
+
+    // Known contractor domains
+    const contractorDomains = [
+        'leidos.com', 'lockheedmartin.com', 'lmco.com', 'northropgrumman.com', 'ngc.com',
+        'baesystems.com', 'rtx.com', 'raytheon.com', 'gd.com', 'l3harris.com',
+        'saic.com', 'caci.com', 'kbr.com', 'jacobs.com', 'aecom.com', 'parsons.com',
+        'bah.com', 'peraton.com', 'mantech.com', 'ga.com', 'cubic.com', 'viasat.com',
+        'nassco.com', 'fluor.com', 'bechtel.com', 'skanska.com', 'mortenson.com',
+        'clarkconstruction.com', 'henselphelps.com', 'turnerconstruction.com',
+        'kratosdefense.com', 'accenture.com', 'deloitte.com', 'ibm.com', 'microsoft.com'
+    ];
+
+    if (contractorDomains.some(d => domain === d || domain.endsWith('.' + d))) {
+        return { valid: true, status: 'corporate', message: 'Verified contractor email domain', isCorporate: true };
+    }
+
+    // Check for common functional mailboxes (likely valid)
+    const functionalPatterns = ['supplier', 'small.business', 'smallbusiness', 'subcontract', 'procurement', 'diversity'];
+    const localPart = email.split('@')[0].toLowerCase();
+    if (functionalPatterns.some(p => localPart.includes(p))) {
+        return { valid: true, status: 'functional', message: 'Functional supplier/procurement email', isFunctional: true };
+    }
+
+    return { valid: true, status: 'unverified', message: 'Email format valid - verify before use' };
+}
+
+// Get link status badge HTML
+function getLinkStatusBadge(validation) {
+    if (!validation) return '';
+
+    const statusConfig = {
+        'trusted': { icon: '✅', color: 'var(--green)', label: 'Verified' },
+        'government': { icon: '🏛️', color: 'var(--blue)', label: 'Government' },
+        'corporate': { icon: '🏢', color: 'var(--blue)', label: 'Corporate' },
+        'portal': { icon: '🌐', color: 'var(--orange)', label: 'Portal' },
+        'demo': { icon: '⚠️', color: 'var(--orange)', label: 'Demo Only' },
+        'unverified': { icon: '❓', color: 'var(--gray)', label: 'Unverified' },
+        'error': { icon: '❌', color: 'var(--red)', label: 'Invalid' },
+        'missing': { icon: '➖', color: 'var(--gray)', label: 'No Link' }
+    };
+
+    const config = statusConfig[validation.status] || statusConfig['unverified'];
+
+    return `<span style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.15rem 0.5rem; background: rgba(0,0,0,0.3); border-radius: 4px; font-size: 0.7rem; color: ${config.color};" title="${validation.message}">
+        ${config.icon} ${config.label}
+    </span>`;
+}
+
+// Batch validate all links for an opportunity
+function validateOpportunityLinks(opp) {
+    const results = {
+        mainLink: null,
+        portalLink: null,
+        contactEmail: null,
+        isComplete: false, // Has both link and email
+        issues: []
+    };
+
+    // Validate main opportunity link
+    if (opp.link) {
+        results.mainLink = validateLink(opp.link);
+        if (!results.mainLink.valid) {
+            results.issues.push('Invalid or demo link');
+        }
+    } else {
+        results.issues.push('Missing opportunity link');
+    }
+
+    // Validate posting URL if different
+    if (opp.postingUrl && opp.postingUrl !== opp.link) {
+        results.portalLink = validateLink(opp.postingUrl);
+    }
+
+    // Validate contact email if present
+    if (opp.contact?.email) {
+        results.contactEmail = validateEmail(opp.contact.email);
+        if (!results.contactEmail.valid) {
+            results.issues.push('Invalid contact email');
+        }
+    } else {
+        results.issues.push('Missing contact email');
+    }
+
+    // Check if opportunity is complete for proposal
+    results.isComplete = results.mainLink?.valid && results.contactEmail?.valid;
+
+    return results;
+}
+
 async function checkBackendAuth() {
     const authStatus = document.getElementById('authStatus');
     const configBar = document.getElementById('configBar');
@@ -3383,21 +3582,53 @@ function showDetail(id) {
         }
     }
     
-    // Source link - distinguish direct links from portal links
+    // Source link - with validation status
     const smartLink = getSmartSourceLink(o);
     if (o.link) {
         const isPortal = o.isPortal || !smartLink.isDirect;
         const linkLabel = isPortal ? 'Visit Portal' : 'View Opportunity';
+        const linkValidation = validateLink(o.link);
+        const linkBadge = getLinkStatusBadge(linkValidation);
+
         body += `
-            <div style="font-size: 0.75rem; color: var(--gray); margin-bottom: 1rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
-                ${isPortal ? '🌐' : '🔗'} <a href="${o.link}" target="_blank" rel="noopener noreferrer" style="color: var(--green); font-weight: 500;">${linkLabel}</a>
-                <span style="color: var(--gray);"> on ${o.source || 'Source'}</span>
+            <div style="font-size: 0.75rem; color: var(--gray); margin-bottom: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <strong style="color: var(--blue); font-size: 0.8rem;">📎 Link & Contact Verification</strong>
+                    ${linkBadge}
+                </div>
+                <div style="margin-bottom: 0.5rem;">
+                    ${isPortal ? '🌐' : '🔗'} <a href="${o.link}" target="_blank" rel="noopener noreferrer" style="color: var(--green); font-weight: 500;">${linkLabel}</a>
+                    <span style="color: var(--gray);"> on ${o.source || 'Source'}</span>
+                </div>
+                ${o.contact?.email ? `
+                    <div style="margin-bottom: 0.5rem;">
+                        📧 <a href="mailto:${o.contact.email}" style="color: var(--green);">${o.contact.email}</a>
+                        ${getLinkStatusBadge(validateEmail(o.contact.email))}
+                    </div>
+                ` : `
+                    <div style="color: var(--orange); font-size: 0.7rem;">⚠️ No contact email found - check portal for submission details</div>
+                `}
+                ${o.contact?.phone ? `
+                    <div>📞 ${o.contact.phone}</div>
+                ` : ''}
                 ${isPortal && smartLink.searchTerms ? `
                     <div style="margin-top: 0.4rem; padding: 0.4rem; background: rgba(59,130,246,0.1); border-radius: 4px; border-left: 2px solid var(--blue);">
                         <span style="color: var(--blue); font-size: 0.7rem;">💡 Search tip:</span>
                         <code style="background: #222; padding: 0.15rem 0.4rem; border-radius: 3px; color: var(--green); font-size: 0.7rem;">${smartLink.searchTerms.primary}</code>
                     </div>
                 ` : ''}
+                ${linkValidation.status === 'demo' ? `
+                    <div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(255,107,53,0.2); border-radius: 4px; border-left: 3px solid var(--orange);">
+                        <strong style="color: var(--orange);">⚠️ Demo Data</strong>
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.7rem; color: var(--gray);">This is example data. Click "Scan Live Data" to get real opportunities with working links.</p>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    } else {
+        body += `
+            <div style="font-size: 0.75rem; color: var(--orange); margin-bottom: 1rem; padding: 0.75rem; background: rgba(255,107,53,0.1); border-radius: 6px; border: 1px solid rgba(255,107,53,0.3);">
+                ⚠️ <strong>No direct link available</strong> - Search the source portal manually
             </div>
         `;
     }

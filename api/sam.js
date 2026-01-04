@@ -55,21 +55,46 @@ export default async function handler(req, res) {
     
     // ========== SINGH AUTOMATION PROFILE ==========
     const singhProfile = {
-        naicsCodes: ['333249', '333922', '541330', '541512', '541715', '238210'],
-        keywords: ['robotic', 'welding', 'automation', 'conveyor', 'warehouse', 'PLC', 'SCADA', 
+        naicsCodes: ['333249', '333922', '541330', '541512', '541715', '238210', '333999', '334419', '334111', '333923'],
+        keywords: ['robotic', 'welding', 'automation', 'conveyor', 'warehouse', 'PLC', 'SCADA',
                    'machine vision', 'systems integration', 'FANUC', 'industrial', 'manufacturing',
-                   'material handling', 'assembly', 'packaging', 'palletizing', 'AMR', 'AGV'],
+                   'material handling', 'assembly', 'packaging', 'palletizing', 'AMR', 'AGV',
+                   'cobot', 'collaborative robot', 'pick and place', 'industrial IoT', 'HMI'],
         certifications: ['Small Business', 'MBE', 'WBENC'],
         notCertified: ['SDVOSB', 'VOSB', '8(a)', 'HUBZone', 'WOSB', 'EDWOSB'],
-        noVehicles: ['SeaPort NxG', 'SeaPort-e', 'OASIS', 'OASIS+', 'GSA MAS', 'GSA Schedule', 
+        noVehicles: ['SeaPort NxG', 'SeaPort-e', 'OASIS', 'OASIS+', 'GSA MAS', 'GSA Schedule',
                      'SEWP', 'CIO-SP3', 'STARS III', 'Alliant 2', 'ITES-3S', 'T4NG']
     };
-    
-    const samKeywords = ['robotic welding', 'robotics', 'automation', 'conveyor', 'warehouse automation', 
-                         'PLC', 'SCADA', 'machine vision', 'systems integration', 'FANUC', 
-                         'industrial machinery', 'manufacturing equipment', 'assembly line', 'material handling'];
-    
-    const sbirKeywords = ['robot', 'automation', 'manufacturing', 'machine', 'vision'];
+
+    // Expanded keyword list for broader coverage
+    const samKeywords = [
+        // Core automation
+        'robotic welding', 'robotics', 'automation', 'automated', 'robotic',
+        // Material handling
+        'conveyor', 'warehouse automation', 'material handling', 'palletizing', 'packaging',
+        // Controls & integration
+        'PLC', 'SCADA', 'HMI', 'systems integration', 'controls integration',
+        // Vision & inspection
+        'machine vision', 'vision system', 'inspection system', 'quality inspection',
+        // Specific equipment
+        'FANUC', 'ABB robot', 'KUKA', 'Universal Robot', 'cobot',
+        // Manufacturing
+        'industrial machinery', 'manufacturing equipment', 'assembly line', 'production line',
+        // Mobile robots
+        'AMR', 'AGV', 'autonomous mobile', 'guided vehicle',
+        // Facility automation
+        'facility automation', 'building automation', 'process automation'
+    ];
+
+    // Expanded SBIR keywords
+    const sbirKeywords = [
+        'robot', 'robotic', 'automation', 'manufacturing', 'machine vision',
+        'industrial', 'conveyor', 'material handling', 'assembly', 'welding',
+        'cobot', 'collaborative', 'autonomous', 'inspection', 'quality control'
+    ];
+
+    // Grants.gov keywords (defined here for clarity)
+    const grantsKeywords = ['robotics', 'automation', 'manufacturing', 'industrial', 'advanced manufacturing'];
     
     let allOpps = [];
     const seenIds = new Set();
@@ -103,7 +128,7 @@ export default async function handler(req, res) {
     // ========== 1. SAM.GOV FEDERAL CONTRACTS ==========
     try {
         const samUrls = samKeywords.map(kw => ({
-            url: `https://api.sam.gov/prod/opportunities/v2/search?api_key=${SAM_KEY}&keyword=${encodeURIComponent(kw)}&postedFrom=${encodeURIComponent(fmt(ago))}&postedTo=${encodeURIComponent(fmt(today))}&limit=15`,
+            url: `https://api.sam.gov/prod/opportunities/v2/search?api_key=${SAM_KEY}&keyword=${encodeURIComponent(kw)}&postedFrom=${encodeURIComponent(fmt(ago))}&postedTo=${encodeURIComponent(fmt(today))}&limit=50`,
             keyword: kw
         }));
         
@@ -186,7 +211,7 @@ export default async function handler(req, res) {
     // ========== 2. SBIR/STTR OPPORTUNITIES ==========
     try {
         const sbirUrls = sbirKeywords.map(kw => ({
-            url: `https://api.www.sbir.gov/public/api/solicitations?keyword=${encodeURIComponent(kw)}&open=1&rows=20`,
+            url: `https://api.www.sbir.gov/public/api/solicitations?keyword=${encodeURIComponent(kw)}&open=1&rows=50`,
             keyword: kw
         }));
         
@@ -246,9 +271,9 @@ export default async function handler(req, res) {
 
     // ========== 3. GRANTS.GOV ==========
     try {
-        const grantsKeywords = ['robotics', 'automation', 'manufacturing', 'industrial'];
+        // Using grantsKeywords defined above
         const grantsUrls = grantsKeywords.map(kw => ({
-            url: `https://www.grants.gov/grantsws/rest/opportunities/search?keyword=${encodeURIComponent(kw)}&oppStatuses=forecasted|posted&rows=15`,
+            url: `https://www.grants.gov/grantsws/rest/opportunities/search?keyword=${encodeURIComponent(kw)}&oppStatuses=forecasted|posted&rows=50`,
             keyword: kw
         }));
         

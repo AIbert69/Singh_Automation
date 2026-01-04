@@ -188,7 +188,7 @@ async function scanOpportunities() {
     currentAbortController = new AbortController();
 
     try {
-        showLoadingIndicator('Scanning 50+ procurement portals...');
+        showLoadingIndicator('Scanning SAM.gov, SBIR, Grants.gov...');
         updateScanButton('scanning');
 
         let opportunities;
@@ -295,8 +295,8 @@ async function requestDistributorQuote(opportunityId) {
 }
 
 /**
- * Filters opportunities by score
- * @param {'all' | 'high' | 'medium'} filter - Filter type
+ * Filters opportunities by tiered status
+ * @param {'all' | 'go' | 'evaluate' | 'actionable' | 'urgent'} filter - Filter type
  */
 function filterOpportunities(filter) {
     if (!currentOpportunities.length) {
@@ -305,14 +305,38 @@ function filterOpportunities(filter) {
     }
 
     let filtered;
+    const now = new Date();
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
     switch (filter) {
-        case 'high':
-            filtered = currentOpportunities.filter(o => (o.match_score || o.qualification?.score || 0) >= 80);
+        case 'go':
+            // GO only (≥70) - high confidence
+            filtered = currentOpportunities.filter(o =>
+                (o.match_score || o.qualification?.score || 0) >= 70
+            );
             break;
-        case 'medium':
+        case 'evaluate':
+            // EVALUATE only (50-69) - needs capacity decision
             filtered = currentOpportunities.filter(o => {
                 const score = o.match_score || o.qualification?.score || 0;
-                return score >= 50 && score < 80;
+                return score >= 50 && score < 70;
+            });
+            break;
+        case 'actionable':
+            // GO + EVALUATE (≥50) - worth looking at
+            filtered = currentOpportunities.filter(o =>
+                (o.match_score || o.qualification?.score || 0) >= 50
+            );
+            break;
+        case 'urgent':
+            // Closing within 7 days AND actionable
+            filtered = currentOpportunities.filter(o => {
+                const score = o.match_score || o.qualification?.score || 0;
+                if (score < 50) return false;
+                const closeDate = o.response_deadline || o.closeDate;
+                if (!closeDate) return false;
+                const date = new Date(closeDate);
+                return date >= now && date <= sevenDaysFromNow;
             });
             break;
         default:
@@ -320,7 +344,8 @@ function filterOpportunities(filter) {
     }
 
     displayOpportunities(filtered);
-    showNotification(`Showing ${filtered.length} opportunities`, 'success');
+    const filterNames = { go: 'GO', evaluate: 'EVALUATE', actionable: 'actionable', urgent: 'urgent', all: 'all' };
+    showNotification(`Showing ${filtered.length} ${filterNames[filter] || ''} opportunities`, 'success');
 }
 
 // =============================================================================
@@ -368,6 +393,24 @@ function displayOpportunities(opportunities) {
 }
 
 /**
+ * Calculates days remaining until deadline
+ * @param {string} dateStr - Date string
+ * @returns {{ days: number, urgent: boolean, overdue: boolean }}
+ */
+function getDaysRemaining(dateStr) {
+    if (!dateStr) return { days: null, urgent: false, overdue: false };
+    const now = new Date();
+    const deadline = new Date(dateStr);
+    const diffMs = deadline - now;
+    const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    return {
+        days,
+        urgent: days >= 0 && days <= 7,
+        overdue: days < 0
+    };
+}
+
+/**
  * Creates a table row for an opportunity using safe DOM methods
  * @param {Object} opp - Opportunity object
  * @returns {HTMLTableRowElement}
@@ -375,18 +418,20 @@ function displayOpportunities(opportunities) {
 function createOpportunityRow(opp) {
     const row = document.createElement('tr');
 
-    // Get score safely
+    // Get score safely - using tiered thresholds
     const score = opp.match_score || opp.qualification?.score || 0;
-    const scoreClass = score >= 80 ? 'score-high' :
-                       score >= 50 ? 'score-medium' : 'score-low';
+    const scoreClass = score >= 70 ? 'score-high' :    // GO
+                       score >= 50 ? 'score-medium' :   // EVALUATE
+                       'score-low';                     // PASS
+    const statusLabel = score >= 70 ? 'GO' : score >= 50 ? 'EVAL' : 'PASS';
 
     // Format value
     const value = opp.estimated_value || opp.value;
     const valueDisplay = value ? `$${(value / 1000).toFixed(0)}K` : 'TBD';
 
-    // Format date
+    // Calculate days remaining with urgency
     const dueDate = opp.response_deadline || opp.closeDate;
-    const dateDisplay = dueDate ? new Date(dueDate).toLocaleDateString() : 'TBD';
+    const { days, urgent, overdue } = getDaysRemaining(dueDate);
 
     // Title cell
     const titleCell = document.createElement('td');
@@ -409,11 +454,11 @@ function createOpportunityRow(opp) {
     agencyCell.textContent = opp.agency || 'Unknown';
     row.appendChild(agencyCell);
 
-    // Score cell
+    // Score cell with status label
     const scoreCell = document.createElement('td');
     const scoreSpan = document.createElement('span');
     scoreSpan.className = `score ${scoreClass}`;
-    scoreSpan.textContent = `${score}%`;
+    scoreSpan.textContent = `${statusLabel} ${score}%`;
     scoreCell.appendChild(scoreSpan);
     row.appendChild(scoreCell);
 
@@ -422,20 +467,30 @@ function createOpportunityRow(opp) {
     valueCell.textContent = valueDisplay;
     row.appendChild(valueCell);
 
-    // Date cell
+    // Date cell with urgency indicator
     const dateCell = document.createElement('td');
-    dateCell.textContent = dateDisplay;
+    if (days !== null) {
+        if (overdue) {
+            dateCell.innerHTML = `<span style="color:#ef4444;font-weight:600">CLOSED</span>`;
+        } else if (urgent) {
+            dateCell.innerHTML = `<span style="color:#f59e0b;font-weight:600">${days}d left</span>`;
+        } else {
+            dateCell.textContent = `${days}d`;
+        }
+    } else {
+        dateCell.textContent = 'TBD';
+    }
     row.appendChild(dateCell);
 
-    // Action cell with quote button
+    // Action cell - button label reflects actual action
     const actionCell = document.createElement('td');
-    const quoteBtn = document.createElement('button');
-    quoteBtn.className = 'btn btn-primary quote-btn';
-    quoteBtn.style.cssText = 'padding:8px 16px;font-size:13px';
-    quoteBtn.textContent = 'Get Quote';
+    const actionBtn = document.createElement('button');
+    actionBtn.className = 'btn btn-primary quote-btn';
+    actionBtn.style.cssText = 'padding:8px 16px;font-size:13px';
+    actionBtn.textContent = 'View RFQ';  // Fixed: accurate label
     // Store ID in data attribute (safe - not interpolated into JS)
-    quoteBtn.dataset.opportunityId = opp.id;
-    actionCell.appendChild(quoteBtn);
+    actionBtn.dataset.opportunityId = opp.id;
+    actionCell.appendChild(actionBtn);
     row.appendChild(actionCell);
 
     return row;
@@ -471,22 +526,46 @@ Click OK to copy to clipboard.
 
 /**
  * Updates stats cards with opportunity data
+ * Uses tiered scoring: GO (≥70), EVALUATE (50-69), PASS (<50)
  * @param {Object[]} opportunities - Array of opportunities
  */
 function updateStats(opportunities) {
     const total = opportunities.length;
-    const qualified = opportunities.filter(o => {
+
+    // GO opportunities (high confidence, ≥70)
+    const goOpportunities = opportunities.filter(o => {
         const score = o.match_score || o.qualification?.score || 0;
-        return score >= 50;
-    }).length;
-    const highScore = opportunities.filter(o => {
+        return score >= 70;
+    });
+
+    // EVALUATE opportunities (promising, 50-69)
+    const evaluateOpportunities = opportunities.filter(o => {
         const score = o.match_score || o.qualification?.score || 0;
-        return score >= 80;
+        return score >= 50 && score < 70;
+    });
+
+    // Closing soon (within 7 days) - only for actionable opportunities
+    const now = new Date();
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const closingSoon = opportunities.filter(o => {
+        const score = o.match_score || o.qualification?.score || 0;
+        if (score < 50) return false; // Don't count PASS opportunities
+        const closeDate = o.response_deadline || o.closeDate;
+        if (!closeDate) return false;
+        const date = new Date(closeDate);
+        return date >= now && date <= sevenDaysFromNow;
     }).length;
 
-    const totalValue = opportunities.reduce((sum, o) => {
+    // Pipeline value: ONLY count GO opportunities (honest number)
+    const goValue = goOpportunities.reduce((sum, o) => {
         return sum + (o.estimated_value || o.value || 0);
     }, 0);
+
+    // Average score across actionable opportunities
+    const actionable = [...goOpportunities, ...evaluateOpportunities];
+    const avgScore = actionable.length > 0
+        ? Math.round(actionable.reduce((sum, o) => sum + (o.match_score || o.qualification?.score || 0), 0) / actionable.length)
+        : 0;
 
     const setElementText = (id, text) => {
         const el = document.getElementById(id);
@@ -494,9 +573,11 @@ function updateStats(opportunities) {
     };
 
     setElementText('statTotal', total);
-    setElementText('statQualified', qualified);
-    setElementText('statHighScore', highScore);
-    setElementText('statValue', `$${(totalValue / 1000000).toFixed(1)}M`);
+    setElementText('statQualified', goOpportunities.length + evaluateOpportunities.length);
+    setElementText('statHighScore', goOpportunities.length);
+    setElementText('statClosingSoon', closingSoon);
+    setElementText('statValue', `$${(goValue / 1000000).toFixed(1)}M`);
+    setElementText('statAvgScore', `${avgScore}%`);
 }
 
 // =============================================================================

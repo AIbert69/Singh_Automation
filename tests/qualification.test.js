@@ -6,7 +6,7 @@
 import { jest, describe, test, expect, beforeEach } from '@jest/globals';
 import { qualifyOpportunity, qualifyOpportunities, filterByStatus, sortByScore } from '../lib/qualification.js';
 
-// Mock the config module
+// Mock the config module - using tiered scoring thresholds
 jest.unstable_mockModule('../lib/config.js', () => ({
     default: {
         companyProfile: {
@@ -20,8 +20,9 @@ jest.unstable_mockModule('../lib/config.js', () => ({
             naicsMatchPoints: 30,
             keywordMatchPoints: 5,
             setAsidePoints: 20,
-            goThreshold: 50,
-            reviewThreshold: 25,
+            goThreshold: 70,           // GO: high confidence
+            evaluateThreshold: 50,     // EVALUATE: promising, needs capacity decision
+            passThreshold: 50,         // PASS: below this threshold
             compatibleSetAsides: ['small business', 'full and open', 'unrestricted'],
         },
     },
@@ -103,7 +104,7 @@ describe('qualifyOpportunity', () => {
         });
     });
 
-    describe('GO Recommendations', () => {
+    describe('GO Recommendations (≥70 points)', () => {
         test('should return GO for matching NAICS + keywords + compatible set-aside', () => {
             const opp = {
                 id: 'test-6',
@@ -116,8 +117,8 @@ describe('qualifyOpportunity', () => {
             const result = qualifyOpportunity(opp, mockProfile);
 
             expect(result.status).toBe('GO');
-            expect(result.score).toBeGreaterThanOrEqual(50);
-            expect(result.recommendation).toBe('GO');
+            expect(result.score).toBeGreaterThanOrEqual(70);
+            expect(result.recommendation).toContain('Pursue');
         });
 
         test('should return GO with high score for multiple keyword matches', () => {
@@ -132,28 +133,46 @@ describe('qualifyOpportunity', () => {
             const result = qualifyOpportunity(opp, mockProfile);
 
             expect(result.status).toBe('GO');
-            expect(result.score).toBeGreaterThan(50);
+            expect(result.score).toBeGreaterThanOrEqual(70);
             expect(result.breakdown.keywords).toBeDefined();
         });
     });
 
-    describe('Review Recommendations', () => {
-        test('should return Review for partial matches', () => {
+    describe('EVALUATE Recommendations (50-69 points)', () => {
+        test('should return EVALUATE for partial matches with some keywords', () => {
             const opp = {
                 id: 'test-8',
-                title: 'Industrial Equipment',
-                description: 'Some automation components',
+                title: 'Industrial Automation Equipment',
+                description: 'Some robotic components for welding',
                 naicsCode: '999999', // Non-matching NAICS
                 setAside: 'Small Business',
             };
 
             const result = qualifyOpportunity(opp, mockProfile);
 
-            expect(result.status).toBe('Review');
-            expect(result.recommendation).toBe('Review');
+            expect(result.status).toBe('EVALUATE');
+            expect(result.recommendation).toContain('Evaluate');
+            expect(result.score).toBeGreaterThanOrEqual(50);
+            expect(result.score).toBeLessThan(70);
         });
 
-        test('should return Review for low score opportunities', () => {
+        test('should return EVALUATE for NAICS match without many keywords', () => {
+            const opp = {
+                id: 'test-8b',
+                title: 'Equipment Installation',
+                naicsCode: '333249',
+                setAside: 'Small Business',
+            };
+
+            const result = qualifyOpportunity(opp, mockProfile);
+
+            expect(result.status).toBe('EVALUATE');
+            expect(result.score).toBeGreaterThanOrEqual(50);
+        });
+    });
+
+    describe('PASS Recommendations (<50 points)', () => {
+        test('should return PASS for low score opportunities', () => {
             const opp = {
                 id: 'test-9',
                 title: 'Office Supplies',
@@ -162,8 +181,22 @@ describe('qualifyOpportunity', () => {
 
             const result = qualifyOpportunity(opp, mockProfile);
 
-            expect(result.status).toBe('Review');
-            expect(result.reason).toContain('Limited match');
+            expect(result.status).toBe('PASS');
+            expect(result.reason).toContain('Low match');
+        });
+
+        test('should return PASS for non-matching opportunity', () => {
+            const opp = {
+                id: 'test-9b',
+                title: 'Catering Services',
+                description: 'Food service for federal building',
+                naicsCode: '722310',
+            };
+
+            const result = qualifyOpportunity(opp, mockProfile);
+
+            expect(result.status).toBe('PASS');
+            expect(result.score).toBeLessThan(50);
         });
     });
 
@@ -245,7 +278,7 @@ describe('qualifyOpportunity', () => {
             const result = qualifyOpportunity(opp, mockProfile);
 
             expect(result).toBeDefined();
-            expect(result.status).toBe('Review');
+            expect(result.status).toBe('PASS'); // No matching data = low score = PASS
         });
 
         test('should be case-insensitive for keyword matching', () => {
@@ -307,8 +340,9 @@ describe('filterByStatus', () => {
     const opportunities = [
         { id: '1', qualification: { status: 'GO' } },
         { id: '2', qualification: { status: 'NO-GO' } },
-        { id: '3', qualification: { status: 'Review' } },
+        { id: '3', qualification: { status: 'EVALUATE' } },
         { id: '4', qualification: { status: 'GO' } },
+        { id: '5', qualification: { status: 'PASS' } },
     ];
 
     test('should filter by GO status', () => {
@@ -322,14 +356,27 @@ describe('filterByStatus', () => {
         expect(result).toHaveLength(1);
     });
 
-    test('should filter by Review status', () => {
-        const result = filterByStatus(opportunities, 'Review');
+    test('should filter by EVALUATE status', () => {
+        const result = filterByStatus(opportunities, 'EVALUATE');
         expect(result).toHaveLength(1);
+    });
+
+    test('should filter by PASS status', () => {
+        const result = filterByStatus(opportunities, 'PASS');
+        expect(result).toHaveLength(1);
+    });
+
+    test('should filter actionable opportunities (GO + EVALUATE)', () => {
+        const result = filterByStatus(opportunities, 'actionable');
+        expect(result).toHaveLength(3); // 2 GO + 1 EVALUATE
+        expect(result.every(o =>
+            o.qualification.status === 'GO' || o.qualification.status === 'EVALUATE'
+        )).toBe(true);
     });
 
     test('should return all when status is "all"', () => {
         const result = filterByStatus(opportunities, 'all');
-        expect(result).toHaveLength(4);
+        expect(result).toHaveLength(5);
     });
 });
 

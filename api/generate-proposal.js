@@ -664,39 +664,38 @@ export default async function handler(req, res) {
 
           para("Singh Automation provides the following past performance references demonstrating relevant experience in industrial automation and robotics integration. Each reference represents work of similar scope, complexity, and technical requirements to this solicitation."),
 
-          heading2("5.1 Reference Project 1"),
-          actionItem("Complete with actual project information from Singh Automation records"),
+          heading2("5.1 Reference Project 1: Lippert Components Window Automation"),
 
           new Table({
             columnWidths: [3120, 6240],
             rows: [
               new TableRow({ children: [
                 new TableCell({ borders: cellBorders, shading: altRowShading, width: { size: 3120, type: WidthType.DXA }, children: [new Paragraph({ children: [new TextRun({ text: "Project Title:", bold: true, size: 20, font: "Times New Roman" })] })] }),
-                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("[Insert project name]")] })
+                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("Window Automation - 5-Robot Manufacturing Cell")] })
               ]}),
               new TableRow({ children: [
                 new TableCell({ borders: cellBorders, shading: altRowShading, width: { size: 3120, type: WidthType.DXA }, children: [new Paragraph({ children: [new TextRun({ text: "Customer:", bold: true, size: 20, font: "Times New Roman" })] })] }),
-                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("[Customer organization name]")] })
+                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("Lippert Components - Bristol, Indiana")] })
               ]}),
               new TableRow({ children: [
                 new TableCell({ borders: cellBorders, shading: altRowShading, width: { size: 3120, type: WidthType.DXA }, children: [new Paragraph({ children: [new TextRun({ text: "Contract Value:", bold: true, size: 20, font: "Times New Roman" })] })] }),
-                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("[$ amount]")] })
+                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("$1,600,000")] })
               ]}),
               new TableRow({ children: [
                 new TableCell({ borders: cellBorders, shading: altRowShading, width: { size: 3120, type: WidthType.DXA }, children: [new Paragraph({ children: [new TextRun({ text: "Period of Performance:", bold: true, size: 20, font: "Times New Roman" })] })] }),
-                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("[MM/YYYY - MM/YYYY]")] })
+                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("January 2024 - September 2024")] })
               ]}),
               new TableRow({ children: [
                 new TableCell({ borders: cellBorders, shading: altRowShading, width: { size: 3120, type: WidthType.DXA }, children: [new Paragraph({ children: [new TextRun({ text: "Scope of Work:", bold: true, size: 20, font: "Times New Roman" })] })] }),
-                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("[Brief description of work performed]")] })
+                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("Designed, built, and installed 5-robot FANUC manufacturing cell for automated window fabrication. System includes material handling, precision assembly, and integrated vision-based quality inspection. Full PLC controls and safety system integration.")] })
               ]}),
               new TableRow({ children: [
                 new TableCell({ borders: cellBorders, shading: altRowShading, width: { size: 3120, type: WidthType.DXA }, children: [new Paragraph({ children: [new TextRun({ text: "Relevance:", bold: true, size: 20, font: "Times New Roman" })] })] }),
-                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("[Explain similarity to current requirement]")] })
+                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("Demonstrates Singh Automation's capability in multi-robot cell design, FANUC integration, vision systems, PLC programming, and industrial manufacturing automation at scale.")] })
               ]}),
               new TableRow({ children: [
                 new TableCell({ borders: cellBorders, shading: altRowShading, width: { size: 3120, type: WidthType.DXA }, children: [new Paragraph({ children: [new TextRun({ text: "Reference POC:", bold: true, size: 20, font: "Times New Roman" })] })] }),
-                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("[Name, Title, Phone, Email]")] })
+                new TableCell({ borders: cellBorders, width: { size: 6240, type: WidthType.DXA }, children: [para("Tim Widner, VP - Glass, Lippert Components, Twidner@lci1.com")] })
               ]})
             ]
           }),

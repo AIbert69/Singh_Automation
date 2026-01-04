@@ -1990,78 +1990,123 @@ async function scanAll() {
 }
 
 // Demo data fallback for when API is unavailable
+// NOTE: These are DEMONSTRATION opportunities for testing only
+// Use "Scan Live Data" button to fetch real opportunities from SAM.gov
 function loadDemoData() {
     const demoOpportunities = [
         {
-            id: 'W911QY-25-R-0042',
+            id: 'W911QY-26-R-0042',
             title: 'Robotic Welding System for Defense Manufacturing',
             agency: 'Department of Defense',
             subAgency: 'Army Contracting Command',
             value: 485000,
-            closeDate: '2025-02-14',
+            closeDate: '2026-02-14',
             naicsCode: '333249',
             setAside: 'Small Business',
-            solicitation: 'W911QY-25-R-0042',
+            solicitation: 'W911QY-26-R-0042',
             description: 'Procurement of automated robotic welding systems for military vehicle manufacturing facility.',
-            source: 'SAM.gov'
+            source: 'SAM.gov',
+            postingUrl: 'https://sam.gov/opp/W911QY-26-R-0042/view',
+            isDemo: true
         },
         {
-            id: 'SPE4A7-25-Q-0198',
+            id: 'SPE4A7-26-Q-0198',
             title: 'PLC Modernization - Water Treatment Facility',
             agency: 'Defense Logistics Agency',
             subAgency: 'DLA Troop Support',
             value: 175000,
-            closeDate: '2025-02-27',
+            closeDate: '2026-02-27',
             naicsCode: '541512',
-            setAside: 'WOSB',
-            solicitation: 'SPE4A7-25-Q-0198',
+            setAside: 'Small Business',
+            solicitation: 'SPE4A7-26-Q-0198',
             description: 'Upgrade and modernization of PLC control systems at water treatment facility.',
-            source: 'SAM.gov'
+            source: 'SAM.gov',
+            postingUrl: 'https://sam.gov/opp/SPE4A7-26-Q-0198/view',
+            isDemo: true
         },
         {
-            id: 'NNX25-SBIR-0087',
+            id: 'NNX26-SBIR-0087',
             title: 'SBIR Phase II - Advanced Vision Inspection',
             agency: 'NASA',
             subAgency: 'Goddard Space Flight Center',
             value: 750000,
-            closeDate: '2025-01-30',
+            closeDate: '2026-01-30',
             naicsCode: '541715',
             setAside: 'SBIR',
-            solicitation: 'NNX25-SBIR-0087',
+            solicitation: 'NNX26-SBIR-0087',
             description: 'Development of AI-powered vision inspection system for aerospace manufacturing.',
-            source: 'SBIR/STTR'
+            source: 'SBIR/STTR',
+            postingUrl: 'https://www.sbir.gov/node/NNX26-SBIR-0087',
+            isDemo: true
         },
         {
-            id: 'DTFH61-25-P-00234',
+            id: 'DTFH61-26-P-00234',
             title: 'Conveyor System Automation Upgrade',
             agency: 'Department of Transportation',
             subAgency: 'Federal Highway Administration',
             value: 125000,
-            closeDate: '2025-03-14',
+            closeDate: '2026-03-14',
             naicsCode: '333922',
-            setAside: 'SDB',
-            solicitation: 'DTFH61-25-P-00234',
+            setAside: 'Small Business',
+            solicitation: 'DTFH61-26-P-00234',
             description: 'Automation upgrade for material handling conveyor systems.',
-            source: 'SAM.gov'
+            source: 'SAM.gov',
+            postingUrl: 'https://sam.gov/opp/DTFH61-26-P-00234/view',
+            isDemo: true
         },
         {
-            id: 'SPE7M1-25-R-0056',
+            id: 'SPE7M1-26-R-0056',
             title: 'Collaborative Robot Integration - Manufacturing',
             agency: 'Defense Logistics Agency',
             subAgency: 'DLA Land and Maritime',
             value: 320000,
-            closeDate: '2025-02-19',
+            closeDate: '2026-02-19',
             naicsCode: '333249',
             setAside: 'Small Business',
-            solicitation: 'SPE7M1-25-R-0056',
+            solicitation: 'SPE7M1-26-R-0056',
             description: 'Integration of collaborative robots (cobots) into existing manufacturing lines.',
-            source: 'SAM.gov'
+            source: 'SAM.gov',
+            postingUrl: 'https://sam.gov/opp/SPE7M1-26-R-0056/view',
+            isDemo: true
         }
     ];
-    
-    processOpportunities(demoOpportunities, 'Demo');
+
+    // Filter out any expired opportunities
+    const validOpps = filterExpiredOpportunities(demoOpportunities);
+
+    processOpportunities(validOpps, 'Demo');
     setModeIndicator('demo', 'DEMO DATA');
     log('Loaded demo data - connect backend for live opportunities', 'info');
+}
+
+// Filter out expired opportunities and log warnings
+function filterExpiredOpportunities(opportunities) {
+    const now = new Date();
+    const valid = [];
+    const expired = [];
+
+    for (const opp of opportunities) {
+        if (opp.closeDate) {
+            const deadline = new Date(opp.closeDate);
+            if (deadline < now) {
+                expired.push(opp);
+                continue;
+            }
+            // Warn if deadline is within 7 days
+            const daysUntil = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+            if (daysUntil <= 7) {
+                opp.urgentDeadline = true;
+                opp.daysUntilDeadline = daysUntil;
+            }
+        }
+        valid.push(opp);
+    }
+
+    if (expired.length > 0) {
+        console.warn(`[Singh] Filtered ${expired.length} expired opportunities:`, expired.map(o => o.id));
+    }
+
+    return valid;
 }
 
 // Schema validation for opportunity data
@@ -4699,21 +4744,23 @@ async function loadSubcontracting() {
     renderSubOpportunities();
 }
 
+// Subcontracting demo data - FY2026 opportunities
+// NOTE: These are DEMONSTRATION opportunities. Contact primes directly to verify current needs.
 function getSubDemoData() {
     return [
-        { id: 'SUB-001', prime: 'Turner Construction', award_amount: 8200000, agency: 'Army Corps of Engineers', description: 'Military base modernization with automated material handling systems', location: 'Fort Liberty, NC', naics: '236220', match_score: 87, tier: 'hot', signals: ['automation scope', 'material handling', 'DoD prime'], contact: { email: 'subcontracting@turnerconstruction.com', portal: 'https://www.turnerconstruction.com/subcontractors' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_W912DY24C0001' },
-        { id: 'SUB-002', prime: 'Hensel Phelps', award_amount: 12400000, agency: 'Department of Veterans Affairs', description: 'VA hospital renovation including robotic pharmacy and logistics systems', location: 'San Diego, CA', naics: '236220', match_score: 84, tier: 'hot', signals: ['robotic pharmacy', 'logistics automation', 'healthcare'], contact: { email: 'suppliers@henselphelps.com', portal: 'https://www.henselphelps.com/subcontractors/' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_36C24624C0002' },
-        { id: 'SUB-003', prime: 'Clark Construction', award_amount: 6800000, agency: 'GSA', description: 'Federal building upgrade with smart building automation', location: 'Chicago, IL', naics: '236220', match_score: 78, tier: 'hot', signals: ['building automation', 'smart systems', 'controls'], contact: { email: 'subcontractors@clarkconstruction.com', portal: 'https://www.clarkconstruction.com/subcontractors' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_GS09P24BTC0003' },
-        { id: 'SUB-004', prime: 'Leidos', award_amount: 5700000, agency: 'DoD', description: 'Defense logistics automation and AI systems integration', location: 'Huntsville, AL', naics: '541512', match_score: 62, tier: 'warm', signals: ['AI integration', 'logistics', 'defense'], contact: { email: 'small.business@leidos.com', portal: 'https://www.leidos.com/suppliers' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_W58RGZ24C0004' },
-        { id: 'SUB-005', prime: 'Jacobs Engineering', award_amount: 4800000, agency: 'NASA', description: 'Facility systems integration for launch complex', location: 'Cape Canaveral, FL', naics: '541330', match_score: 58, tier: 'warm', signals: ['systems integration', 'NASA', 'facility automation'], contact: { email: 'supplier.diversity@jacobs.com', portal: 'https://www.jacobs.com/suppliers' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_NNK24MA0005' },
-        { id: 'SUB-006', prime: 'KBR Inc', award_amount: 6100000, agency: 'Army', description: 'Base infrastructure modernization project', location: 'Fort Hood, TX', naics: '541330', match_score: 55, tier: 'warm', signals: ['infrastructure', 'modernization', 'DoD'], contact: { email: 'supplierdiversity@kbr.com', portal: 'https://www.kbr.com/en/about-us/suppliers' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_W911KB24C0006' },
-        { id: 'SUB-007', prime: 'AECOM', award_amount: 3200000, agency: 'Air Force', description: 'Hangar facility improvements', location: 'Edwards AFB, CA', naics: '236220', match_score: 42, tier: 'cold', signals: ['facility', 'Air Force'], contact: { email: 'suppliers@aecom.com', portal: 'https://aecom.com/about-aecom/suppliers/' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_FA930824C0007' },
-        { id: 'SUB-008', prime: 'Parsons Corporation', award_amount: 5200000, agency: 'DHS', description: 'Border security technology systems', location: 'El Paso, TX', naics: '541512', match_score: 38, tier: 'cold', signals: ['security systems', 'technology'], contact: { email: 'suppliers@parsons.com', portal: 'https://www.parsons.com/suppliers/' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_HSBP1024C0008' },
-        // San Diego Defense Opportunities
-        { id: 'SUB-009', prime: 'General Dynamics NASSCO', award_amount: 18500000, agency: 'Navy', description: 'Ship repair and modernization - welding automation, material handling systems', location: 'San Diego, CA', naics: '336611', match_score: 92, tier: 'hot', signals: ['welding automation', 'shipyard', 'Navy', 'material handling'], contact: { email: 'smallbusiness@nassco.com', portal: 'https://www.nassco.com/suppliers' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_N0002424C0009' },
-        { id: 'SUB-010', prime: 'General Atomics', award_amount: 7800000, agency: 'Navy', description: 'Unmanned systems manufacturing support - robotic assembly, precision automation', location: 'Poway, CA', naics: '336411', match_score: 85, tier: 'hot', signals: ['robotics', 'precision automation', 'defense manufacturing'], contact: { email: 'small.business@ga.com', portal: 'https://www.ga.com/small-business' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_N0001924C0010' },
-        { id: 'SUB-011', prime: 'BAE Systems San Diego Ship Repair', award_amount: 9200000, agency: 'Navy', description: 'Destroyer maintenance and repair - automated welding, robotic inspection', location: 'San Diego, CA', naics: '336611', match_score: 88, tier: 'hot', signals: ['welding', 'ship repair', 'robotic inspection', 'Navy'], contact: { email: 'supplier.management@baesystems.com', portal: 'https://www.baesystems.com/en/our-company/about-us/suppliers' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_N0002424C0011' },
-        { id: 'SUB-012', prime: 'NAVWAR/SPAWAR', award_amount: 4500000, agency: 'Navy', description: 'Command and control systems integration - PLC/SCADA, industrial controls', location: 'San Diego, CA', naics: '541512', match_score: 72, tier: 'warm', signals: ['SCADA', 'controls integration', 'Navy C2'], contact: { email: 'navwar.smallbusiness@navy.mil', portal: 'https://www.navwar.navy.mil/OSBP/' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_N6600124C0012' }
+        { id: 'SUB-001', prime: 'Turner Construction', award_amount: 8200000, agency: 'Army Corps of Engineers', description: 'Military base modernization with automated material handling systems', location: 'Fort Liberty, NC', naics: '236220', match_score: 87, tier: 'hot', signals: ['automation scope', 'material handling', 'DoD prime'], contact: { email: 'subcontracting@turnerconstruction.com', portal: 'https://www.turnerconstruction.com/subcontractors' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_W912DY26C0001', isDemo: true },
+        { id: 'SUB-002', prime: 'Hensel Phelps', award_amount: 12400000, agency: 'Department of Veterans Affairs', description: 'VA hospital renovation including robotic pharmacy and logistics systems', location: 'San Diego, CA', naics: '236220', match_score: 84, tier: 'hot', signals: ['robotic pharmacy', 'logistics automation', 'healthcare'], contact: { email: 'suppliers@henselphelps.com', portal: 'https://www.henselphelps.com/subcontractors/' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_36C26626C0002', isDemo: true },
+        { id: 'SUB-003', prime: 'Clark Construction', award_amount: 6800000, agency: 'GSA', description: 'Federal building upgrade with smart building automation', location: 'Chicago, IL', naics: '236220', match_score: 78, tier: 'hot', signals: ['building automation', 'smart systems', 'controls'], contact: { email: 'subcontractors@clarkconstruction.com', portal: 'https://www.clarkconstruction.com/subcontractors' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_GS09P26BTC0003', isDemo: true },
+        { id: 'SUB-004', prime: 'Leidos', award_amount: 5700000, agency: 'DoD', description: 'Defense logistics automation and AI systems integration', location: 'Huntsville, AL', naics: '541512', match_score: 62, tier: 'warm', signals: ['AI integration', 'logistics', 'defense'], contact: { email: 'small.business@leidos.com', portal: 'https://www.leidos.com/suppliers' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_W58RGZ26C0004', isDemo: true },
+        { id: 'SUB-005', prime: 'Jacobs Engineering', award_amount: 4800000, agency: 'NASA', description: 'Facility systems integration for launch complex', location: 'Cape Canaveral, FL', naics: '541330', match_score: 58, tier: 'warm', signals: ['systems integration', 'NASA', 'facility automation'], contact: { email: 'supplier.diversity@jacobs.com', portal: 'https://www.jacobs.com/suppliers' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_NNK26MA0005', isDemo: true },
+        { id: 'SUB-006', prime: 'KBR Inc', award_amount: 6100000, agency: 'Army', description: 'Base infrastructure modernization project', location: 'Fort Cavazos, TX', naics: '541330', match_score: 55, tier: 'warm', signals: ['infrastructure', 'modernization', 'DoD'], contact: { email: 'supplierdiversity@kbr.com', portal: 'https://www.kbr.com/en/about-us/suppliers' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_W911KB26C0006', isDemo: true },
+        { id: 'SUB-007', prime: 'AECOM', award_amount: 3200000, agency: 'Air Force', description: 'Hangar facility improvements', location: 'Edwards AFB, CA', naics: '236220', match_score: 42, tier: 'cold', signals: ['facility', 'Air Force'], contact: { email: 'suppliers@aecom.com', portal: 'https://aecom.com/about-aecom/suppliers/' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_FA930826C0007', isDemo: true },
+        { id: 'SUB-008', prime: 'Parsons Corporation', award_amount: 5200000, agency: 'DHS', description: 'Border security technology systems', location: 'El Paso, TX', naics: '541512', match_score: 38, tier: 'cold', signals: ['security systems', 'technology'], contact: { email: 'suppliers@parsons.com', portal: 'https://www.parsons.com/suppliers/' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_HSBP1026C0008', isDemo: true },
+        // San Diego Defense Opportunities - High priority for Singh Automation
+        { id: 'SUB-009', prime: 'General Dynamics NASSCO', award_amount: 18500000, agency: 'Navy', description: 'Ship repair and modernization - welding automation, material handling systems', location: 'San Diego, CA', naics: '336611', match_score: 92, tier: 'hot', signals: ['welding automation', 'shipyard', 'Navy', 'material handling'], contact: { email: 'smallbusiness@nassco.com', portal: 'https://nassco.com/small-business/' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_N0002426C0009', isDemo: true },
+        { id: 'SUB-010', prime: 'General Atomics', award_amount: 7800000, agency: 'Navy', description: 'Unmanned systems manufacturing support - robotic assembly, precision automation', location: 'Poway, CA', naics: '336411', match_score: 85, tier: 'hot', signals: ['robotics', 'precision automation', 'defense manufacturing'], contact: { email: 'small.business@ga.com', portal: 'https://www.ga.com/small-business' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_N0001926C0010', isDemo: true },
+        { id: 'SUB-011', prime: 'BAE Systems San Diego Ship Repair', award_amount: 9200000, agency: 'Navy', description: 'Destroyer maintenance and repair - automated welding, robotic inspection', location: 'San Diego, CA', naics: '336611', match_score: 88, tier: 'hot', signals: ['welding', 'ship repair', 'robotic inspection', 'Navy'], contact: { email: 'supplier.management@baesystems.com', portal: 'https://www.baesystems.com/en/our-company/about-us/suppliers' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_N0002426C0011', isDemo: true },
+        { id: 'SUB-012', prime: 'NAVWAR', award_amount: 4500000, agency: 'Navy', description: 'Command and control systems integration - PLC/SCADA, industrial controls', location: 'San Diego, CA', naics: '541512', match_score: 72, tier: 'warm', signals: ['SCADA', 'controls integration', 'Navy C2'], contact: { email: 'navwar.smallbusiness@navy.mil', portal: 'https://www.navwar.navy.mil/OSBP/' }, contract_link: 'https://usaspending.gov/award/CONT_AWD_N6600126C0012', isDemo: true }
     ];
 }
 

@@ -119,7 +119,26 @@ export default async function handler(req, res) {
             for (const o of data.opportunitiesData) {
                 if (seenIds.has(o.noticeId)) continue;
                 seenIds.add(o.noticeId);
-                
+
+                // Extract contact info from SAM.gov response
+                let contact = null;
+                if (o.pointOfContact && o.pointOfContact.length > 0) {
+                    const poc = o.pointOfContact[0];
+                    contact = {
+                        name: poc.fullName || poc.firstName + ' ' + poc.lastName || null,
+                        email: poc.email || null,
+                        phone: poc.phone || null,
+                        type: poc.type || 'Primary'
+                    };
+                } else if (o.primaryContact) {
+                    contact = {
+                        name: o.primaryContact.fullName || null,
+                        email: o.primaryContact.email || null,
+                        phone: o.primaryContact.phone || null,
+                        type: 'Primary'
+                    };
+                }
+
                 const opp = {
                     id: o.noticeId,
                     noticeId: o.noticeId,
@@ -134,6 +153,8 @@ export default async function handler(req, res) {
                     description: o.description?.substring(0, 1000) || '',
                     fullDescription: o.description || '',
                     link: `https://sam.gov/opp/${o.noticeId}/view`,
+                    contact: contact,
+                    officeAddress: o.officeAddress || o.placeOfPerformance?.city?.name || null,
                     isLive: true,
                     source: 'SAM.gov',
                     type: 'contract',

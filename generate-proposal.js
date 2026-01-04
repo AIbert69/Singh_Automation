@@ -506,15 +506,14 @@ export default async function handler(req, res) {
           
           para("Singh Automation has delivered robotics and automation solutions for industrial clients. Representative project references are provided below."),
           
-          heading2("5.1 Reference 1"),
-          actionRequired("Complete with actual project information"),
-          boldPara("Project Name: ", "[Insert project name]"),
-          boldPara("Customer: ", "[Insert customer name]"),
-          boldPara("Contract Value: ", "[Insert value]"),
-          boldPara("Period of Performance: ", "[Insert dates]"),
-          boldPara("Scope of Work: ", "[Describe work performed]"),
-          boldPara("Relevance: ", "[Explain similarity to current requirement]"),
-          boldPara("Point of Contact: ", "[Name, Title, Phone, Email]"),
+          heading2("5.1 Reference 1: Lippert Components Window Automation"),
+          boldPara("Project Name: ", "Window Automation - 5-Robot Manufacturing Cell"),
+          boldPara("Customer: ", "Lippert Components - Bristol, Indiana"),
+          boldPara("Contract Value: ", "$1,600,000"),
+          boldPara("Period of Performance: ", "January 2024 - September 2024"),
+          boldPara("Scope of Work: ", "Designed, built, and installed 5-robot FANUC manufacturing cell for automated window fabrication. System includes material handling, precision assembly, and integrated vision-based quality inspection. Full PLC controls and safety system integration."),
+          boldPara("Relevance: ", "Demonstrates Singh Automation's capability in multi-robot cell design, FANUC integration, vision systems, PLC programming, and industrial manufacturing automation at scale."),
+          boldPara("Point of Contact: ", "Tim Widner, VP - Glass, Lippert Components, Twidner@lci1.com"),
           
           heading2("5.2 Reference 2"),
           actionRequired("Complete with second project reference"),

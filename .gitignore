@@ -54,3 +54,6 @@ __pycache__/
 test_proposal_output.md
 test_singh_platform.db
 *.pyc
+
+# Generated database (created from singh_platform_master_data.sql)
+singh_platform.db

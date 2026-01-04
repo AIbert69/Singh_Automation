@@ -1792,6 +1792,35 @@ function setModeIndicator(mode, text) {
     if (modeText) modeText.textContent = text;
 }
 
+// Show prominent demo warning banner
+function showDemoWarning() {
+    // Remove any existing warning
+    const existing = document.getElementById('demoWarningBanner');
+    if (existing) existing.remove();
+
+    const banner = document.createElement('div');
+    banner.id = 'demoWarningBanner';
+    banner.innerHTML = `
+        <div style="background: linear-gradient(135deg, #ff6b35, #f7931e); color: white; padding: 1rem; text-align: center; font-weight: 600; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+            <span style="font-size: 1.2rem;">⚠️ DEMO MODE - Example Data Only</span>
+            <p style="margin: 0.5rem 0 0 0; font-weight: 400; font-size: 0.9rem;">
+                These opportunities are <strong>fictional examples</strong> for UI demonstration.
+                Links go to search portals, not specific opportunities.
+                <button onclick="scanOpportunities()" style="background: white; color: #ff6b35; border: none; padding: 0.5rem 1rem; margin-left: 1rem; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                    🔍 Scan Live Data Now
+                </button>
+            </p>
+        </div>
+    `;
+    document.body.insertBefore(banner, document.body.firstChild);
+}
+
+// Hide demo warning when live data is loaded
+function hideDemoWarning() {
+    const banner = document.getElementById('demoWarningBanner');
+    if (banner) banner.remove();
+}
+
 async function checkBackendAuth() {
     const authStatus = document.getElementById('authStatus');
     const configBar = document.getElementById('configBar');
@@ -1939,6 +1968,7 @@ async function scanAll() {
             
             processOpportunities(d.opportunities, 'Live');
             setModeIndicator('live', 'LIVE DATA');
+            hideDemoWarning(); // Remove demo warning when live data loads
             // Update data freshness timestamp
             const scanTime = new Date();
             const el = document.getElementById('lastScanTime');
@@ -1990,84 +2020,95 @@ async function scanAll() {
 }
 
 // Demo data fallback for when API is unavailable
-// NOTE: These are DEMONSTRATION opportunities for testing only
-// Use "Scan Live Data" button to fetch real opportunities from SAM.gov
+// ⚠️ WARNING: These are EXAMPLE opportunities for UI demonstration ONLY
+// The solicitation numbers and URLs below are FICTIONAL - they do not exist!
+// Click "Scan Live Data" to fetch REAL opportunities from SAM.gov with working links
 function loadDemoData() {
+    // Show prominent warning that this is demo mode
+    showDemoWarning();
+
     const demoOpportunities = [
         {
-            id: 'W911QY-26-R-0042',
-            title: 'Robotic Welding System for Defense Manufacturing',
+            id: 'DEMO-001',
+            title: '[EXAMPLE] Robotic Welding System for Defense Manufacturing',
             agency: 'Department of Defense',
             subAgency: 'Army Contracting Command',
             value: 485000,
             closeDate: '2026-02-14',
             naicsCode: '333249',
             setAside: 'Small Business',
-            solicitation: 'W911QY-26-R-0042',
-            description: 'Procurement of automated robotic welding systems for military vehicle manufacturing facility.',
-            source: 'SAM.gov',
-            postingUrl: 'https://sam.gov/opp/W911QY-26-R-0042/view',
-            isDemo: true
+            solicitation: 'DEMO-EXAMPLE-001',
+            description: '⚠️ DEMO DATA - This is an example opportunity for UI testing. Click "Scan Live Data" to find real opportunities. Search SAM.gov for: robotic welding, automation systems.',
+            source: 'DEMO',
+            // Link to actual SAM.gov search instead of fake opportunity
+            postingUrl: 'https://sam.gov/search/?keywords=robotic%20welding&index=opp&sort=-modifiedDate&page=1&date_filter_index=0&inactive_filter_values=false',
+            isDemo: true,
+            isDemoData: true
         },
         {
-            id: 'SPE4A7-26-Q-0198',
-            title: 'PLC Modernization - Water Treatment Facility',
+            id: 'DEMO-002',
+            title: '[EXAMPLE] PLC Modernization - Water Treatment Facility',
             agency: 'Defense Logistics Agency',
             subAgency: 'DLA Troop Support',
             value: 175000,
             closeDate: '2026-02-27',
             naicsCode: '541512',
             setAside: 'Small Business',
-            solicitation: 'SPE4A7-26-Q-0198',
-            description: 'Upgrade and modernization of PLC control systems at water treatment facility.',
-            source: 'SAM.gov',
-            postingUrl: 'https://sam.gov/opp/SPE4A7-26-Q-0198/view',
-            isDemo: true
+            solicitation: 'DEMO-EXAMPLE-002',
+            description: '⚠️ DEMO DATA - This is an example opportunity for UI testing. Click "Scan Live Data" to find real opportunities. Search SAM.gov for: PLC, SCADA, controls.',
+            source: 'DEMO',
+            postingUrl: 'https://sam.gov/search/?keywords=PLC%20controls&index=opp&sort=-modifiedDate&page=1&date_filter_index=0&inactive_filter_values=false',
+            isDemo: true,
+            isDemoData: true
         },
         {
-            id: 'NNX26-SBIR-0087',
-            title: 'SBIR Phase II - Advanced Vision Inspection',
+            id: 'DEMO-003',
+            title: '[EXAMPLE] SBIR Phase II - Advanced Vision Inspection',
             agency: 'NASA',
             subAgency: 'Goddard Space Flight Center',
             value: 750000,
             closeDate: '2026-01-30',
             naicsCode: '541715',
             setAside: 'SBIR',
-            solicitation: 'NNX26-SBIR-0087',
-            description: 'Development of AI-powered vision inspection system for aerospace manufacturing.',
-            source: 'SBIR/STTR',
-            postingUrl: 'https://www.sbir.gov/node/NNX26-SBIR-0087',
-            isDemo: true
+            solicitation: 'DEMO-EXAMPLE-003',
+            description: '⚠️ DEMO DATA - This is an example SBIR opportunity. Click "Scan Live Data" to find real SBIR opportunities from sbir.gov.',
+            source: 'DEMO',
+            // Link to actual SBIR search
+            postingUrl: 'https://www.sbir.gov/sbirsearch/topic/current?keyword=machine%20vision',
+            isDemo: true,
+            isDemoData: true
         },
         {
-            id: 'DTFH61-26-P-00234',
-            title: 'Conveyor System Automation Upgrade',
+            id: 'DEMO-004',
+            title: '[EXAMPLE] Conveyor System Automation Upgrade',
             agency: 'Department of Transportation',
             subAgency: 'Federal Highway Administration',
             value: 125000,
             closeDate: '2026-03-14',
             naicsCode: '333922',
             setAside: 'Small Business',
-            solicitation: 'DTFH61-26-P-00234',
-            description: 'Automation upgrade for material handling conveyor systems.',
-            source: 'SAM.gov',
-            postingUrl: 'https://sam.gov/opp/DTFH61-26-P-00234/view',
-            isDemo: true
+            solicitation: 'DEMO-EXAMPLE-004',
+            description: '⚠️ DEMO DATA - This is an example opportunity for UI testing. Click "Scan Live Data" for real opportunities.',
+            source: 'DEMO',
+            postingUrl: 'https://sam.gov/search/?keywords=conveyor%20automation&index=opp&sort=-modifiedDate&page=1&date_filter_index=0&inactive_filter_values=false',
+            isDemo: true,
+            isDemoData: true
         },
         {
-            id: 'SPE7M1-26-R-0056',
-            title: 'Collaborative Robot Integration - Manufacturing',
+            id: 'DEMO-005',
+            title: '[EXAMPLE] Collaborative Robot Integration - Manufacturing',
             agency: 'Defense Logistics Agency',
             subAgency: 'DLA Land and Maritime',
             value: 320000,
             closeDate: '2026-02-19',
             naicsCode: '333249',
             setAside: 'Small Business',
-            solicitation: 'SPE7M1-26-R-0056',
-            description: 'Integration of collaborative robots (cobots) into existing manufacturing lines.',
-            source: 'SAM.gov',
-            postingUrl: 'https://sam.gov/opp/SPE7M1-26-R-0056/view',
-            isDemo: true
+            solicitation: 'DEMO-EXAMPLE-005',
+            description: '⚠️ DEMO DATA - This is an example opportunity for UI testing. Click "Scan Live Data" for real opportunities.',
+            source: 'DEMO',
+            postingUrl: 'https://sam.gov/search/?keywords=collaborative%20robot&index=opp&sort=-modifiedDate&page=1&date_filter_index=0&inactive_filter_values=false',
+            isDemo: true,
+            isDemoData: true
         }
     ];
 

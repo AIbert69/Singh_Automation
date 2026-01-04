@@ -493,6 +493,11 @@ function createOpportunityRow(opp) {
     actionCell.appendChild(actionBtn);
     row.appendChild(actionCell);
 
+    // Add bid tracking buttons if BidTracker is available
+    if (typeof window.addTrackingButtons === 'function') {
+        window.addTrackingButtons(row, opp);
+    }
+
     return row;
 }
 

@@ -487,11 +487,10 @@ function generateOutreachEmail(award, scoring) {
 
 I noticed your company was recently awarded a contract with ${agency} involving ${truncate(description.toLowerCase(), 100)}.
 
-Singh Automation is a FANUC and Universal Robots authorized integrator specializing in industrial robotics, AI vision systems, and warehouse automation. If your team needs support executing the robotics, automation, or vision systems portion of this contract, we'd welcome the opportunity to discuss teaming.
+Singh Automation is a FANUC Authorized System Integrator specializing in industrial robotics, AI vision systems, and warehouse automation. If your team needs support executing the robotics, automation, or vision systems portion of this contract, we'd welcome the opportunity to discuss teaming.
 
 Our qualifications:
 • FANUC Authorized System Integrator (ASI)
-• Universal Robots Certified System Partner (CSP)
 • CAGE Code: 86VF7 | UEI: GJ1DPYQ3X8K5
 • Certified Small Business, MBE, WBENC
 • NAICS: 333249, 541330, 541512, 541715

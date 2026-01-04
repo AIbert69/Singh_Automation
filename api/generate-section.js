@@ -67,7 +67,6 @@ KEY PERSONNEL (REAL NAMES):
 
 CAPABILITIES:
 - FANUC robotics integration (Authorized System Integrator)
-- Universal Robots integration (CSP Partner)
 - PLC programming (Allen-Bradley, Siemens)
 - Machine vision systems
 - Turnkey system integration

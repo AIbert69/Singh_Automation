@@ -546,7 +546,7 @@ COMPANY PROFILE:
 - Name: Singh Automation
 - UEI: GJ1DPYQ3X8K5 | CAGE: 86VF7
 - NAICS: 333249, 333922, 541330, 541512, 541715, 238210
-- Certifications: Small Business, MBE, WBENC, FANUC Authorized Integrator, Universal Robots Certified Partner
+- Certifications: Small Business, MBE, WBENC, FANUC Authorized Integrator
 - Locations: Kalamazoo, MI (HQ) | Irvine, CA (Sales)
 - Contact: (269) 381-6236 | info@singhautomation.com
 - Address: 2400 E Cork Street, Kalamazoo, MI 49001

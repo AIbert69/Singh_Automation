@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     
     // Check SAM.gov API key
     const samKey = process.env.SAM_API_KEY;
-    health.services.sam = !!(samKey && samKey.startsWith('SAM-'));
+    health.services.sam = !!(samKey && samKey.length > 20);
     health.services.samPublic = true; // Public API always available as fallback
     
     // Shorthand for frontend

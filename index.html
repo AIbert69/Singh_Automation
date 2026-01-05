@@ -7504,7 +7504,7 @@ function showLiveDetail(oppId) {
         </button>
     `;
 
-    modal.style.display = 'flex';
+    modal.classList.add('active');
 }
 
 function addLiveToPipeline(oppId) {
@@ -7542,7 +7542,7 @@ function addLiveToPipeline(oppId) {
     // Add to pipeline
     if (!pipeline[opp.id]) {
         pipeline[opp.id] = 'identified';
-        localStorage.setItem('singh_pipeline', JSON.stringify(pipeline));
+        localStorage.setItem('pipeline', JSON.stringify(pipeline));
     }
 
     closeModal();
@@ -7554,7 +7554,7 @@ function startProposalFromLive(oppId) {
     if (!opp) return;
 
     // Store opportunity data for proposal editor
-    localStorage.setItem('proposalOpp', JSON.stringify({
+    localStorage.setItem('currentOpportunity', JSON.stringify({
         id: opp.id,
         title: opp.title,
         solicitation: opp.solicitationNumber,

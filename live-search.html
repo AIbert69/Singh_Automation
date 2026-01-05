@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentSam Live Search - Singh Automation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0f1419;
+            --card: #1a2332;
+            --border: #2d3748;
+            --text: #fff;
+            --text-muted: #9ca3af;
+            --green: #22c55e;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--green), #06b6d4);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .back-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-link:hover {
+            color: var(--text);
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .stat-card.pursue { border-left: 4px solid var(--green); }
+        .stat-card.watch { border-left: 4px solid var(--orange); }
+        .stat-card.skip { border-left: 4px solid var(--text-muted); }
+        .stat-card.avg { border-left: 4px solid var(--blue); }
+        .stat-card.total { border-left: 4px solid var(--purple); }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-card.pursue .stat-value { color: var(--green); }
+        .stat-card.watch .stat-value { color: var(--orange); }
+        .stat-card.skip .stat-value { color: var(--text-muted); }
+        .stat-card.avg .stat-value { color: var(--blue); }
+        .stat-card.total .stat-value { color: var(--purple); }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.25rem;
+        }
+
+        /* Layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .panel-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--green);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--green), #06b6d4);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--blue);
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin: 0.15rem;
+        }
+
+        /* Scoring legend */
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.8rem;
+        }
+
+        .score-item:last-child {
+            border-bottom: none;
+        }
+
+        .score-points {
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        /* Results */
+        .results-panel {
+            min-height: 600px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .filter-pill {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-pill:hover {
+            border-color: var(--text-muted);
+        }
+
+        .filter-pill.active {
+            background: var(--green);
+            border-color: var(--green);
+            color: white;
+        }
+
+        /* Opportunity cards */
+        .opp-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .opp-card:hover {
+            border-color: var(--green);
+        }
+
+        .opp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .opp-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+
+        .badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+
+        .badge.pursue { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+        .badge.watch { background: rgba(245, 158, 11, 0.2); color: var(--orange); }
+        .badge.skip { background: rgba(107, 114, 128, 0.2); color: var(--text-muted); }
+        .badge.naics { background: rgba(59, 130, 246, 0.1); color: var(--blue); }
+        .badge.setaside { background: rgba(139, 92, 246, 0.1); color: var(--purple); }
+
+        .opp-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            color: var(--text);
+        }
+
+        .opp-agency {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .opp-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .opp-score {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .opp-score-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .opp-score-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .opp-reasons {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+
+        .reason-tag {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--green);
+            border-radius: 3px;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Error state */
+        .error-state {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 8px;
+            color: var(--red);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal {
+            background: var(--card);
+            border-radius: 16px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-link {
+            background: var(--blue);
+            color: white;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Detail grid */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-item {
+            padding: 0.75rem;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+
+        .detail-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            font-size: 0.9rem;
+        }
+
+        /* Score breakdown */
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .breakdown-item {
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .breakdown-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .breakdown-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-bar {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <div>
+                    <div class="logo-text">AgentSam Live Search</div>
+                    <div class="logo-subtitle">Real-time SAM.gov Contract Scanner</div>
+                </div>
+            </div>
+            <a href="index.html" class="back-link">← Back to Platform</a>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-card pursue">
+                <div class="stat-value" id="statPursue">-</div>
+                <div class="stat-label">Pursue</div>
+            </div>
+            <div class="stat-card watch">
+                <div class="stat-value" id="statWatch">-</div>
+                <div class="stat-label">Watch</div>
+            </div>
+            <div class="stat-card skip">
+                <div class="stat-value" id="statSkip">-</div>
+                <div class="stat-label">Skip</div>
+            </div>
+            <div class="stat-card avg">
+                <div class="stat-value" id="statAvg">-</div>
+                <div class="stat-label">Avg Score</div>
+            </div>
+            <div class="stat-card total">
+                <div class="stat-value" id="statTotal">-</div>
+                <div class="stat-label">Total Found</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Company Profile -->
+                <div class="panel" style="background: linear-gradient(135deg, #1a2332, #232d3f);">
+                    <div class="panel-title">🏢 Company Profile</div>
+                    <div style="font-weight: 600;">Singh Automation LLC</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        CAGE: 86VF7 | UEI: GJ1DPYQ3X8K5
+                    </div>
+                    <div style="margin-top: 0.75rem;">
+                        <span class="tag" style="background: rgba(34, 197, 94, 0.1); color: var(--green);">Small Business</span>
+                        <span class="tag" style="background: rgba(34, 197, 94, 0.1); color: var(--green);">MBE</span>
+                    </div>
+                </div>
+
+                <!-- Search Settings -->
+                <div class="panel">
+                    <div class="panel-title">⚙️ Search Settings</div>
+
+                    <div class="form-group">
+                        <label class="form-label">Target NAICS Codes</label>
+                        <div>
+                            <span class="tag">333249</span>
+                            <span class="tag">333922</span>
+                            <span class="tag">541330</span>
+                            <span class="tag">541512</span>
+                            <span class="tag">541715</span>
+                            <span class="tag">238210</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Date Range</label>
+                        <select class="form-select" id="daysSelect">
+                            <option value="30">Last 30 days</option>
+                            <option value="60" selected>Last 60 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Custom Keywords (optional)</label>
+                        <input type="text" class="form-input" id="keywordsInput" placeholder="e.g. welding, conveyor, SCADA">
+                    </div>
+
+                    <button class="btn btn-primary" id="searchBtn" onclick="runSearch()">
+                        ⚡ Run Live Search
+                    </button>
+                </div>
+
+                <!-- Scoring Legend -->
+                <div class="panel">
+                    <div class="panel-title">📊 Scoring Factors</div>
+                    <div class="score-item">
+                        <span>NAICS Code Match</span>
+                        <span class="score-points">+25 pts</span>
+                    </div>
+                    <div class="score-item">
+                        <span>Keyword Matches (max 7)</span>
+                        <span class="score-points">+35 pts</span>
+                    </div>
+                    <div class="score-item">
+                        <span>Priority Agency</span>
+                        <span class="score-points">+15 pts</span>
+                    </div>
+                    <div class="score-item">
+                        <span>Value $25K-$5M</span>
+                        <span class="score-points">+15 pts</span>
+                    </div>
+                    <div class="score-item">
+                        <span>Small Biz Set-Aside</span>
+                        <span class="score-points">+10 pts</span>
+                    </div>
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem; font-size: 0.7rem;">
+                        <span class="badge pursue">PURSUE ≥65</span>
+                        <span class="badge watch">WATCH 40-64</span>
+                        <span class="badge skip">SKIP &lt;40</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="panel results-panel">
+                <div class="results-header">
+                    <div class="panel-title">📋 Live Search Results</div>
+                    <div class="filter-pills">
+                        <button class="filter-pill active" data-filter="all">All</button>
+                        <button class="filter-pill" data-filter="pursue">Pursue</button>
+                        <button class="filter-pill" data-filter="watch">Watch</button>
+                    </div>
+                </div>
+
+                <div id="resultsContainer">
+                    <div class="empty-state">
+                        <div class="empty-icon">⚡</div>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem;">
+                            Ready to Search
+                        </div>
+                        <div style="max-width: 400px; margin: 0 auto;">
+                            Click "Run Live Search" to query SAM.gov for real contract opportunities matching Singh Automation's capabilities.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Opportunity Details</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer" id="modalFooter"></div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let opportunities = [];
+        let currentFilter = 'all';
+
+        // Run search
+        async function runSearch() {
+            const btn = document.getElementById('searchBtn');
+            const container = document.getElementById('resultsContainer');
+            const days = document.getElementById('daysSelect').value;
+            const keywords = document.getElementById('keywordsInput').value.trim();
+
+            // Show loading
+            btn.disabled = true;
+            btn.textContent = 'Searching...';
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Querying SAM.gov API...</div>
+                    <div style="font-size: 0.8rem; margin-top: 0.5rem;">This searches REAL contracts only</div>
+                </div>
+            `;
+
+            try {
+                // Build URL
+                let url = `/api/sam-live?days=${days}&limit=50`;
+                if (keywords) {
+                    url += `&keywords=${encodeURIComponent(keywords)}`;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || data.message || 'Search failed');
+                }
+
+                opportunities = data.opportunities || [];
+
+                // Update stats
+                document.getElementById('statPursue').textContent = data.stats?.pursue || 0;
+                document.getElementById('statWatch').textContent = data.stats?.watch || 0;
+                document.getElementById('statSkip').textContent = data.stats?.skip || 0;
+                document.getElementById('statAvg').textContent = data.stats?.avgScore || 0;
+                document.getElementById('statTotal').textContent = data.stats?.total || 0;
+
+                // Render results
+                renderResults();
+
+            } catch (error) {
+                console.error('Search error:', error);
+                container.innerHTML = `
+                    <div class="error-state">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚠️</div>
+                        <div style="font-weight: 600;">Search Failed</div>
+                        <div style="font-size: 0.9rem; margin-top: 0.5rem;">${error.message}</div>
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '⚡ Run Live Search';
+            }
+        }
+
+        // Filter results
+        function filterResults(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-pill').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
+            });
+            renderResults();
+        }
+
+        // Render results
+        function renderResults() {
+            const container = document.getElementById('resultsContainer');
+
+            let filtered = opportunities;
+            if (currentFilter === 'pursue') {
+                filtered = opportunities.filter(o => o.recommendation === 'PURSUE');
+            } else if (currentFilter === 'watch') {
+                filtered = opportunities.filter(o => o.recommendation === 'WATCH');
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <div>No opportunities found${currentFilter !== 'all' ? ' for this filter' : ''}</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(opp => `
+                <div class="opp-card" onclick="showDetail('${opp.id}')">
+                    <div class="opp-header">
+                        <div style="flex: 1; min-width: 0;">
+                            <div class="opp-badges">
+                                <span class="badge ${opp.recommendation.toLowerCase()}">${opp.recommendation}</span>
+                                ${opp.naicsCode ? `<span class="badge naics">${opp.naicsCode}</span>` : ''}
+                                ${opp.setAside && opp.setAside !== 'Full and Open' ? `<span class="badge setaside">${opp.setAside}</span>` : ''}
+                            </div>
+                            <div class="opp-title">${escapeHtml(opp.title)}</div>
+                            <div class="opp-agency">${escapeHtml(opp.agency)}</div>
+                            <div class="opp-meta">
+                                ${opp.solicitationNumber} • Posted: ${opp.postedDate || 'N/A'} • Due: ${opp.responseDeadline || 'TBD'}
+                            </div>
+                        </div>
+                        <div class="opp-score">
+                            <div class="opp-score-value" style="color: ${opp.recommendationColor};">${opp.score}</div>
+                            <div class="opp-score-label">SCORE</div>
+                        </div>
+                    </div>
+                    ${opp.matchReasons && opp.matchReasons.length > 0 ? `
+                        <div class="opp-reasons">
+                            ${opp.matchReasons.map(r => `<span class="reason-tag">✓ ${escapeHtml(r)}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Show detail modal
+        function showDetail(oppId) {
+            const opp = opportunities.find(o => o.id === oppId);
+            if (!opp) return;
+
+            const modal = document.getElementById('detailModal');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+            const footer = document.getElementById('modalFooter');
+
+            title.textContent = opp.title;
+
+            body.innerHTML = `
+                <!-- Score Section -->
+                <div style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem; background: var(--bg); border-radius: 8px; margin-bottom: 1rem;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: 700; color: ${opp.recommendationColor};">${opp.score}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">AI SCORE</div>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 1.1rem; font-weight: 700; color: ${opp.recommendationColor}; margin-bottom: 0.5rem;">${opp.recommendation}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">
+                            ${opp.matchReasons ? opp.matchReasons.join(' • ') : 'No specific match reasons'}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Score Breakdown -->
+                <div class="score-breakdown">
+                    <div class="breakdown-item">
+                        <div class="breakdown-value" style="color: ${opp.scoreBreakdown?.naics > 0 ? 'var(--green)' : 'var(--text-muted)'};">${opp.scoreBreakdown?.naics || 0}</div>
+                        <div class="breakdown-label">NAICS</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-value" style="color: ${opp.scoreBreakdown?.keywords > 0 ? 'var(--green)' : 'var(--text-muted)'};">${opp.scoreBreakdown?.keywords || 0}</div>
+                        <div class="breakdown-label">Keywords</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-value" style="color: ${opp.scoreBreakdown?.agency > 0 ? 'var(--green)' : 'var(--text-muted)'};">${opp.scoreBreakdown?.agency || 0}</div>
+                        <div class="breakdown-label">Agency</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-value" style="color: ${opp.scoreBreakdown?.value > 0 ? 'var(--green)' : 'var(--text-muted)'};">${opp.scoreBreakdown?.value || 0}</div>
+                        <div class="breakdown-label">Value</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-value" style="color: ${opp.scoreBreakdown?.setAside > 0 ? 'var(--green)' : 'var(--text-muted)'};">${opp.scoreBreakdown?.setAside || 0}</div>
+                        <div class="breakdown-label">Set-Aside</div>
+                    </div>
+                </div>
+
+                <!-- Details Grid -->
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Agency</div>
+                        <div class="detail-value">${escapeHtml(opp.agency)}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Sub-Agency</div>
+                        <div class="detail-value">${escapeHtml(opp.subAgency || 'N/A')}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Solicitation #</div>
+                        <div class="detail-value">${escapeHtml(opp.solicitationNumber)}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">NAICS</div>
+                        <div class="detail-value">${opp.naicsCode || 'N/A'}${opp.naicsDescription ? ` - ${escapeHtml(opp.naicsDescription)}` : ''}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Posted Date</div>
+                        <div class="detail-value">${opp.postedDate || 'N/A'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Response Deadline</div>
+                        <div class="detail-value" style="color: ${opp.responseDeadline ? 'var(--orange)' : 'inherit'}; font-weight: ${opp.responseDeadline ? '600' : '400'};">${opp.responseDeadline || 'TBD'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Set-Aside</div>
+                        <div class="detail-value">${escapeHtml(opp.setAside || 'Full and Open')}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Place of Performance</div>
+                        <div class="detail-value">${escapeHtml(opp.placeOfPerformance || 'N/A')}</div>
+                    </div>
+                </div>
+
+                ${opp.contact ? `
+                    <div class="detail-item" style="margin-bottom: 1rem;">
+                        <div class="detail-label">Point of Contact</div>
+                        <div class="detail-value">${escapeHtml(opp.contact.name || 'N/A')}</div>
+                        ${opp.contact.email ? `<div style="color: var(--blue); font-size: 0.85rem;">${escapeHtml(opp.contact.email)}</div>` : ''}
+                        ${opp.contact.phone ? `<div style="color: var(--text-muted); font-size: 0.85rem;">${escapeHtml(opp.contact.phone)}</div>` : ''}
+                    </div>
+                ` : ''}
+
+                ${opp.description ? `
+                    <div>
+                        <div class="detail-label" style="margin-bottom: 0.5rem;">Description</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; max-height: 200px; overflow-y: auto; background: var(--bg); padding: 1rem; border-radius: 8px;">
+                            ${escapeHtml(opp.description)}
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            footer.innerHTML = `
+                <a href="${opp.link}" target="_blank" class="btn btn-link">
+                    View on SAM.gov →
+                </a>
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+            `;
+
+            modal.style.display = 'flex';
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Event listeners
+        document.querySelectorAll('.filter-pill').forEach(btn => {
+            btn.addEventListener('click', () => filterResults(btn.dataset.filter));
+        });
+
+        // Close modal on overlay click
+        document.getElementById('detailModal').addEventListener('click', (e) => {
+            if (e.target.id === 'detailModal') closeModal();
+        });
+
+        // Close modal on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+</body>
+</html>

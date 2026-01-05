@@ -1106,6 +1106,33 @@
                     <div id="qualifiedList" style="display: none;"></div>
                 </div>
 
+                <!-- Free Alert Sources -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="icon">🔔</span>
+                        <span class="panel-title">Free Alert Sources</span>
+                    </div>
+                    <div style="padding: 0.5rem; font-size: 0.75rem; color: var(--gray-light);">Register for free email alerts:</div>
+                    <div class="free-alerts-list" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0 0.5rem 0.75rem;">
+                        <a href="https://www.publicpurchase.com/gems/register/vendor/register.html" target="_blank" class="alert-link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--card-hover); border-radius: 8px; color: #fff; text-decoration: none; font-size: 0.8rem; transition: all 0.2s;">
+                            <span style="font-size: 1rem;">🏛️</span>
+                            <span><b>PublicPurchase</b> - CA & MI agencies</span>
+                        </a>
+                        <a href="https://sigma.michigan.gov/webapp/PRDVSS2X1/AltSelfService" target="_blank" class="alert-link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--card-hover); border-radius: 8px; color: #fff; text-decoration: none; font-size: 0.8rem; transition: all 0.2s;">
+                            <span style="font-size: 1rem;">🦌</span>
+                            <span><b>Michigan SIGMA</b> - State contracts</span>
+                        </a>
+                        <a href="https://caleprocure.ca.gov/pages/vendor-registration.aspx" target="_blank" class="alert-link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--card-hover); border-radius: 8px; color: #fff; text-decoration: none; font-size: 0.8rem; transition: all 0.2s;">
+                            <span style="font-size: 1rem;">🐻</span>
+                            <span><b>Cal eProcure</b> - California state</span>
+                        </a>
+                        <a href="https://sam.gov/content/entity-registration" target="_blank" class="alert-link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--card-hover); border-radius: 8px; color: #fff; text-decoration: none; font-size: 0.8rem; transition: all 0.2s;">
+                            <span style="font-size: 1rem;">🇺🇸</span>
+                            <span><b>SAM.gov</b> - Federal opportunities</span>
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Pipeline -->
                 <div class="panel">
                     <div class="panel-header">
@@ -3300,7 +3327,7 @@ function openBidNetSearch() {
     // Open BidNet Direct solicitation search page
     // User filters by: automation, robotic, welding, PLC, SCADA, conveyor
     // Purchasing Groups: California, MITN (Michigan), Texas, Ohio
-    const bidNetUrl = 'https://www.bidnetdirect.com/solicitations';
+    const bidNetUrl = 'https://www.bidnetdirect.com';
     window.open(bidNetUrl, '_blank');
 
     // Show search tips popup
@@ -3310,9 +3337,10 @@ function openBidNetSearch() {
         <div style="position:fixed;top:20px;right:20px;background:linear-gradient(135deg,#1e3a5f,#2d5a87);color:#fff;padding:1.25rem 1.5rem;border-radius:12px;z-index:10000;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.4);font-family:Inter,sans-serif;">
             <div style="font-weight:600;font-size:1rem;margin-bottom:0.75rem;">🔍 BidNet Search Tips</div>
             <div style="font-size:0.85rem;color:#e0e0e0;line-height:1.5;">
-                <div style="margin-bottom:0.5rem;"><b style="color:#fff;">Keywords:</b> automation, robotic, welding, PLC, SCADA, conveyor</div>
-                <div style="margin-bottom:0.5rem;"><b style="color:#fff;">Purchasing Groups:</b> California, MITN (Michigan), Texas, Ohio</div>
-                <div><b style="color:#fff;">NIGP Codes:</b> 939 (Industrial Equipment), 958 (Welding)</div>
+                <div style="margin-bottom:0.5rem;"><b style="color:#10b981;">1.</b> Click <b style="color:#fff;">SOLICITATIONS</b> in the top menu</div>
+                <div style="margin-bottom:0.5rem;"><b style="color:#10b981;">2.</b> Select <b style="color:#fff;">Purchasing Groups:</b> California, MITN, Texas, Ohio</div>
+                <div style="margin-bottom:0.5rem;"><b style="color:#10b981;">3.</b> Enter <b style="color:#fff;">Keywords:</b> automation, robotic, welding, PLC</div>
+                <div><b style="color:#10b981;">4.</b> Click <b style="color:#fff;">Save Search</b> for daily email alerts</div>
             </div>
             <button onclick="document.getElementById('bidnet-tip').remove()" style="position:absolute;top:10px;right:12px;background:none;border:none;color:#fff;cursor:pointer;font-size:1.3rem;opacity:0.7;">&times;</button>
         </div>

@@ -77,15 +77,16 @@ export default async function handler(req, res) {
             clearTimeout(timeout);
 
             if (!response.ok) {
-                console.error(`SAM.gov API error: ${response.status}`);
-                return null;
+                const errorText = await response.text();
+                console.error(`SAM.gov API error: ${response.status} - ${errorText}`);
+                return { error: `HTTP ${response.status}: ${errorText.substring(0, 200)}` };
             }
 
             return await response.json();
         } catch (error) {
             clearTimeout(timeout);
             console.error(`Fetch error: ${error.message}`);
-            return null;
+            return { error: error.message };
         }
     };
 
@@ -185,12 +186,15 @@ export default async function handler(req, res) {
         const allSearches = [...keywordSearches, ...naicsSearches];
 
         // Execute searches in parallel
+        const errors = [];
         const results = await Promise.all(
             allSearches.map(async (search) => {
                 apiCallCount++;
                 const data = await fetchWithTimeout(search.url);
                 if (data?.opportunitiesData) {
                     successCount++;
+                } else if (data?.error) {
+                    errors.push({ type: search.type, term: search.term, error: data.error });
                 }
                 return { ...search, data };
             })
@@ -303,6 +307,7 @@ export default async function handler(req, res) {
             latencyMs,
             stats,
             opportunities: limitedResults,
+            errors: errors.length > 0 ? errors.slice(0, 3) : undefined,
         });
 
     } catch (error) {

@@ -5343,10 +5343,47 @@ function showSubOutreach(idx) {
     
     // Known prime contractor contact database
     const primeContacts = {
+        // Major Construction Primes
         'turner construction': { email: 'subcontracting@turnerconstruction.com', portal: 'https://www.turnerconstruction.com/subcontractors' },
         'hensel phelps': { email: 'suppliers@henselphelps.com', portal: 'https://www.henselphelps.com/subcontractors/' },
         'clark construction': { email: 'subcontractors@clarkconstruction.com', portal: 'https://www.clarkconstruction.com/subcontractors' },
+        'fluor': { email: 'supplier.diversity@fluor.com', portal: 'https://www.fluor.com/sustainability/community/supplier-diversity' },
+        'bechtel': { email: 'supplierdiversity@bechtel.com', portal: 'https://www.bechtel.com/suppliers/' },
+        'skanska': { email: 'subcontractors@skanska.com', portal: 'https://www.usa.skanska.com/subcontractors/' },
+        'mortenson': { email: 'supplier.diversity@mortenson.com', portal: 'https://www.mortenson.com/subcontractors' },
+        'whiting-turner': { email: 'subcontractors@whiting-turner.com', portal: 'https://www.whiting-turner.com/subcontractors/' },
+        'mccarthy': { email: 'subcontractors@mccarthy.com', portal: 'https://www.mccarthy.com/subcontractors' },
+        'balfour beatty': { email: 'suppliers@balfourbeattyus.com', portal: 'https://www.balfourbeattyus.com/suppliers' },
+        'granite construction': { email: 'supplierdiversity@gfrainc.com', portal: 'https://www.graniteconstruction.com/suppliers' },
+
+        // Defense/Aerospace Primes
+        'lockheed martin': { email: 'suppliers@lmco.com', portal: 'https://www.lockheedmartin.com/en-us/suppliers.html' },
+        'northrop grumman': { email: 'supplierdiversity@ngc.com', portal: 'https://www.northropgrumman.com/suppliers/' },
+        'raytheon': { email: 'smallbusiness@rtx.com', portal: 'https://www.rtx.com/suppliers' },
+        'rtx': { email: 'smallbusiness@rtx.com', portal: 'https://www.rtx.com/suppliers' },
+        'general dynamics': { email: 'suppliers@gd.com', portal: 'https://www.gd.com/suppliers' },
+        'bae systems': { email: 'supplier.management@baesystems.com', portal: 'https://www.baesystems.com/en/our-company/about-us/suppliers' },
+        'l3harris': { email: 'supplierdiversity@l3harris.com', portal: 'https://www.l3harris.com/company/suppliers' },
+        'boeing': { email: 'supplierdiversity@boeing.com', portal: 'https://www.boeing.com/company/key-orgs/supplier-diversity' },
+        'textron': { email: 'smallbusiness@textron.com', portal: 'https://www.textron.com/About/Suppliers' },
+        'huntington ingalls': { email: 'smallbusiness@hii-co.com', portal: 'https://hii.com/suppliers/' },
+        'hii': { email: 'smallbusiness@hii-co.com', portal: 'https://hii.com/suppliers/' },
+
+        // IT/Professional Services Primes
         'leidos': { email: 'small.business@leidos.com', portal: 'https://www.leidos.com/suppliers' },
+        'booz allen': { email: 'supplierdiversity@bah.com', portal: 'https://www.boozallen.com/about/supplier-diversity.html' },
+        'booz allen hamilton': { email: 'supplierdiversity@bah.com', portal: 'https://www.boozallen.com/about/supplier-diversity.html' },
+        'saic': { email: 'small.business@saic.com', portal: 'https://www.saic.com/who-we-are/suppliers' },
+        'caci': { email: 'subcontracts@caci.com', portal: 'https://www.caci.com/teaming' },
+        'peraton': { email: 'smallbusiness@peraton.com', portal: 'https://www.peraton.com/suppliers/' },
+        'mantech': { email: 'smallbusiness@mantech.com', portal: 'https://www.mantech.com/suppliers' },
+        'gdit': { email: 'smallbusiness@gdit.com', portal: 'https://www.gdit.com/suppliers/' },
+        'general dynamics it': { email: 'smallbusiness@gdit.com', portal: 'https://www.gdit.com/suppliers/' },
+        'serco': { email: 'smallbusiness.na@serco.com', portal: 'https://www.serco.com/na/about/suppliers' },
+        'maximus': { email: 'supplierdiversity@maximus.com', portal: 'https://maximus.com/suppliers' },
+        'icf': { email: 'supplierdiversity@icf.com', portal: 'https://www.icf.com/company/about/suppliers' },
+
+        // Engineering Primes
         'jacobs': { email: 'supplier.diversity@jacobs.com', portal: 'https://www.jacobs.com/suppliers' },
         'jacobs engineering': { email: 'supplier.diversity@jacobs.com', portal: 'https://www.jacobs.com/suppliers' },
         'kbr': { email: 'supplierdiversity@kbr.com', portal: 'https://www.kbr.com/en/about-us/suppliers' },
@@ -5354,16 +5391,38 @@ function showSubOutreach(idx) {
         'aecom': { email: 'suppliers@aecom.com', portal: 'https://aecom.com/about-aecom/suppliers/' },
         'parsons': { email: 'suppliers@parsons.com', portal: 'https://www.parsons.com/suppliers/' },
         'parsons corporation': { email: 'suppliers@parsons.com', portal: 'https://www.parsons.com/suppliers/' },
-        'lockheed martin': { email: 'suppliers@lmco.com', portal: 'https://www.lockheedmartin.com/en-us/suppliers.html' },
-        'northrop grumman': { email: 'supplierdiversity@ngc.com', portal: 'https://www.northropgrumman.com/suppliers/' },
-        'raytheon': { email: 'smallbusiness@rtx.com', portal: 'https://www.rtx.com/suppliers' },
-        'general dynamics': { email: 'suppliers@gd.com', portal: 'https://www.gd.com/suppliers' },
-        'bae systems': { email: 'supplier.management@baesystems.com', portal: 'https://www.baesystems.com/en/our-company/about-us/suppliers' },
-        'booz allen': { email: 'supplierdiversity@bah.com', portal: 'https://www.boozallen.com/about/supplier-diversity.html' },
-        'booz allen hamilton': { email: 'supplierdiversity@bah.com', portal: 'https://www.boozallen.com/about/supplier-diversity.html' },
-        'saic': { email: 'small.business@saic.com', portal: 'https://www.saic.com/who-we-are/suppliers' },
-        'caci': { email: 'subcontracts@caci.com', portal: 'https://www.caci.com/teaming' },
-        'peraton': { email: 'smallbusiness@peraton.com', portal: 'https://www.peraton.com/suppliers/' },
+        'tetra tech': { email: 'supplierdiversity@tetratech.com', portal: 'https://www.tetratech.com/about/suppliers/' },
+        'wsp': { email: 'suppliers@wsp.com', portal: 'https://www.wsp.com/en-us/who-we-are/suppliers' },
+        'stantec': { email: 'supplierdiversity@stantec.com', portal: 'https://www.stantec.com/en/about/suppliers' },
+        'hdrinc': { email: 'supplierdiversity@hdrinc.com', portal: 'https://www.hdrinc.com/about-us/suppliers' },
+        'hdr': { email: 'supplierdiversity@hdrinc.com', portal: 'https://www.hdrinc.com/about-us/suppliers' },
+        'black & veatch': { email: 'supplierdiversity@bv.com', portal: 'https://www.bv.com/suppliers' },
+
+        // Consulting/Big 4
+        'accenture': { email: 'supplier.inclusion@accenture.com', portal: 'https://www.accenture.com/us-en/about/company/supplier-inclusion-diversity' },
+        'deloitte': { email: 'supplierdiversity@deloitte.com', portal: 'https://www2.deloitte.com/us/en/pages/about-deloitte/articles/supplier-diversity.html' },
+        'deloitte consulting': { email: 'supplierdiversity@deloitte.com', portal: 'https://www2.deloitte.com/us/en/pages/about-deloitte/articles/supplier-diversity.html' },
+        'pwc': { email: 'us_supplier_diversity@pwc.com', portal: 'https://www.pwc.com/us/en/about-us/supplier-diversity.html' },
+        'pricewaterhousecoopers': { email: 'us_supplier_diversity@pwc.com', portal: 'https://www.pwc.com/us/en/about-us/supplier-diversity.html' },
+        'kpmg': { email: 'us-supplierdiversity@kpmg.com', portal: 'https://www.kpmg.us/about/supplier-diversity.html' },
+        'ey': { email: 'supplier.diversity@ey.com', portal: 'https://www.ey.com/en_us/about-us/supplier-diversity' },
+        'ernst & young': { email: 'supplier.diversity@ey.com', portal: 'https://www.ey.com/en_us/about-us/supplier-diversity' },
+        'mckinsey': { email: 'supplierdiversity@mckinsey.com', portal: 'https://www.mckinsey.com/about-us/supplier-diversity' },
+
+        // Tech Companies
+        'ibm': { email: 'supplierdiversity@us.ibm.com', portal: 'https://www.ibm.com/impact/be-equal/supplier-diversity' },
+        'microsoft': { email: 'msdiversity@microsoft.com', portal: 'https://www.microsoft.com/en-us/procurement/supplier-diversity' },
+        'oracle': { email: 'supplierdiversity_us@oracle.com', portal: 'https://www.oracle.com/corporate/suppliers/' },
+        'aws': { email: 'aws-supplierdiversity@amazon.com', portal: 'https://aws.amazon.com/partners/work-with-partners/' },
+        'amazon': { email: 'supplierdiversity@amazon.com', portal: 'https://sustainability.aboutamazon.com/people/communities/supplier-diversity' },
+        'google': { email: 'supplierdiversity@google.com', portal: 'https://about.google/supplier-diversity/' },
+        'cisco': { email: 'supplierdiversity@cisco.com', portal: 'https://www.cisco.com/c/en/us/about/supplier-diversity.html' },
+        'dell': { email: 'supplier_diversity@dell.com', portal: 'https://www.dell.com/en-us/dt/corporate/social-impact/advancing-sustainability/supply-chain/supplier-diversity.htm' },
+        'hp': { email: 'supplierdiversity@hp.com', portal: 'https://www.hp.com/us-en/hp-information/sustainable-impact/supply-chain-responsibility.html' },
+        'salesforce': { email: 'supplierdiversity@salesforce.com', portal: 'https://www.salesforce.com/company/supplier-diversity/' },
+        'palantir': { email: 'suppliers@palantir.com', portal: 'https://www.palantir.com/suppliers/' },
+        'snowflake': { email: 'procurement@snowflake.com', portal: 'https://www.snowflake.com/legal/supplier-code-of-conduct/' },
+
         // San Diego Defense Contractors
         'general atomics': { email: 'small.business@ga.com', portal: 'https://www.ga.com/small-business' },
         'general atomics aeronautical': { email: 'small.business@ga.com', portal: 'https://www.ga.com/small-business' },
@@ -5375,22 +5434,31 @@ function showSubOutreach(idx) {
         'kratos defense': { email: 'subcontracts@kratosdefense.com', portal: 'https://www.kratosdefense.com/about/suppliers' },
         'spawar': { email: 'navwar.smallbusiness@navy.mil', portal: 'https://www.navwar.navy.mil/OSBP/' },
         'navwar': { email: 'navwar.smallbusiness@navy.mil', portal: 'https://www.navwar.navy.mil/OSBP/' },
-        'nassco': { email: 'smallbusiness@nassco.com', portal: 'https://www.nassco.com/suppliers' },
-        'general dynamics nassco': { email: 'smallbusiness@nassco.com', portal: 'https://www.nassco.com/suppliers' },
-        'bae systems san diego': { email: 'supplier.management@baesystems.com', portal: 'https://www.baesystems.com/en/our-company/about-us/suppliers' },
-        'l3harris san diego': { email: 'supplierdiversity@l3harris.com', portal: 'https://www.l3harris.com/company/suppliers' },
-        'fluor': { email: 'supplier.diversity@fluor.com', portal: 'https://www.fluor.com/sustainability/community/supplier-diversity' },
-        'bechtel': { email: 'supplierdiversity@bechtel.com', portal: 'https://www.bechtel.com/suppliers/' },
-        'skanska': { email: 'subcontractors@skanska.com', portal: 'https://www.usa.skanska.com/subcontractors/' },
-        'mortenson': { email: 'supplier.diversity@mortenson.com', portal: 'https://www.mortenson.com/subcontractors' },
-        'whiting-turner': { email: 'subcontractors@whiting-turner.com', portal: 'https://www.whiting-turner.com/subcontractors/' },
-        'mccarthy': { email: 'subcontractors@mccarthy.com', portal: 'https://www.mccarthy.com/subcontractors' },
-        'balfour beatty': { email: 'suppliers@balfourbeattyus.com', portal: 'https://www.balfourbeattyus.com/suppliers' },
-        'granite construction': { email: 'supplierdiversity@gfrainc.com', portal: 'https://www.graniteconstruction.com/suppliers' },
-        'accenture': { email: 'supplier.inclusion@accenture.com', portal: 'https://www.accenture.com/us-en/about/company/supplier-inclusion-diversity' },
-        'deloitte': { email: 'supplierdiversity@deloitte.com', portal: 'https://www2.deloitte.com/us/en/pages/about-deloitte/articles/supplier-diversity.html' },
-        'ibm': { email: 'supplierdiversity@us.ibm.com', portal: 'https://www.ibm.com/impact/be-equal/supplier-diversity' },
-        'microsoft': { email: 'msdiversity@microsoft.com', portal: 'https://www.microsoft.com/en-us/procurement/supplier-diversity' }
+        'nassco': { email: 'smallbusiness@nassco.com', portal: 'https://nassco.com/suppliers/' },
+        'general dynamics nassco': { email: 'smallbusiness@nassco.com', portal: 'https://nassco.com/suppliers/' },
+
+        // Government Contractors from USASpending
+        'ensco': { email: 'contracts@ensco.com', portal: 'https://www.ensco.com/about/suppliers' },
+        'ensco inc': { email: 'contracts@ensco.com', portal: 'https://www.ensco.com/about/suppliers' },
+        'battelle': { email: 'smallbusiness@battelle.org', portal: 'https://www.battelle.org/about-us/suppliers' },
+        'mitre': { email: 'smallbusiness@mitre.org', portal: 'https://www.mitre.org/about/corporate-overview/doing-business-with-mitre' },
+        'rand': { email: 'contracts@rand.org', portal: 'https://www.rand.org/about/contracts.html' },
+        'sri international': { email: 'procurement@sri.com', portal: 'https://www.sri.com/about/procurement/' },
+        'aerospace corporation': { email: 'smallbusiness@aero.org', portal: 'https://aerospace.org/about/supplier-information' },
+        'applied research': { email: 'contracts@arl.psu.edu', portal: 'https://www.arl.psu.edu/procurement' },
+
+        // Healthcare/Social Services Primes
+        'management & training': { email: 'contracts@mtctrains.com', portal: 'https://www.mtctrains.com/about/suppliers/' },
+        'mtc': { email: 'contracts@mtctrains.com', portal: 'https://www.mtctrains.com/about/suppliers/' },
+        'geo group': { email: 'supplierdiversity@geogroup.com', portal: 'https://www.geogroup.com/Supplier_Diversity' },
+        'corecivic': { email: 'supplierdiversity@corecivic.com', portal: 'https://www.corecivic.com/suppliers' },
+
+        // Telecom
+        'at&t': { email: 'supplierdiversity@att.com', portal: 'https://www.att.com/csr/supplier-diversity/' },
+        'verizon': { email: 'supplierdiversity@verizon.com', portal: 'https://www.verizon.com/about/responsibility/supplier-diversity' },
+        't-mobile': { email: 'supplierdiversity@t-mobile.com', portal: 'https://www.t-mobile.com/responsibility/operating-responsibly/supplier-diversity' },
+        'lumen': { email: 'supplierdiversity@lumen.com', portal: 'https://www.lumen.com/en-us/about/supplier-diversity.html' },
+        'centurylink': { email: 'supplierdiversity@lumen.com', portal: 'https://www.lumen.com/en-us/about/supplier-diversity.html' }
     };
     
     // Look up contact or generate guess

@@ -7275,7 +7275,7 @@ async function runLiveSearch() {
 
     try {
         // Build URL
-        let url = `/api/live-search?days=${days}&limit=100`;
+        let url = `/api/sam-live?days=${days}&limit=100`;
         if (customKeywords) {
             url += `&keywords=${encodeURIComponent(customKeywords)}`;
         }

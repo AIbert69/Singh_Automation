@@ -3877,11 +3877,23 @@ function showDetail(id) {
             </div>
         </div>
     `;
-    
+
     document.getElementById('detailModal').classList.add('active');
 }
 
 function closeModal() { document.getElementById('detailModal').classList.remove('active'); }
+
+// Close modal on overlay click or ESC key
+document.getElementById('detailModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+        closeTrainModal && closeTrainModal();
+        closeQuoteModal && closeQuoteModal();
+    }
+});
 
 // Ask Agent_SAM about a specific opportunity from the modal
 function askAgentAboutOpp(id) {

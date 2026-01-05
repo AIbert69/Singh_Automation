@@ -5397,16 +5397,18 @@ function showSubOutreach(idx) {
     const primeLower = prime.toLowerCase().trim();
     let contactEmail = opp.contact?.email || opp.email || '';
     let portalUrl = opp.contact?.portal || '';
-    
+    let isVerifiedContact = !!contactEmail; // True if came from API
+
     // Check known database
     for (const [key, value] of Object.entries(primeContacts)) {
         if (primeLower.includes(key) || key.includes(primeLower.split(' ')[0].toLowerCase())) {
             contactEmail = contactEmail || value.email;
             portalUrl = portalUrl || value.portal;
+            isVerifiedContact = true; // From verified database
             break;
         }
     }
-    
+
     // If still no email, generate educated guess
     if (!contactEmail && prime !== 'Prime Contractor') {
         const companySlug = prime.toLowerCase()
@@ -5414,7 +5416,11 @@ function showSubOutreach(idx) {
             .trim()
             .replace(/\s+/g, '');
         contactEmail = `subcontracting@${companySlug}.com`;
+        isVerifiedContact = false; // This is a guess
     }
+
+    // Generate search URL for unverified contacts
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(prime + ' supplier subcontractor portal')}`;
     
     const email = generateSubEmail({ prime, agency, description: desc });
     
@@ -5429,10 +5435,17 @@ function showSubOutreach(idx) {
                 <button class="close-outreach-btn" style="background: none; border: none; color: var(--gray); font-size: 1.5rem; cursor: pointer; padding: 0.25rem 0.5rem;">&times;</button>
             </div>
             <div style="padding: 1rem;">
+                ${!isVerifiedContact ? `
+                <div style="background: rgba(239,68,68,0.15); border: 1px solid var(--red); border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem;">
+                    <div style="color: var(--red); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">⚠️ Unverified Contact</div>
+                    <p style="color: #fca5a5; font-size: 0.75rem; margin: 0 0 0.5rem 0;">This email address is an <strong>educated guess</strong>. The actual contact may be different.</p>
+                    <a href="${searchUrl}" target="_blank" style="color: var(--blue); font-size: 0.75rem;">🔍 Search for ${prime}'s supplier portal →</a>
+                </div>
+                ` : ''}
                 <div style="margin-bottom: 1rem;">
-                    <label style="display: block; font-size: 0.75rem; color: var(--gray); margin-bottom: 0.25rem;">To: ${!opp.contact?.email ? '<span style="color: var(--orange);">(estimated - verify before sending)</span>' : ''}</label>
+                    <label style="display: block; font-size: 0.75rem; color: var(--gray); margin-bottom: 0.25rem;">To: ${!isVerifiedContact ? '<span style="color: var(--orange);">(estimated - verify before sending)</span>' : '<span style="color: var(--green);">✓ verified</span>'}</label>
                     <input type="text" id="outreachTo" value="${contactEmail}" style="width: 100%; padding: 0.5rem; background: var(--dark); border: 1px solid var(--border); border-radius: 4px; color: #fff;">
-                    ${portalUrl ? `<a href="${portalUrl}" target="_blank" style="font-size: 0.7rem; color: var(--blue); margin-top: 0.25rem; display: inline-block;">🔗 Supplier Portal</a>` : '<span style="font-size: 0.7rem; color: var(--gray); margin-top: 0.25rem; display: inline-block;">💡 Tip: Search "[Company] supplier portal" to find official contact</span>'}
+                    ${portalUrl ? `<a href="${portalUrl}" target="_blank" style="font-size: 0.7rem; color: var(--blue); margin-top: 0.25rem; display: inline-block;">🔗 Supplier Portal</a>` : `<a href="${searchUrl}" target="_blank" style="font-size: 0.7rem; color: var(--gray); margin-top: 0.25rem; display: inline-block;">💡 Tip: Search "[Company] supplier portal" to find official contact</a>`}
                 </div>
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; font-size: 0.75rem; color: var(--gray); margin-bottom: 0.25rem;">Subject:</label>

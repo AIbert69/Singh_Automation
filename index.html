@@ -7541,7 +7541,16 @@ function addLiveToPipeline(oppId) {
 
     // Add to pipeline
     if (!pipeline[opp.id]) {
-        pipeline[opp.id] = 'identified';
+        pipeline[opp.id] = {
+            status: opp.recommendation === 'PURSUE' ? 'go' : 'review',
+            title: opp.title,
+            agency: opp.agency,
+            value: opp.estimatedValue,
+            score: opp.score,
+            recommendation: opp.recommendation,
+            addedAt: new Date().toISOString(),
+            source: 'Live Search'
+        };
         localStorage.setItem('pipeline', JSON.stringify(pipeline));
     }
 
@@ -7556,10 +7565,13 @@ function startProposalFromLive(oppId) {
     // Store opportunity data for proposal editor
     localStorage.setItem('currentOpportunity', JSON.stringify({
         id: opp.id,
+        noticeId: opp.solicitationNumber || opp.id,
         title: opp.title,
         solicitation: opp.solicitationNumber,
         agency: opp.agency,
+        value: opp.estimatedValue,
         deadline: opp.responseDeadline,
+        responseDeadLine: opp.responseDeadline,
         naics: opp.naicsCode,
         setAside: opp.setAside,
         description: opp.description,

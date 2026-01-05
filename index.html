@@ -903,6 +903,9 @@
         <button class="nav-btn" data-page="train" data-testid="nav-train" title="Train the AI agent with your company's past performance and win themes">
             <span class="icon">🧠</span> Train Agent
         </button>
+        <button class="nav-btn" data-page="live" data-testid="nav-live" title="Live SAM.gov search with AI scoring" style="background: linear-gradient(135deg, #10b981, #06b6d4); color: #fff; border-color: transparent;">
+            <span class="icon">⚡</span> Live Search
+        </button>
     </nav>
 
     <div class="config-bar" id="configBar" style="display: none;">
@@ -1691,6 +1694,162 @@
                     </div>
                 </div>
                 
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE SEARCH PAGE -->
+    <div class="page" id="page-live">
+        <!-- Live Search Stats -->
+        <div class="stats-bar" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="stat-card" style="border-left: 4px solid var(--green);">
+                <div class="stat-label">PURSUE</div>
+                <div class="stat-value" id="livePursue" style="color: var(--green);">0</div>
+                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--green);">🎯</div>
+            </div>
+            <div class="stat-card" style="border-left: 4px solid var(--orange);">
+                <div class="stat-label">WATCH</div>
+                <div class="stat-value" id="liveWatch" style="color: var(--orange);">0</div>
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: var(--orange);">👀</div>
+            </div>
+            <div class="stat-card" style="border-left: 4px solid var(--gray);">
+                <div class="stat-label">SKIP</div>
+                <div class="stat-value" id="liveSkip" style="color: var(--gray);">0</div>
+                <div class="stat-icon" style="background: rgba(107, 114, 128, 0.2); color: var(--gray);">⏭️</div>
+            </div>
+            <div class="stat-card" style="border-left: 4px solid var(--blue);">
+                <div class="stat-label">AVG SCORE</div>
+                <div class="stat-value" id="liveAvgScore" style="color: var(--blue);">0</div>
+                <div class="stat-icon" style="background: rgba(59, 130, 246, 0.2); color: var(--blue);">📊</div>
+            </div>
+            <div class="stat-card" style="border-left: 4px solid var(--purple);">
+                <div class="stat-label">TOTAL FOUND</div>
+                <div class="stat-value" id="liveTotal">0</div>
+                <div class="stat-icon" style="background: rgba(139, 92, 246, 0.2); color: var(--purple);">🔍</div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 1rem; padding: 0 1.5rem 1.5rem;">
+            <!-- Left Sidebar - Search Controls -->
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <!-- Company Profile Card -->
+                <div class="panel" style="background: linear-gradient(135deg, #1a2332, #232d3f);">
+                    <div class="panel-header">
+                        <span class="icon">🏢</span>
+                        <span class="panel-title">Company Profile</span>
+                    </div>
+                    <div style="font-size: 0.85rem;">
+                        <div style="font-weight: 600; color: #fff;">Singh Automation LLC</div>
+                        <div style="color: var(--gray); font-size: 0.75rem; margin-top: 0.25rem;">
+                            CAGE: 86VF7 | UEI: GJ1DPYQ3X8K5
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                        <span class="cert-badge">Small Business</span>
+                        <span class="cert-badge">MBE</span>
+                    </div>
+                </div>
+
+                <!-- Search Controls -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="icon">⚙️</span>
+                        <span class="panel-title">Search Settings</span>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-size: 0.75rem; color: var(--gray); display: block; margin-bottom: 0.5rem;">NAICS Codes</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                            <span class="cert-badge" style="background: rgba(59, 130, 246, 0.1); color: var(--blue); border-color: rgba(59, 130, 246, 0.2);">333249</span>
+                            <span class="cert-badge" style="background: rgba(59, 130, 246, 0.1); color: var(--blue); border-color: rgba(59, 130, 246, 0.2);">333922</span>
+                            <span class="cert-badge" style="background: rgba(59, 130, 246, 0.1); color: var(--blue); border-color: rgba(59, 130, 246, 0.2);">541330</span>
+                            <span class="cert-badge" style="background: rgba(59, 130, 246, 0.1); color: var(--blue); border-color: rgba(59, 130, 246, 0.2);">541512</span>
+                            <span class="cert-badge" style="background: rgba(59, 130, 246, 0.1); color: var(--blue); border-color: rgba(59, 130, 246, 0.2);">541715</span>
+                            <span class="cert-badge" style="background: rgba(59, 130, 246, 0.1); color: var(--blue); border-color: rgba(59, 130, 246, 0.2);">238210</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-size: 0.75rem; color: var(--gray); display: block; margin-bottom: 0.5rem;">Date Range</label>
+                        <select id="liveDaysSelect" style="width: 100%; padding: 0.5rem; background: var(--dark); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 0.85rem;">
+                            <option value="30">Last 30 days</option>
+                            <option value="60" selected>Last 60 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-size: 0.75rem; color: var(--gray); display: block; margin-bottom: 0.5rem;">Custom Keywords (comma-separated)</label>
+                        <input type="text" id="liveKeywordsInput" placeholder="robotics, automation, PLC..." style="width: 100%; padding: 0.5rem; background: var(--dark); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 0.85rem;">
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 600;" onclick="runLiveSearch()">
+                        ⚡ Run Live Search
+                    </button>
+                </div>
+
+                <!-- Scoring Legend -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="icon">📏</span>
+                        <span class="panel-title">Scoring Factors</span>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--gray);">
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <span>NAICS Match</span>
+                            <span style="color: var(--green);">+25 pts</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <span>Keywords (max 7)</span>
+                            <span style="color: var(--green);">+35 pts</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <span>Priority Agency</span>
+                            <span style="color: var(--green);">+15 pts</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <span>Value $25K-$5M</span>
+                            <span style="color: var(--green);">+15 pts</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0;">
+                            <span>Small Biz Set-Aside</span>
+                            <span style="color: var(--green);">+10 pts</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+                        <div style="display: flex; gap: 0.5rem; font-size: 0.7rem;">
+                            <span style="padding: 0.25rem 0.5rem; background: rgba(34, 197, 94, 0.2); color: #22c55e; border-radius: 4px;">PURSUE ≥65</span>
+                            <span style="padding: 0.25rem 0.5rem; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border-radius: 4px;">WATCH 40-64</span>
+                            <span style="padding: 0.25rem 0.5rem; background: rgba(107, 114, 128, 0.2); color: #6b7280; border-radius: 4px;">SKIP &lt;40</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content - Results -->
+            <div class="panel" style="min-height: 500px;">
+                <div class="panel-header" style="justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="icon">⚡</span>
+                        <span class="panel-title">Live Search Results</span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="filter-pill active" data-live-filter="all" onclick="filterLiveResults('all')">All</button>
+                        <button class="filter-pill" data-live-filter="pursue" onclick="filterLiveResults('pursue')" style="color: var(--green);">Pursue</button>
+                        <button class="filter-pill" data-live-filter="watch" onclick="filterLiveResults('watch')" style="color: var(--orange);">Watch</button>
+                    </div>
+                </div>
+
+                <div id="liveSearchResults" style="min-height: 400px;">
+                    <div style="text-align: center; padding: 4rem 2rem; color: var(--gray);">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 0.5rem;">AgentSam Live Search</div>
+                        <div style="font-size: 0.85rem; max-width: 400px; margin: 0 auto;">
+                            Real-time SAM.gov contract scanning with AI-powered scoring.
+                            Click "Run Live Search" to find opportunities matching Singh Automation's capabilities.
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -7095,6 +7254,310 @@ function closeTrainModal() {
 
 // Initialize training data on page load
 document.addEventListener('DOMContentLoaded', loadAgentMemory);
+
+// ========== LIVE SEARCH (AgentSam) ==========
+let liveSearchResults = [];
+let liveSearchFilter = 'all';
+
+async function runLiveSearch() {
+    const resultsDiv = document.getElementById('liveSearchResults');
+    const days = document.getElementById('liveDaysSelect')?.value || '60';
+    const customKeywords = document.getElementById('liveKeywordsInput')?.value || '';
+
+    // Show loading
+    resultsDiv.innerHTML = `
+        <div style="text-align: center; padding: 4rem 2rem;">
+            <div class="spinner" style="margin: 0 auto 1rem;"></div>
+            <div style="color: var(--gray);">Searching SAM.gov...</div>
+            <div style="color: var(--gray); font-size: 0.75rem; margin-top: 0.5rem;">Scanning by NAICS codes and keywords</div>
+        </div>
+    `;
+
+    try {
+        // Build URL
+        let url = `/api/sam-live?days=${days}&limit=100`;
+        if (customKeywords) {
+            url += `&keywords=${encodeURIComponent(customKeywords)}`;
+        }
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Search failed');
+        }
+
+        liveSearchResults = data.opportunities || [];
+
+        // Update stats
+        document.getElementById('livePursue').textContent = data.stats?.pursue || 0;
+        document.getElementById('liveWatch').textContent = data.stats?.watch || 0;
+        document.getElementById('liveSkip').textContent = data.stats?.skip || 0;
+        document.getElementById('liveAvgScore').textContent = data.stats?.avgScore || 0;
+        document.getElementById('liveTotal').textContent = data.stats?.total || 0;
+
+        // Render results
+        renderLiveResults();
+
+    } catch (err) {
+        console.error('Live search error:', err);
+        resultsDiv.innerHTML = `
+            <div style="text-align: center; padding: 4rem 2rem; color: var(--red);">
+                <div style="font-size: 2rem; margin-bottom: 1rem;">⚠️</div>
+                <div style="font-weight: 600;">Search Failed</div>
+                <div style="font-size: 0.85rem; color: var(--gray); margin-top: 0.5rem;">${err.message}</div>
+            </div>
+        `;
+    }
+}
+
+function filterLiveResults(filter) {
+    liveSearchFilter = filter;
+    document.querySelectorAll('[data-live-filter]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.liveFilter === filter);
+    });
+    renderLiveResults();
+}
+
+function renderLiveResults() {
+    const resultsDiv = document.getElementById('liveSearchResults');
+
+    // Filter results
+    let filtered = liveSearchResults;
+    if (liveSearchFilter === 'pursue') {
+        filtered = liveSearchResults.filter(o => o.recommendation === 'PURSUE');
+    } else if (liveSearchFilter === 'watch') {
+        filtered = liveSearchResults.filter(o => o.recommendation === 'WATCH');
+    }
+
+    if (filtered.length === 0) {
+        resultsDiv.innerHTML = `
+            <div style="text-align: center; padding: 4rem 2rem; color: var(--gray);">
+                <div style="font-size: 2rem; margin-bottom: 1rem;">📭</div>
+                <div>No opportunities found${liveSearchFilter !== 'all' ? ' for this filter' : ''}</div>
+            </div>
+        `;
+        return;
+    }
+
+    resultsDiv.innerHTML = filtered.map(opp => `
+        <div class="live-opp-card" style="border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem; background: var(--dark); cursor: pointer; transition: all 0.2s;" onclick="showLiveDetail('${opp.id}')" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; background: ${opp.recommendationColor}20; color: ${opp.recommendationColor};">${opp.recommendation}</span>
+                        <span style="font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(59, 130, 246, 0.1); color: var(--blue);">${opp.naicsCode || 'N/A'}</span>
+                        ${opp.setAside && opp.setAside !== 'Full and Open' ? `<span style="font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(139, 92, 246, 0.1); color: var(--purple);">${opp.setAside}</span>` : ''}
+                    </div>
+                    <div style="font-weight: 600; font-size: 0.95rem; color: #fff; margin-bottom: 0.35rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${opp.title}</div>
+                    <div style="font-size: 0.75rem; color: var(--gray); margin-bottom: 0.35rem;">${opp.agency}</div>
+                    <div style="font-size: 0.7rem; color: var(--gray-light);">
+                        ${opp.solicitationNumber} • Posted: ${opp.postedDate || 'N/A'} • Due: ${opp.responseDeadline || 'TBD'}
+                    </div>
+                </div>
+                <div style="text-align: right; flex-shrink: 0;">
+                    <div style="font-size: 1.75rem; font-weight: 700; color: ${opp.recommendationColor};">${opp.score}</div>
+                    <div style="font-size: 0.65rem; color: var(--gray);">SCORE</div>
+                </div>
+            </div>
+            ${opp.matchReasons && opp.matchReasons.length > 0 ? `
+                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                        ${opp.matchReasons.map(r => `<span style="font-size: 0.65rem; padding: 0.15rem 0.4rem; background: rgba(16, 185, 129, 0.1); color: var(--green); border-radius: 3px;">✓ ${r}</span>`).join('')}
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `).join('');
+}
+
+function showLiveDetail(oppId) {
+    const opp = liveSearchResults.find(o => o.id === oppId);
+    if (!opp) return;
+
+    const modal = document.getElementById('detailModal');
+    const title = document.getElementById('modalTitle');
+    const body = document.getElementById('modalBody');
+    const footer = document.getElementById('modalFooter');
+
+    title.textContent = opp.title;
+
+    body.innerHTML = `
+        <div style="display: grid; gap: 1rem;">
+            <!-- Score Section -->
+            <div style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem; background: var(--dark); border-radius: 8px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: 700; color: ${opp.recommendationColor};">${opp.score}</div>
+                    <div style="font-size: 0.7rem; color: var(--gray);">AI SCORE</div>
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-size: 1.1rem; font-weight: 700; color: ${opp.recommendationColor}; margin-bottom: 0.5rem;">${opp.recommendation}</div>
+                    <div style="font-size: 0.75rem; color: var(--gray);">
+                        ${opp.matchReasons ? opp.matchReasons.join(' • ') : 'No specific match reasons'}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Score Breakdown -->
+            <div style="padding: 1rem; background: var(--dark); border-radius: 8px;">
+                <div style="font-weight: 600; margin-bottom: 0.75rem; font-size: 0.85rem;">Score Breakdown</div>
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; font-size: 0.75rem;">
+                    <div style="text-align: center; padding: 0.5rem; background: var(--card); border-radius: 4px;">
+                        <div style="font-weight: 600; color: ${opp.scoreBreakdown?.naics > 0 ? 'var(--green)' : 'var(--gray)'};">${opp.scoreBreakdown?.naics || 0}</div>
+                        <div style="color: var(--gray); font-size: 0.65rem;">NAICS</div>
+                    </div>
+                    <div style="text-align: center; padding: 0.5rem; background: var(--card); border-radius: 4px;">
+                        <div style="font-weight: 600; color: ${opp.scoreBreakdown?.keywords > 0 ? 'var(--green)' : 'var(--gray)'};">${opp.scoreBreakdown?.keywords || 0}</div>
+                        <div style="color: var(--gray); font-size: 0.65rem;">Keywords</div>
+                    </div>
+                    <div style="text-align: center; padding: 0.5rem; background: var(--card); border-radius: 4px;">
+                        <div style="font-weight: 600; color: ${opp.scoreBreakdown?.agency > 0 ? 'var(--green)' : 'var(--gray)'};">${opp.scoreBreakdown?.agency || 0}</div>
+                        <div style="color: var(--gray); font-size: 0.65rem;">Agency</div>
+                    </div>
+                    <div style="text-align: center; padding: 0.5rem; background: var(--card); border-radius: 4px;">
+                        <div style="font-weight: 600; color: ${opp.scoreBreakdown?.value > 0 ? 'var(--green)' : 'var(--gray)'};">${opp.scoreBreakdown?.value || 0}</div>
+                        <div style="color: var(--gray); font-size: 0.65rem;">Value</div>
+                    </div>
+                    <div style="text-align: center; padding: 0.5rem; background: var(--card); border-radius: 4px;">
+                        <div style="font-weight: 600; color: ${opp.scoreBreakdown?.setAside > 0 ? 'var(--green)' : 'var(--gray)'};">${opp.scoreBreakdown?.setAside || 0}</div>
+                        <div style="color: var(--gray); font-size: 0.65rem;">Set-Aside</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Details Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--gray); text-transform: uppercase;">Agency</div>
+                    <div style="font-size: 0.9rem; color: #fff;">${opp.agency}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--gray); text-transform: uppercase;">Sub-Agency</div>
+                    <div style="font-size: 0.9rem; color: #fff;">${opp.subAgency || 'N/A'}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--gray); text-transform: uppercase;">Solicitation #</div>
+                    <div style="font-size: 0.9rem; color: #fff;">${opp.solicitationNumber}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--gray); text-transform: uppercase;">NAICS</div>
+                    <div style="font-size: 0.9rem; color: #fff;">${opp.naicsCode || 'N/A'} ${opp.naicsDescription ? `- ${opp.naicsDescription}` : ''}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--gray); text-transform: uppercase;">Posted Date</div>
+                    <div style="font-size: 0.9rem; color: #fff;">${opp.postedDate || 'N/A'}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--gray); text-transform: uppercase;">Response Deadline</div>
+                    <div style="font-size: 0.9rem; color: ${opp.responseDeadline ? 'var(--orange)' : '#fff'}; font-weight: ${opp.responseDeadline ? '600' : '400'};">${opp.responseDeadline || 'TBD'}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--gray); text-transform: uppercase;">Set-Aside</div>
+                    <div style="font-size: 0.9rem; color: #fff;">${opp.setAside || 'Full and Open'}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--gray); text-transform: uppercase;">Place of Performance</div>
+                    <div style="font-size: 0.9rem; color: #fff;">${opp.placeOfPerformance || 'N/A'}</div>
+                </div>
+            </div>
+
+            ${opp.contact ? `
+                <div style="padding: 1rem; background: var(--dark); border-radius: 8px;">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 0.85rem;">Point of Contact</div>
+                    <div style="font-size: 0.85rem; color: #fff;">${opp.contact.name || 'N/A'}</div>
+                    ${opp.contact.email ? `<div style="font-size: 0.8rem; color: var(--blue);">${opp.contact.email}</div>` : ''}
+                    ${opp.contact.phone ? `<div style="font-size: 0.8rem; color: var(--gray);">${opp.contact.phone}</div>` : ''}
+                </div>
+            ` : ''}
+
+            ${opp.description ? `
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--gray); text-transform: uppercase; margin-bottom: 0.5rem;">Description</div>
+                    <div style="font-size: 0.85rem; color: var(--gray-light); line-height: 1.5; max-height: 200px; overflow-y: auto;">${opp.description}</div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    footer.innerHTML = `
+        <a href="${opp.link}" target="_blank" class="btn btn-primary" style="text-decoration: none;">
+            View on SAM.gov →
+        </a>
+        <button class="btn btn-secondary" onclick="addLiveToPipeline('${opp.id}')">
+            📊 Add to Pipeline
+        </button>
+        <button class="btn" style="background: var(--purple); color: #fff;" onclick="startProposalFromLive('${opp.id}')">
+            📝 Start Proposal
+        </button>
+    `;
+
+    modal.style.display = 'flex';
+}
+
+function addLiveToPipeline(oppId) {
+    const opp = liveSearchResults.find(o => o.id === oppId);
+    if (!opp) return;
+
+    // Convert to pipeline format
+    const pipelineOpp = {
+        id: opp.id,
+        noticeId: opp.id,
+        title: opp.title,
+        solicitation: opp.solicitationNumber,
+        agency: opp.agency,
+        postedDate: opp.postedDate,
+        closeDate: opp.responseDeadline,
+        setAside: opp.setAside,
+        naicsCode: opp.naicsCode,
+        value: opp.estimatedValue,
+        description: opp.description,
+        link: opp.link,
+        contact: opp.contact,
+        source: 'Live Search',
+        type: 'contract',
+        category: 'Federal',
+        status: opp.recommendation === 'PURSUE' ? 'GO' : 'Review',
+        statusReason: `AI Score: ${opp.score} - ${opp.recommendation}`,
+        score: opp.score,
+    };
+
+    // Add to opportunities array if not already present
+    if (!opportunities.find(o => o.id === opp.id)) {
+        opportunities.push(pipelineOpp);
+    }
+
+    // Add to pipeline
+    if (!pipeline[opp.id]) {
+        pipeline[opp.id] = 'identified';
+        localStorage.setItem('singh_pipeline', JSON.stringify(pipeline));
+    }
+
+    closeModal();
+    alert(`Added "${opp.title}" to pipeline!`);
+}
+
+function startProposalFromLive(oppId) {
+    const opp = liveSearchResults.find(o => o.id === oppId);
+    if (!opp) return;
+
+    // Store opportunity data for proposal editor
+    localStorage.setItem('proposalOpp', JSON.stringify({
+        id: opp.id,
+        title: opp.title,
+        solicitation: opp.solicitationNumber,
+        agency: opp.agency,
+        deadline: opp.responseDeadline,
+        naics: opp.naicsCode,
+        setAside: opp.setAside,
+        description: opp.description,
+        score: opp.score,
+        recommendation: opp.recommendation,
+        link: opp.link,
+    }));
+
+    // Open proposal editor
+    window.open('proposal-editor.html', '_blank');
+}
 
 </script>
 </body>

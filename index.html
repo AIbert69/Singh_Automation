@@ -3877,11 +3877,23 @@ function showDetail(id) {
             </div>
         </div>
     `;
-    
+
     document.getElementById('detailModal').classList.add('active');
 }
 
 function closeModal() { document.getElementById('detailModal').classList.remove('active'); }
+
+// Close modal on overlay click or ESC key
+document.getElementById('detailModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+        closeTrainModal && closeTrainModal();
+        closeQuoteModal && closeQuoteModal();
+    }
+});
 
 // Ask Agent_SAM about a specific opportunity from the modal
 function askAgentAboutOpp(id) {
@@ -7492,7 +7504,7 @@ function showLiveDetail(oppId) {
         </button>
     `;
 
-    modal.style.display = 'flex';
+    modal.classList.add('active');
 }
 
 function addLiveToPipeline(oppId) {
@@ -7529,8 +7541,17 @@ function addLiveToPipeline(oppId) {
 
     // Add to pipeline
     if (!pipeline[opp.id]) {
-        pipeline[opp.id] = 'identified';
-        localStorage.setItem('singh_pipeline', JSON.stringify(pipeline));
+        pipeline[opp.id] = {
+            status: opp.recommendation === 'PURSUE' ? 'go' : 'review',
+            title: opp.title,
+            agency: opp.agency,
+            value: opp.estimatedValue,
+            score: opp.score,
+            recommendation: opp.recommendation,
+            addedAt: new Date().toISOString(),
+            source: 'Live Search'
+        };
+        localStorage.setItem('pipeline', JSON.stringify(pipeline));
     }
 
     closeModal();
@@ -7542,12 +7563,15 @@ function startProposalFromLive(oppId) {
     if (!opp) return;
 
     // Store opportunity data for proposal editor
-    localStorage.setItem('proposalOpp', JSON.stringify({
+    localStorage.setItem('currentOpportunity', JSON.stringify({
         id: opp.id,
+        noticeId: opp.solicitationNumber || opp.id,
         title: opp.title,
         solicitation: opp.solicitationNumber,
         agency: opp.agency,
+        value: opp.estimatedValue,
         deadline: opp.responseDeadline,
+        responseDeadLine: opp.responseDeadline,
         naics: opp.naicsCode,
         setAside: opp.setAside,
         description: opp.description,

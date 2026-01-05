@@ -1082,6 +1082,10 @@
                         <span class="panel-title">Quick Actions</span>
                     </div>
                     <div class="quick-actions">
+                        <div class="action-btn" onclick="openBidNetSearch()" style="background: linear-gradient(135deg, #1e3a5f, #2d5a87);">
+                            <span class="icon">🔍</span>
+                            <span class="label">Search BidNet</span>
+                        </div>
                         <div class="action-btn" onclick="openNewProposal()">
                             <span class="icon">📄</span>
                             <span class="label">New Proposal</span>
@@ -3292,6 +3296,15 @@ function updateRevenueCalculator() {
 }
 
 // ========== QUICK ACTION HELPERS ==========
+function openBidNetSearch() {
+    // Open BidNet Direct with pre-configured search for Singh Automation
+    // Keywords: automation, robotic, welding, PLC, SCADA, conveyor
+    // States: California, Michigan, Texas, Ohio
+    const bidNetUrl = 'https://www.bidnetdirect.com/solicitations/open?keywords=automation+robotic+welding+PLC+SCADA+conveyor&purchasingGroups=California+Purchasing+Group,MITN+Purchasing+Group,Texas+Purchasing+Group,Ohio+Purchasing+Group';
+    window.open(bidNetUrl, '_blank');
+    log('Opened BidNet Direct search for state/local opportunities', 'info');
+}
+
 function openNewProposal() {
     // Navigate to Agent page for proposal generation
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));

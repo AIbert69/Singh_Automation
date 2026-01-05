@@ -3297,11 +3297,29 @@ function updateRevenueCalculator() {
 
 // ========== QUICK ACTION HELPERS ==========
 function openBidNetSearch() {
-    // Open BidNet Direct with pre-configured search for Singh Automation
-    // Keywords: automation, robotic, welding, PLC, SCADA, conveyor
-    // States: California, Michigan, Texas, Ohio
-    const bidNetUrl = 'https://www.bidnetdirect.com/solicitations/open?keywords=automation+robotic+welding+PLC+SCADA+conveyor&purchasingGroups=California+Purchasing+Group,MITN+Purchasing+Group,Texas+Purchasing+Group,Ohio+Purchasing+Group';
+    // Open BidNet Direct solicitation search page
+    // User filters by: automation, robotic, welding, PLC, SCADA, conveyor
+    // Purchasing Groups: California, MITN (Michigan), Texas, Ohio
+    const bidNetUrl = 'https://www.bidnetdirect.com/solicitations';
     window.open(bidNetUrl, '_blank');
+
+    // Show search tips popup
+    const tip = document.createElement('div');
+    tip.id = 'bidnet-tip';
+    tip.innerHTML = `
+        <div style="position:fixed;top:20px;right:20px;background:linear-gradient(135deg,#1e3a5f,#2d5a87);color:#fff;padding:1.25rem 1.5rem;border-radius:12px;z-index:10000;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.4);font-family:Inter,sans-serif;">
+            <div style="font-weight:600;font-size:1rem;margin-bottom:0.75rem;">🔍 BidNet Search Tips</div>
+            <div style="font-size:0.85rem;color:#e0e0e0;line-height:1.5;">
+                <div style="margin-bottom:0.5rem;"><b style="color:#fff;">Keywords:</b> automation, robotic, welding, PLC, SCADA, conveyor</div>
+                <div style="margin-bottom:0.5rem;"><b style="color:#fff;">Purchasing Groups:</b> California, MITN (Michigan), Texas, Ohio</div>
+                <div><b style="color:#fff;">NIGP Codes:</b> 939 (Industrial Equipment), 958 (Welding)</div>
+            </div>
+            <button onclick="document.getElementById('bidnet-tip').remove()" style="position:absolute;top:10px;right:12px;background:none;border:none;color:#fff;cursor:pointer;font-size:1.3rem;opacity:0.7;">&times;</button>
+        </div>
+    `;
+    document.body.appendChild(tip);
+    setTimeout(() => { if(document.getElementById('bidnet-tip')) document.getElementById('bidnet-tip').remove(); }, 15000);
+
     log('Opened BidNet Direct search for state/local opportunities', 'info');
 }
 

@@ -863,114 +863,88 @@
         /* ============ MOBILE RESPONSIVE ============ */
         @media (max-width: 768px) {
             .app-container { flex-direction: column; }
-            .sidebar {
+            /* Hide sidebar on mobile - use tabs instead */
+            .sidebar { display: none; }
+            .main-content {
+                padding: 1rem;
                 width: 100%;
-                height: auto;
-                max-height: 200px;
-                overflow-x: auto;
-                overflow-y: hidden;
-                flex-direction: row;
-                flex-wrap: wrap;
-                padding: 0.5rem;
-                gap: 0.5rem;
+                margin-left: 0;
             }
-            .sidebar-section {
-                flex-direction: row;
-                flex-wrap: wrap;
-                gap: 0.25rem;
-                margin-bottom: 0;
-            }
-            .sidebar-section h3 {
-                width: 100%;
-                font-size: 0.65rem;
-                margin-bottom: 0.25rem;
-            }
-            .source-toggle {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.65rem;
-            }
-            .main-content { padding: 0.5rem; }
             .stats-bar {
                 display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 0.5rem;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+                margin-bottom: 1rem;
             }
-            .stat-card { padding: 0.5rem; }
-            .stat-card .value { font-size: 1.25rem; }
-            .stat-card .label { font-size: 0.6rem; }
-            .header { padding: 0.5rem 1rem; }
-            .header-title h1 { font-size: 1rem; }
+            .stat-card { padding: 0.75rem; }
+            .stat-card .value { font-size: 1.5rem; }
+            .stat-card .label { font-size: 0.75rem; }
+            .header { padding: 0.75rem 1rem; }
+            .header-title h1 { font-size: 1.1rem; }
             .tab-nav {
-                overflow-x: auto;
-                gap: 0.25rem;
-                padding-bottom: 0.5rem;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+                padding: 0.5rem;
             }
             .tab-btn {
-                padding: 0.4rem 0.75rem;
-                font-size: 0.7rem;
+                padding: 0.75rem 1rem;
+                font-size: 0.85rem;
                 white-space: nowrap;
+                justify-content: center;
             }
-            .opportunities-list { gap: 0.5rem; }
-            .opp-card { padding: 0.75rem; }
+            .opportunities-list { gap: 0.75rem; }
+            .opp-card { padding: 1rem; }
             .opp-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-            .opp-title { font-size: 0.85rem; }
-            .opp-meta { flex-wrap: wrap; gap: 0.25rem 0.5rem; font-size: 0.65rem; }
-            .opp-footer { flex-direction: column; gap: 0.5rem; align-items: stretch; }
+            .opp-title { font-size: 1rem; }
+            .opp-meta { flex-wrap: wrap; gap: 0.5rem; font-size: 0.8rem; }
+            .opp-footer { flex-direction: column; gap: 0.75rem; align-items: stretch; }
             .opp-actions { justify-content: center; }
+            /* Right panel - full width stacked */
             .right-panel {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
+                position: relative;
                 width: 100%;
-                height: 60vh;
-                max-height: 60vh;
-                border-radius: 16px 16px 0 0;
-                transform: translateY(calc(100% - 50px));
-                transition: transform 0.3s ease;
-                z-index: 1000;
+                height: auto;
+                max-height: none;
+                border-radius: 0;
+                margin-top: 1rem;
             }
-            .right-panel:focus-within,
-            .right-panel.expanded { transform: translateY(0); }
-            .right-panel::before {
-                content: '⬆ Agent SAM';
-                display: block;
-                text-align: center;
-                padding: 0.5rem;
-                font-size: 0.75rem;
-                color: var(--gray);
-                cursor: pointer;
+            .agent-panel, .proposal-panel {
+                width: 100% !important;
+                margin-bottom: 1rem;
             }
-            .filter-bar { flex-wrap: wrap; gap: 0.5rem; }
+            .filter-bar { flex-wrap: wrap; gap: 0.75rem; }
             .search-box { width: 100%; }
             .filter-tags { width: 100%; overflow-x: auto; }
             .modal-content {
                 width: 95%;
                 max-height: 90vh;
                 margin: 5vh auto;
-                padding: 1rem;
+                padding: 1.25rem;
             }
-            .modal-body { padding: 0.5rem; }
-            .chat-messages { max-height: 40vh; }
+            .modal-body { padding: 0.75rem; }
+            .chat-messages { max-height: 50vh; }
             .quick-actions {
                 display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 0.25rem;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
             }
             .quick-action-btn {
-                padding: 0.5rem;
-                font-size: 0.6rem;
+                padding: 0.75rem;
+                font-size: 0.8rem;
             }
-            .certifications { flex-wrap: wrap; gap: 0.25rem; }
-            .cert-badge { font-size: 0.6rem; padding: 0.2rem 0.4rem; }
+            .certifications { flex-wrap: wrap; gap: 0.5rem; }
+            .cert-badge { font-size: 0.75rem; padding: 0.3rem 0.6rem; }
+            .btn { padding: 0.6rem 1rem; font-size: 0.85rem; }
         }
 
         @media (max-width: 480px) {
-            .stats-bar { grid-template-columns: repeat(2, 1fr); }
-            .stat-card:last-child { grid-column: span 2; }
-            .sidebar { max-height: 150px; }
-            .opp-card { padding: 0.5rem; }
-            .btn { padding: 0.4rem 0.75rem; font-size: 0.7rem; }
+            .header-title h1 { font-size: 1rem; }
+            .tab-nav { grid-template-columns: repeat(2, 1fr); }
+            .tab-btn { padding: 0.6rem 0.5rem; font-size: 0.75rem; }
+            .stat-card .value { font-size: 1.25rem; }
+            .opp-card { padding: 0.75rem; }
+            .quick-actions { grid-template-columns: 1fr 1fr; }
         }
     </style>
     <!-- Document parsing libraries -->

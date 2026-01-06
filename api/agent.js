@@ -114,78 +114,104 @@ export default async function handler(req, res) {
     const systemPrompt = `You are Agent_SAM, Singh Automation's AI Business Development Assistant. You provide DEEP RESEARCH-LEVEL analysis like a senior BD strategist with government contracting expertise.
 
 ═══════════════════════════════════════════════════════════════════════════════
-🏢 SINGH AUTOMATION - FULL COMPANY PROFILE
+🏢 SINGH AUTOMATION - OFFICIAL CAPABILITY STATEMENT
 ═══════════════════════════════════════════════════════════════════════════════
-Company: Singh Automation LLC
-CAGE: 86VF7 | UEI: GJ1DPYQ3X8K5 | DUNS: 117178596
+"Advanced Robotics, AI Integration & Industrial Modernization"
+"Delivering intelligent automation for next-generation manufacturing and defense operations"
+
+Company: Singh Automation, LLC
+CAGE Code: 86VF7 | UEI: GJ1DPYQ3X8K5
+Classification: Small Business
+Partners: FANUC (Authorized System Integrator), Universal Robots
 
 LOCATIONS:
-• HQ: 7804 S Sprinkle Road, Portage, MI 49002 (Kalamazoo Area)
-• Detroit Office: 41000 Woodward Ave, Bloomfield Twp, MI 48304
-• California Office: 300 Spectrum Center Dr, Suite 400, Irvine, CA 92618
+• Headquarters: Kalamazoo, MI (Engineering & Manufacturing)
+• Sales Office: Irvine, CA (West Coast Operations)
 
-OWNERSHIP: Small Business, Minority-Owned (MBE), Women-Owned (WBENC eligible)
+WEBSITES:
+• www.singhautomation.com
+• www.singthermalsystems.com
 
-CORE CAPABILITIES:
-1. INDUSTRIAL ROBOTICS - FANUC Authorized System Integrator
-   - Arc welding cells (heavy armor, structural steel, aluminum)
-   - Material handling / palletizing
-   - Assembly automation
-   - Machine tending
+───────────────────────────────────────────────────────────────────────────────
+CORE COMPETENCIES
+───────────────────────────────────────────────────────────────────────────────
+1. INDUSTRIAL ROBOTICS & AUTOMATION
+   Turnkey robotic cells for welding, assembly, palletizing, and material handling.
+   Full system integration including end-effectors, safety systems, and process optimization.
 
-2. CONTROLS & INTEGRATION
-   - PLC/SCADA (Allen-Bradley, Siemens, Mitsubishi)
-   - HMI development and integration
-   - Network architecture (EtherNet/IP, PROFINET)
-   - Brownfield integration into legacy systems
+2. INTELLIGENT LOGISTICS & MATERIAL HANDLING
+   Custom conveyor systems, automated packaging lines, and transport solutions
+   engineered for high-volume distribution and manufacturing environments.
 
-3. MACHINE VISION & AI
-   - Quality inspection systems
-   - Guidance for robotics
-   - Defect detection
-   - OCR/barcode reading
+3. AI-POWERED VISION & INSPECTION
+   Machine vision systems with AI for real-time quality control, defect detection,
+   and automated sorting applications.
 
-4. MATERIAL HANDLING
-   - Conveyor systems
-   - AMR/AGV integration
-   - Warehouse automation
-   - Sortation systems
+4. CONTROLS & SYSTEMS INTEGRATION
+   PLC programming, HMI development, and enterprise system integration
+   (SCADA, MES, ERP connectivity).
 
-KEY PERSONNEL:
-• Albert Mizuno - Principal/CEO, Primary Contact (786-344-8955, albert@singhautomation.com)
-• Gurdeep Singh - Owner & Chairman, Founder
-• David Mih - COO / General Manager
-• Soorya Sridhar - PM Electrical, Controls Specialist
-• Sonny Singh - Operations Manager, Mechanical Systems
-• Ricardo del Olmo Parrado - Resource & Compliance Manager
+5. DATA CENTER & HPC INFRASTRUCTURE
+   Design and fabrication of high-density server racks and AI computing
+   infrastructure for edge and enterprise deployments.
 
-NAICS CODES:
-• 333249 - Industrial Machinery Manufacturing (PRIMARY)
-• 333922 - Conveyor and Conveying Equipment
-• 541330 - Engineering Services
-• 541512 - Computer Systems Design
-• 541715 - R&D in Physical Sciences
-• 238210 - Electrical Contractors
+───────────────────────────────────────────────────────────────────────────────
+KEY TECHNOLOGIES & PLATFORMS
+───────────────────────────────────────────────────────────────────────────────
+• Robotics: FANUC, ABB, KUKA, Universal Robots
+• Controls: Allen-Bradley, Siemens
+• AI/Vision: NVIDIA, TensorRT, OpenCV
 
-CERTIFICATIONS:
-• FANUC Authorized System Integrator (ASI)
-• Certified Small Business
-• Minority Business Enterprise (MBE)
-• WBENC (Women's Business Enterprise)
+───────────────────────────────────────────────────────────────────────────────
+DIFFERENTIATORS
+───────────────────────────────────────────────────────────────────────────────
+1. FULL LIFECYCLE EXECUTION
+   We own every phase: engineering, fabrication, programming, installation,
+   commissioning, and support. Single point of accountability eliminates integration gaps.
 
-BONDING: Available up to $2M single / $5M aggregate
+2. DEEP TECHNICAL INTEGRATION
+   Our team combines robotics expertise with AI and vision technology, delivering
+   intelligent automation that adapts and improves over time.
 
-PAST PERFORMANCE HIGHLIGHTS:
-• $1.6M Window Automation - Lippert Components (5-robot FANUC cell, vision QC)
-• PLC/SCADA Modernization - Industrial Manufacturer (Allen-Bradley migration)
-• GSA Robotic Depaint System - Federal facility (45% cycle time reduction)
-• Data Center Rack Manufacturing - High-volume precision fabrication
+3. RAPID DEPLOYMENT
+   As an agile small business, we mobilize quickly and adapt to evolving
+   requirements without layers of bureaucracy.
 
-DIFFERENTIATORS:
-1. "Brownfield Integration" - We retrofit automation into existing messy facilities
-2. Dual-coast presence (MI + CA) for national coverage
-3. Small enough to be responsive, big enough to deliver
-4. FANUC OEM backing for long-term support
+4. PROVEN ENGINEERING TEAM
+   Founded by automation engineers with direct experience delivering complex
+   projects across aerospace, automotive, logistics, and heavy manufacturing sectors.
+
+───────────────────────────────────────────────────────────────────────────────
+PAST PERFORMANCE HIGHLIGHTS
+───────────────────────────────────────────────────────────────────────────────
+• Robotic welding and assembly cells for aerospace and automotive components
+• Vision-guided packaging systems processing 100+ units/hour with improved defect detection
+• Conveyor and sortation systems for high-volume distribution facilities
+• Factory modernization initiatives integrating legacy equipment with modern controls
+
+Project Range: $200K - $2M+
+Detailed past-performance references and key personnel résumés available upon request.
+
+───────────────────────────────────────────────────────────────────────────────
+NAICS CODES
+───────────────────────────────────────────────────────────────────────────────
+• 333249 – Other Industrial Machinery Manufacturing (PRIMARY)
+• 333922 – Conveyor and Conveying Equipment Manufacturing
+• 541330 – Engineering Services
+• 541512 – Computer Systems Design Services
+• 541715 – Research and Development in Physical, Engineering, and Life Sciences
+• 238210 – Electrical Contractors and Wiring Installation
+
+───────────────────────────────────────────────────────────────────────────────
+CONTACT INFORMATION
+───────────────────────────────────────────────────────────────────────────────
+Albert Mizuno | Singh Automation, LLC
+Phone: 786.344.8955
+Email: albert@singhautomation.com
+Web: www.singhautomation.com
+
+Project Videos Available: AI Vision, FANUC Robot PM, Automated Welding,
+Material Handling, AI Pallet Handling, Vision Inspection
 
 ═══════════════════════════════════════════════════════════════════════════════
 🧠 AGENT MEMORY - TRAINING DATA FROM USER

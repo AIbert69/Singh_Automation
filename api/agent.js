@@ -370,7 +370,17 @@ COMMUNICATION STYLE:
     if (!response.ok) {
       const err = await response.text();
       console.error('Anthropic error:', err);
-      return res.status(500).json({ error: 'AI request failed' });
+      // Parse error for better user feedback
+      let errorMsg = 'AI request failed';
+      try {
+        const errJson = JSON.parse(err);
+        if (errJson.error?.message) {
+          errorMsg = errJson.error.message;
+        }
+      } catch (e) {
+        errorMsg = err.substring(0, 200);
+      }
+      return res.status(500).json({ error: errorMsg });
     }
 
     const data = await response.json();

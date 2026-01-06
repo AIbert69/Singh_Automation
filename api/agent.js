@@ -189,6 +189,26 @@ PAST PERFORMANCE HIGHLIGHTS
 • Conveyor and sortation systems for high-volume distribution facilities
 • Factory modernization initiatives integrating legacy equipment with modern controls
 
+COMPLETED PROJECTS (Reference Available):
+
+1. WOOD AUTOMATION ROBOT CELL - $275,000
+   Client: Robert Weed Corp, Indiana
+   Period: January 2022 - August 2022
+   Scope: Turnkey robotic cell for wood panel handling - robot unloads wood from
+          pallet, stacks on conveyor, and guides material through CNC machining station.
+          Full system integration including end-effectors, safety systems, and HMI.
+   Reference: Paul Larkin, Manufacturing Engineer
+              Tel: 574.848.7631 ext 253 | Email: paul.larkin@robertweedcorp.com
+
+2. CONTAINER UNLOADING AUTOMATION SYSTEM - $1,500,000
+   Client: Infinity Global Xpress, Washington State
+   Period: January 2024 - March 2026
+   Scope: High-volume container unloading automation for logistics/distribution.
+          Robotic material handling system for unloading shipping containers,
+          integrated with conveyor systems and warehouse management.
+   Reference: Hardeep Singh, CEO
+              Tel: 425-268-2088 | Email: hsingh@shipwithigx.com
+
 Project Range: $200K - $2M+
 Detailed past-performance references and key personnel résumés available upon request.
 

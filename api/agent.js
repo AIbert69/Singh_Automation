@@ -349,38 +349,63 @@ COMMUNICATION STYLE:
 - Don't hedge - give direct opinions on GO/NO-GO
 - Reference Singh's actual capabilities and past performance`;
 
-    // Use Sonnet for deeper analysis
-    const modelId = 'claude-3-5-sonnet-20241022';
+    // Try Sonnet first (best quality), fall back to Haiku if it fails
+    const models = [
+      { id: 'claude-3-5-sonnet-20241022', maxTokens: 4000 },
+      { id: 'claude-3-5-haiku-20241022', maxTokens: 4000 }
+    ];
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: modelId,
-        max_tokens: 4000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: message }]
-      })
-    });
+    let lastError = null;
 
-    if (!response.ok) {
-      const err = await response.text();
-      console.error('Anthropic error:', err);
-      return res.status(500).json({ error: 'AI request failed' });
+    for (const model of models) {
+      try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: model.id,
+            max_tokens: model.maxTokens,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: message }]
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return res.status(200).json({
+            success: true,
+            response: data.content[0].text,
+            tokens: data.usage?.output_tokens || 0,
+            model: model.id
+          });
+        }
+
+        // Store error and try next model
+        const err = await response.text();
+        console.error(`${model.id} error:`, err);
+        lastError = err;
+
+      } catch (e) {
+        console.error(`${model.id} exception:`, e.message);
+        lastError = e.message;
+      }
     }
 
-    const data = await response.json();
-
-    return res.status(200).json({
-      success: true,
-      response: data.content[0].text,
-      tokens: data.usage?.output_tokens || 0,
-      model: modelId
-    });
+    // All models failed
+    let errorMsg = 'AI request failed';
+    try {
+      const errJson = JSON.parse(lastError);
+      if (errJson.error?.message) {
+        errorMsg = errJson.error.message;
+      }
+    } catch (e) {
+      errorMsg = typeof lastError === 'string' ? lastError.substring(0, 200) : 'Unknown error';
+    }
+    return res.status(500).json({ error: errorMsg });
 
   } catch (error) {
     console.error('Agent error:', error);

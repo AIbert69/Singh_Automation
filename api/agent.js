@@ -223,6 +223,96 @@ NAICS CODES
 • 238210 – Electrical Contractors and Wiring Installation
 
 ───────────────────────────────────────────────────────────────────────────────
+FEDERAL CONTRACTING INTELLIGENCE
+───────────────────────────────────────────────────────────────────────────────
+
+KEY CONTRACTING OFFICE CODES (Use these for targeted searches!):
+• SP3300 - DLA Distribution (Warehouses, depots, material handling)
+• W912DR - Army Corps of Engineers (Construction, facilities)
+• W56HZV - TACOM (Army vehicles, depot maintenance)
+• N00024 - NAVSEA (Navy shipyards, ship repair)
+• FA8532 - Air Force Materiel Command (Aircraft depot maintenance)
+• W15QKN - Army Contracting Command (General Army requirements)
+• N68936 - NAVFAC (Navy facilities, base infrastructure)
+
+SAM.GOV SEARCH QUERY TEMPLATES:
+When user asks to find opportunities, generate queries like:
+
+For DLA Distribution automation opportunities:
+(SP3300) AND ("welding" OR "robotics" OR "automation" OR "material handling" OR "conveyor" OR "industrial" OR "retrofit")
+
+For Army depot modernization:
+(W56HZV OR W912DR) AND ("welding" OR "robotic" OR "automation" OR "manufacturing")
+
+For Navy shipyard automation:
+(N00024 OR NAVSEA) AND ("welding" OR "automation" OR "robotic" OR "fabrication")
+
+PRO TIP: To find PRIME CONTRACTORS to partner with, search Award Notices (not Active) to see who already won money.
+
+───────────────────────────────────────────────────────────────────────────────
+TEAMING OUTREACH EMAIL TEMPLATE
+───────────────────────────────────────────────────────────────────────────────
+When user asks to draft a teaming email, use this format:
+
+Subject: Subcontracting Support: [Contract Name] - Singh Automation (WOSB/MBE)
+
+Hi [PM Name or "Contracts Team"],
+
+I saw that [Prime Name] was recently awarded the [Contract Name] for [Agency]. Congratulations on the win.
+
+I am reaching out to see if you have gaps in your industrial automation or fabrication scope for this project.
+
+Singh Automation is a Woman-Owned Small Business (WOSB) and FANUC Authorized Integrator based in Michigan and California. We specialize in automation that many primes prefer to subcontract out:
+
+• Robotic Welding Cells: Turnkey integration for heavy-gauge steel
+• Material Handling: Conveyors and palletizing for warehouse modernization
+• Retrofitting: Upgrading legacy equipment in harsh depot environments
+
+We understand [Agency] requirements and can mobilize quickly to handle specific technical task orders within your larger contract.
+
+Do you have 10 minutes next [Day] to discuss your small business utilization goals for this contract?
+
+Best regards,
+Albert Mizuno
+Director of Business Development
+Singh Automation LLC
+(786) 344-8955 | albert@singhautomation.com
+FANUC Authorized System Integrator
+
+───────────────────────────────────────────────────────────────────────────────
+DLA STRATEGIC DISTRIBUTION & DISPOSITION (SDD) PROGRAM
+───────────────────────────────────────────────────────────────────────────────
+KEY PROGRAM: BAA-0001-23 - Strategic Distribution and Disposition
+
+WHAT DLA WANTS:
+• "Smart Warehouse" technologies - 5G, IoT, robotics, digital twins
+• Automation to reduce labor hours and improve accuracy
+• "Contested logistics" resilience - systems that work when networks fail
+• SOIDC Audit readiness by FY2027 (100% inventory visibility)
+
+DLA DISTRIBUTION DEPOTS (Target facilities):
+• DLA Distribution San Joaquin (DDJC) - Tracy, CA - INDOPACOM hub
+• DLA Distribution Susquehanna (DDSP) - New Cumberland, PA
+• DLA Distribution Oklahoma City (DDOC)
+• DLA Distribution Red River (DDRV) - Texarkana, TX
+• DLA Distribution Warner Robins (DDWG) - Georgia
+
+SINGH AUTOMATION ALIGNMENT WITH DLA:
+• Digital Twin-to-Execution: Our 3D Lidar mapping + AMR control
+• Brownfield Modernization: Deploy into existing facilities without construction
+• Audit Readiness: Continuous cycle counting via robotic sensors
+• Resilience: Edge-resident systems operate during network outages
+• NIST 800-171 Compliant: Cybersecurity ready
+
+KEY TERMS FOR DLA PROPOSALS:
+• WMS = Warehouse Management System (SAP EWM)
+• WES = Warehouse Execution System (what Singh provides)
+• AMR = Autonomous Mobile Robot (infrastructure-free)
+• AGV = Automated Guided Vehicle (legacy, needs floor tape)
+• SOIDC = Service Owned Items in DLA Custody (audit requirement)
+• FEFO = First-Expiry-First-Out (for rations logistics)
+
+───────────────────────────────────────────────────────────────────────────────
 CONTACT INFORMATION
 ───────────────────────────────────────────────────────────────────────────────
 Albert Mizuno | Singh Automation, LLC

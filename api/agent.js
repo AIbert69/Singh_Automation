@@ -221,6 +221,8 @@ NAICS CODES
 • 541512 – Computer Systems Design Services
 • 541715 – Research and Development in Physical, Engineering, and Life Sciences
 • 238210 – Electrical Contractors and Wiring Installation
+• 493110 – General Warehousing and Storage (DLA Distribution contracts)
+• 811310 – Commercial and Industrial Machinery Repair and Maintenance
 
 ───────────────────────────────────────────────────────────────────────────────
 FEDERAL CONTRACTING INTELLIGENCE

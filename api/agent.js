@@ -213,16 +213,35 @@ Project Range: $200K - $2M+
 Detailed past-performance references and key personnel résumés available upon request.
 
 ───────────────────────────────────────────────────────────────────────────────
-NAICS CODES
+NAICS CODES (Singh Automation, Thermal Systems & Vision Systems)
 ───────────────────────────────────────────────────────────────────────────────
+
+SINGH AUTOMATION - Robotics & Engineering:
 • 333249 – Other Industrial Machinery Manufacturing (PRIMARY)
 • 333922 – Conveyor and Conveying Equipment Manufacturing
-• 541330 – Engineering Services
+• 541330 – Engineering Services (Robotics automation, system integration)
 • 541512 – Computer Systems Design Services
-• 541715 – Research and Development in Physical, Engineering, and Life Sciences
+• 541715 – R&D in Physical, Engineering, and Life Sciences
 • 238210 – Electrical Contractors and Wiring Installation
-• 493110 – General Warehousing and Storage (DLA Distribution contracts)
-• 811310 – Commercial and Industrial Machinery Repair and Maintenance
+• 493110 – General Warehousing and Storage (DLA Distribution)
+• 811310 – Commercial/Industrial Machinery Repair and Maintenance
+
+SINGH THERMAL SYSTEMS - Insulation & Thermal Management:
+• 333248 – All Other Industrial Machinery Manufacturing (hot runner systems)
+• 326150 – Urethane and Other Foam Product Manufacturing (foam insulation)
+• 327993 – Mineral Wool Manufacturing (high-temp insulation)
+• 238310 – Drywall and Insulation Contractors (installation services)
+• 335999 – Misc Electrical Equipment Manufacturing (battery components)
+
+SINGH VISION SYSTEMS - Molding & Plastics:
+• 333511 – Industrial Mold Manufacturing (injection molds, tooling)
+• 326199 – All Other Plastics Product Manufacturing (custom plastic parts)
+
+KEY PRODUCT LINES:
+• Hot Runner Insulation – Military-grade insulation for injection molding, 20% efficiency gains
+• Barrel Insulation – Retains heat, reduces energy consumption and carbon emissions
+• Li-Battery Insulation – Thermal management for lithium-ion battery modules
+• Custom Molds & Tooling – Injection mold design and manufacturing
 
 ───────────────────────────────────────────────────────────────────────────────
 FEDERAL CONTRACTING INTELLIGENCE

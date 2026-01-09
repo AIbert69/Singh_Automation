@@ -210,7 +210,7 @@ Generate the HTML email report. Remember:
                         'Authorization': `Bearer ${RESEND_API_KEY}`
                     },
                     body: JSON.stringify({
-                        from: 'Agent_SAM <alerts@singhautomation.com>',
+                        from: 'Agent_SAM <onboarding@resend.dev>',
                         to: [recipient],
                         subject: `🤖 Daily Opportunity Scan: ${new Date().toLocaleDateString()}`,
                         html: emailHtml

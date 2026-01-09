@@ -9,13 +9,12 @@
     }
   ],
   "rewrites": [
-    { "source": "/api/v1/scan", "destination": "/api/v1/scan" },
+    { "source": "/api/v1/scan", "destination": "/api/sam" },
     { "source": "/api/v1/validate", "destination": "/api/validate" },
     { "source": "/api/v1/generate", "destination": "/api/generate" },
     { "source": "/api/v1/rfq", "destination": "/api/generate-proposal" },
     { "source": "/api/v1/health", "destination": "/api/health" },
-    { "source": "/api/sam", "destination": "/api/v1/scan" },
-    { "source": "/api/scan", "destination": "/api/v1/scan" },
+    { "source": "/api/scan", "destination": "/api/sam" },
     { "source": "/proposal-editor", "destination": "/proposal-editor.html" },
     { "source": "/live-search", "destination": "/live-search.html" }
   ],

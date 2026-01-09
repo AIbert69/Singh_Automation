@@ -37,11 +37,19 @@ export default async function handler(req, res) {
         uei: 'GJ1DPYQ3X8K5',
         contact: 'albert@singhautomation.com',
 
-        // Target NAICS codes
-        naicsCodes: ['333249', '333922', '541330', '541512', '541715', '238210'],
+        // Target NAICS codes (Singh Automation + Thermal Systems + Vision Systems)
+        naicsCodes: [
+            // Singh Automation - Robotics & Engineering
+            '333249', '333922', '541330', '541512', '541715', '238210', '493110', '811310',
+            // Singh Thermal Systems - Insulation & Foam
+            '333248', '326150', '327993', '238310', '335999',
+            // Singh Vision Systems - Molding & Plastics
+            '333511', '326199'
+        ],
 
         // Target keywords (weighted)
         keywords: [
+            // Automation keywords
             { term: 'robotics', weight: 5 },
             { term: 'robot', weight: 5 },
             { term: 'automation', weight: 5 },
@@ -69,6 +77,18 @@ export default async function handler(req, res) {
             { term: 'Allen-Bradley', weight: 5 },
             { term: 'Rockwell', weight: 5 },
             { term: 'Siemens', weight: 4 },
+            // Singh Thermal Systems keywords
+            { term: 'insulation', weight: 5 },
+            { term: 'thermal', weight: 5 },
+            { term: 'hot runner', weight: 5 },
+            { term: 'injection molding', weight: 5 },
+            { term: 'foam', weight: 4 },
+            { term: 'battery insulation', weight: 5 },
+            { term: 'lithium', weight: 4 },
+            // Singh Vision Systems keywords
+            { term: 'mold', weight: 5 },
+            { term: 'tooling', weight: 5 },
+            { term: 'plastics', weight: 4 },
         ],
 
         // Priority agencies

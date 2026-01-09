@@ -39,11 +39,23 @@ export default async function handler(req, res) {
         });
     }
 
-    // Singh Automation target profile
-    const NAICS_CODES = ['333249', '333922', '541330', '541512', '541715', '238210'];
+    // Singh Companies target profile (Automation + Thermal Systems + Vision Systems)
+    const NAICS_CODES = [
+        // Singh Automation - Robotics & Engineering
+        '333249', '333922', '541330', '541512', '541715', '238210', '493110', '811310',
+        // Singh Thermal Systems - Insulation & Foam
+        '333248', '326150', '327993', '238310', '335999',
+        // Singh Vision Systems - Molding & Plastics
+        '333511', '326199'
+    ];
     const KEYWORDS = [
+        // Automation
         'robotics', 'automation', 'robot', 'PLC', 'SCADA', 'conveyor',
-        'material handling', 'vision system', 'FANUC', 'welding', 'controls'
+        'material handling', 'vision system', 'FANUC', 'welding', 'controls',
+        // Thermal Systems
+        'insulation', 'thermal', 'hot runner', 'foam', 'injection molding', 'battery',
+        // Vision Systems
+        'mold', 'tooling', 'plastics'
     ];
     const PRIORITY_AGENCIES = [
         'defense', 'army', 'navy', 'air force', 'dla', 'nasa', 'doe', 'dod'

@@ -26,21 +26,37 @@ export default async function handler(req, res) {
     const ago = new Date(today); ago.setDate(ago.getDate() - 60);
     const fmt = d => `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;
     
-    // ========== SINGH AUTOMATION PROFILE ==========
+    // ========== SINGH COMPANIES PROFILE (Automation + Thermal Systems + Vision Systems) ==========
     const singhProfile = {
-        naicsCodes: ['333249', '333922', '541330', '541512', '541715', '238210'],
-        keywords: ['robotic', 'welding', 'automation', 'conveyor', 'warehouse', 'PLC', 'SCADA', 
-                   'machine vision', 'systems integration', 'FANUC', 'industrial', 'manufacturing',
-                   'material handling', 'assembly', 'packaging', 'palletizing', 'AMR', 'AGV'],
+        naicsCodes: [
+            // Singh Automation - Robotics & Engineering
+            '333249', '333922', '541330', '541512', '541715', '238210', '493110', '811310',
+            // Singh Thermal Systems - Insulation & Foam
+            '333248', '326150', '327993', '238310', '335999',
+            // Singh Vision Systems - Molding & Plastics
+            '333511', '326199'
+        ],
+        keywords: [
+            'robotic', 'welding', 'automation', 'conveyor', 'warehouse', 'PLC', 'SCADA',
+            'machine vision', 'systems integration', 'FANUC', 'industrial', 'manufacturing',
+            'material handling', 'assembly', 'packaging', 'palletizing', 'AMR', 'AGV',
+            // Singh Thermal Systems
+            'insulation', 'thermal', 'hot runner', 'foam', 'injection molding', 'battery',
+            // Singh Vision Systems
+            'mold', 'tooling', 'plastics'
+        ],
         certifications: ['Small Business', 'MBE', 'WBENC'],
         notCertified: ['SDVOSB', 'VOSB', '8(a)', 'HUBZone', 'WOSB', 'EDWOSB'],
-        noVehicles: ['SeaPort NxG', 'SeaPort-e', 'OASIS', 'OASIS+', 'GSA MAS', 'GSA Schedule', 
+        noVehicles: ['SeaPort NxG', 'SeaPort-e', 'OASIS', 'OASIS+', 'GSA MAS', 'GSA Schedule',
                      'SEWP', 'CIO-SP3', 'STARS III', 'Alliant 2', 'ITES-3S', 'T4NG']
     };
-    
-    const samKeywords = ['robotic welding', 'robotics', 'automation', 'conveyor', 'warehouse automation', 
-                         'PLC', 'SCADA', 'machine vision', 'systems integration', 'FANUC', 
-                         'industrial machinery', 'manufacturing equipment', 'assembly line', 'material handling'];
+
+    const samKeywords = [
+        'robotic welding', 'robotics', 'automation', 'conveyor', 'warehouse automation',
+        'PLC', 'SCADA', 'machine vision', 'systems integration', 'FANUC',
+        'industrial machinery', 'manufacturing equipment', 'assembly line', 'material handling',
+        'insulation', 'thermal', 'hot runner', 'mold', 'tooling', 'foam'
+    ];
     
     const sbirKeywords = ['robot', 'automation', 'manufacturing', 'machine', 'vision'];
     

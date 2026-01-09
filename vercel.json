@@ -2,6 +2,12 @@
   "version": 2,
   "buildCommand": null,
   "outputDirectory": ".",
+  "crons": [
+    {
+      "path": "/api/cron/daily-scan",
+      "schedule": "0 12 * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/api/v1/scan", "destination": "/api/v1/scan" },
     { "source": "/api/v1/validate", "destination": "/api/validate" },

@@ -60,28 +60,26 @@ export default async function handler(req, res) {
     // Covers: design, build, integration, installation, commissioning, sustainment
 
     const singhProfile = {
-        // NAICS CODES - Grouped by capability area
+        // NAICS CODES - All Singh Companies (Automation, Thermal Systems, Vision Systems)
         naicsCodes: [
-            // Core: Automation, Robotics, Systems Integration
-            '541512',  // Computer Systems Design Services - turnkey automation
-            '541330',  // Engineering Services - automation/controls engineering
-            '541511',  // Custom Computer Programming - PLC, HMI/SCADA software
-            '541715',  // R&D Physical Sciences - prototypes, pilots
-            // Industrial Controls, Electrical, Commissioning
-            '238210',  // Electrical Contractors - control panels, wiring, installation
-            '334513',  // Instruments for Measuring/Testing/Control - automation equipment
-            '541690',  // Scientific/Technical Consulting - commissioning, validation
-            // Fabrication, Welding Cells, Custom Machinery
-            '333249',  // Industrial Machinery Manufacturing - robotic cells, custom machines
-            '332312',  // Fabricated Structural Metal - frames, platforms, robotic bases
-            '332322',  // Sheet Metal Work - enclosures, panels, guards
-            '332710',  // Machine Shops - custom machined components
-            '333514',  // Special Tooling/Fixtures - weld fixtures, automation tooling
-            // Material Handling & Factory Automation
-            '333922',  // Conveyor Equipment Manufacturing
-            '333993',  // Packaging Machinery Manufacturing
-            // Sustainment, Training, Support
-            '541990'   // Other Professional Services - training, documentation, lifecycle
+            // SINGH AUTOMATION - Robotics & Engineering (8 codes)
+            '333249',  // Industrial Machinery Manufacturing (PRIMARY)
+            '333922',  // Conveyor and Conveying Equipment Manufacturing
+            '541330',  // Engineering Services
+            '541512',  // Computer Systems Design Services
+            '541715',  // R&D in Physical, Engineering, Life Sciences
+            '238210',  // Electrical Contractors and Wiring Installation
+            '493110',  // General Warehousing and Storage (DLA Distribution)
+            '811310',  // Commercial/Industrial Machinery Repair and Maintenance
+            // SINGH THERMAL SYSTEMS - Insulation & Thermal Management (5 codes)
+            '333248',  // All Other Industrial Machinery Manufacturing (hot runner systems)
+            '326150',  // Urethane and Other Foam Product Manufacturing
+            '327993',  // Mineral Wool Manufacturing
+            '238310',  // Drywall and Insulation Contractors
+            '335999',  // Misc Electrical Equipment Manufacturing (battery components)
+            // SINGH VISION SYSTEMS - Molding & Plastics (2 codes)
+            '333511',  // Industrial Mold Manufacturing
+            '326199'   // All Other Plastics Product Manufacturing
         ],
         keywords: [
             // Automation & Robotics
@@ -99,11 +97,15 @@ export default async function handler(req, res) {
             // Material Handling
             'conveyor system', 'palletizer', 'depalletizer', 'pick and place',
             'packaging automation', 'material handling', 'AGV', 'AMR',
+            // Singh Thermal Systems keywords
+            'insulation', 'thermal', 'hot runner', 'foam', 'injection molding', 'battery',
+            // Singh Vision Systems keywords
+            'mold', 'tooling', 'plastics',
             // Safety & Compliance
             'risk assessment', 'ISO 10218', 'NFPA 79', 'safety PLC'
         ],
-        certifications: ['Small Business', 'MBE', 'WBENC'],
-        notCertified: ['SDVOSB', 'VOSB', '8(a)', 'HUBZone', 'WOSB', 'EDWOSB'],
+        certifications: ['Small Business', 'MBE', 'WBENC', 'WOSB'],
+        notCertified: ['SDVOSB', 'VOSB', '8(a)', 'HUBZone'],
         noVehicles: ['SeaPort NxG', 'SeaPort-e', 'OASIS', 'OASIS+', 'GSA MAS', 'GSA Schedule',
                      'SEWP', 'CIO-SP3', 'STARS III', 'Alliant 2', 'ITES-3S', 'T4NG']
     };

@@ -655,7 +655,7 @@ export default async function handler(req, res) {
         { id: 'dibbs-portal', title: 'DLA DIBBS - DoD Parts Portal', agency: 'DLA',
           solicitation: 'DIBBS Portal', value: null, closeDate: null,
           description: 'Defense Logistics Agency Internet Bid Board System. Search for robot components, PLC modules, industrial parts.',
-          link: 'https://www.dibbs.bsm.dla.mil/RFQ/',
+          link: 'https://dibbs.bsm.dla.mil/',
           setAside: 'Small Business', isPortal: true },
     ];
     

@@ -85,7 +85,26 @@ export default async function handler(req, res) {
         console.log(`[${runId}] Total opportunities to analyze: ${allOpportunities.length}`);
 
         // ═══════════════════════════════════════════════════════════════════
-        // STEP 4: Generate and send the daily report
+        // STEP 4: Run Platform Audit (COR Self-Check)
+        // ═══════════════════════════════════════════════════════════════════
+        console.log(`[${runId}] Running platform audit...`);
+        let auditResult = null;
+        try {
+            const auditResponse = await fetch(`${baseUrl}/api/audit`, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (auditResponse.ok) {
+                auditResult = await auditResponse.json();
+                console.log(`[${runId}] Audit complete: ${auditResult.status} (score: ${auditResult.score})`);
+            } else {
+                console.warn(`[${runId}] Audit failed: ${auditResponse.status}`);
+            }
+        } catch (auditError) {
+            console.error(`[${runId}] Audit error:`, auditError.message);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 5: Generate and send the daily report
         // ═══════════════════════════════════════════════════════════════════
         if (allOpportunities.length === 0) {
             console.log(`[${runId}] No opportunities found, skipping email`);
@@ -105,7 +124,13 @@ export default async function handler(req, res) {
             body: JSON.stringify({
                 opportunities: allOpportunities,
                 sendEmail: true,
-                recipientEmail: process.env.REPORT_EMAIL || 'albert@singhautomation.com'
+                recipientEmail: process.env.REPORT_EMAIL || 'albert@singhautomation.com',
+                audit: auditResult ? {
+                    status: auditResult.status,
+                    score: auditResult.score,
+                    summary: auditResult.summary,
+                    bugsCount: auditResult.bugs?.length || 0
+                } : null
             })
         });
 

@@ -26,10 +26,25 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { opportunities, sendEmail = false, recipientEmail } = req.body;
+        const { opportunities, sendEmail = false, recipientEmail, audit } = req.body;
 
         if (!opportunities || !Array.isArray(opportunities)) {
             return res.status(400).json({ error: 'opportunities array required' });
+        }
+
+        // Format audit status for email
+        let auditStatusHtml = '';
+        if (audit) {
+            const statusColor = audit.status === 'pass' ? '#10b981' : audit.status === 'warn' ? '#f59e0b' : '#ef4444';
+            const statusEmoji = audit.status === 'pass' ? '✅' : audit.status === 'warn' ? '⚠️' : '🚫';
+            auditStatusHtml = `
+                <div style="background: linear-gradient(135deg, ${statusColor}15, ${statusColor}05); border: 1px solid ${statusColor}; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                    <strong style="color: ${statusColor};">${statusEmoji} Platform Health: ${audit.status.toUpperCase()}</strong>
+                    <span style="color: #9ca3af; margin-left: 8px;">Score: ${audit.score}/100</span>
+                    ${audit.bugsCount > 0 ? `<span style="color: #f59e0b; margin-left: 8px;">| ${audit.bugsCount} issues detected</span>` : ''}
+                    <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">${audit.summary || ''}</div>
+                </div>
+            `;
         }
 
         // ═══════════════════════════════════════════════════════════════════
@@ -192,7 +207,10 @@ Generate the HTML email report. Remember:
         }
 
         const data = await response.json();
-        const emailHtml = data.content[0].text;
+        const reportContent = data.content[0].text;
+
+        // Combine audit status with report
+        const emailHtml = auditStatusHtml + reportContent;
 
         // ═══════════════════════════════════════════════════════════════════
         // SEND EMAIL (if requested and Resend configured)

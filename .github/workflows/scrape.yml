@@ -1,0 +1,80 @@
+name: Run Portal Scrapers
+
+on:
+  # Run every 6 hours
+  schedule:
+    - cron: '0 */6 * * *'
+
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      demo_mode:
+        description: 'Use demo data instead of scraping'
+        required: false
+        default: 'false'
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r scrapers/requirements.txt
+
+      - name: Run scrapers
+        id: scrape
+        run: |
+          cd scrapers
+          if [ "${{ github.event.inputs.demo_mode }}" = "true" ]; then
+            python run_all.py --demo --output scraped_data.json
+          else
+            python run_all.py --output scraped_data.json
+          fi
+
+      - name: Upload scraped data artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scraped-data
+          path: scrapers/output/scraped_data.json
+          retention-days: 7
+
+      - name: Commit updated data (if changed)
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          # Check if there are changes
+          if [ -f scrapers/output/scraped_data.json ]; then
+            cp scrapers/output/scraped_data.json api/scraped_data.json
+            git add api/scraped_data.json
+
+            if git diff --staged --quiet; then
+              echo "No changes to commit"
+            else
+              git commit -m "chore: Update scraped opportunities data [skip ci]"
+              git push
+            fi
+          fi
+
+      - name: Summary
+        run: |
+          echo "## Scraper Run Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f scrapers/output/scraped_data.json ]; then
+            COUNT=$(jq '.totalCount' scrapers/output/scraped_data.json)
+            SOURCES=$(jq -r '.sources | join(", ")' scrapers/output/scraped_data.json)
+            echo "- **Opportunities found:** $COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "- **Sources:** $SOURCES" >> $GITHUB_STEP_SUMMARY
+            echo "- **Last updated:** $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- No data file generated" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -736,6 +736,16 @@
         .error-toast .close-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: none; color: #fff; cursor: pointer; font-size: 1.2rem; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
+        /* API error banner */
+        .api-error-banner {
+            position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+            background: rgba(239, 68, 68, 0.95); color: #fff; padding: 1rem 1.5rem;
+            border-radius: 12px; z-index: 10000; animation: slideDown 0.3s ease;
+            box-shadow: 0 8px 32px rgba(239,68,68,0.5); max-width: 500px; min-width: 320px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        @keyframes slideDown { from { transform: translateX(-50%) translateY(-100%); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+
         /* Form styles */
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; font-size: 0.75rem; color: var(--gray-light); margin-bottom: 0.4rem; font-weight: 500; }
@@ -2195,8 +2205,43 @@ function showHardError(component, endpoint, status, message, requestId = null) {
     return errorHtml;
 }
 
-// ========== GLOBAL ERROR TOAST ==========
+// ========== GLOBAL ERROR HANDLING ==========
 let errorToastTimeout = null;
+
+// Enhanced API error banner with endpoint, status, and timestamp
+function showApiError(endpoint, status, message, options = {}) {
+    const timestamp = new Date().toLocaleString();
+    const requestId = options.requestId || crypto.randomUUID().substring(0, 8);
+
+    const errorBanner = document.createElement('div');
+    errorBanner.id = 'apiErrorBanner';
+    errorBanner.className = 'api-error-banner';
+    errorBanner.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <div style="font-weight: 600; color: var(--red); margin-bottom: 0.5rem;">⚠️ API Error</div>
+                <div style="font-size: 0.75rem; color: var(--gray); line-height: 1.5;">
+                    <div><strong>Endpoint:</strong> ${endpoint}</div>
+                    <div><strong>Status:</strong> ${status}</div>
+                    <div><strong>Message:</strong> ${message}</div>
+                    <div><strong>Time:</strong> ${timestamp}</div>
+                    ${options.requestId ? `<div><strong>Request ID:</strong> ${requestId}</div>` : ''}
+                </div>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: var(--gray); cursor: pointer; font-size: 1.2rem;">&times;</button>
+        </div>
+    `;
+
+    // Remove any existing banner
+    document.getElementById('apiErrorBanner')?.remove();
+    document.body.appendChild(errorBanner);
+
+    // Auto-hide after 15 seconds
+    setTimeout(() => errorBanner.remove(), 15000);
+
+    // Also log to console
+    console.error('[API ERROR]', { endpoint, status, message, timestamp, requestId });
+}
 
 function showErrorToast(message, duration = 5000) {
     // Remove existing toast
@@ -2762,6 +2807,10 @@ async function scanAll() {
             processOpportunities(d.opportunities, 'Live');
             setModeIndicator('live', 'LIVE DATA');
             hideDemoWarning(); // Remove demo warning when live data loads
+
+            // Also fetch scraped portal data (Michigan SIGMA, Cal eProcure, etc.)
+            fetchScrapedPortals();
+
             // Update data freshness timestamp
             const scanTime = new Date();
             const el = document.getElementById('lastScanTime');
@@ -2810,6 +2859,52 @@ async function scanAll() {
     const oppList = document.getElementById('oppList');
     if (oppList) oppList.innerHTML = errorHtml;
     log(`HARD FAILURE: Scanner failed after ${MAX_RETRIES} retries`, 'error');
+}
+
+// Fetch scraped portal data (Michigan SIGMA, Cal eProcure, etc.)
+async function fetchScrapedPortals() {
+    try {
+        log('Fetching scraped portal data...', 'info');
+        const response = await fetch(BACKEND_BASE + '/api/scraped', {
+            signal: AbortSignal.timeout(10000)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!data.success || !Array.isArray(data.opportunities)) {
+            throw new Error('Invalid scraped data format');
+        }
+
+        // Merge with existing opportunities (avoid duplicates)
+        const existingIds = new Set(opportunities.map(o => o.id));
+        let addedCount = 0;
+
+        for (const opp of data.opportunities) {
+            if (!existingIds.has(opp.id)) {
+                // Compute eligibility for scraped opportunities
+                opp.eligibility = computeCanonicalEligibility(opp);
+                opp.matchScore = opp.matchScore || calculateMatchScore(opp);
+
+                opportunities.push(opp);
+                existingIds.add(opp.id);
+                addedCount++;
+            }
+        }
+
+        if (addedCount > 0) {
+            log(`Added ${addedCount} opportunities from portal scrapers (${data.sources?.join(', ') || 'state portals'})`, 'success');
+            renderOpps();
+            updateStats();
+        }
+
+    } catch (e) {
+        // Silent fail - scraped data is supplementary
+        log(`Portal scraper data unavailable: ${e.message}`, 'info');
+        console.warn('Scraped portal fetch failed:', e);
+    }
 }
 
 // Demo data fallback for when API is unavailable
@@ -3034,7 +3129,8 @@ function getSamLink(o) {
     if (o.link && o.link.startsWith('http') && !o.link.includes('undefined')) {
         // For SAM.gov, ensure it has a specific opportunity path, not just home page
         if (o.link.includes('sam.gov')) {
-            if (o.link.includes('/opp/') && o.link.match(/\/opp\/[a-f0-9]{32}/i)) {
+            // Match both 32-char hex and UUID formats in SAM.gov opp links
+            if (o.link.includes('/opp/') && o.link.match(/\/opp\/([a-f0-9-]{32,36})/i)) {
                 return o.link; // Valid SAM.gov opportunity link
             }
             // If SAM link doesn't have valid opp path, try to construct from noticeId
@@ -3042,13 +3138,24 @@ function getSamLink(o) {
             return o.link; // Non-SAM links are OK
         }
     }
-    // For SAM.gov opportunities, construct from noticeId if it's a real SAM ID (32+ hex chars)
-    if (o.noticeId && o.noticeId.length >= 32 && /^[a-f0-9]+$/i.test(o.noticeId)) {
+    // For SAM.gov opportunities, construct from noticeId if it's a real SAM ID
+    // SAM.gov uses both 32-char hex and UUID format (with dashes)
+    if (o.noticeId && (
+        (o.noticeId.length >= 32 && /^[a-f0-9]+$/i.test(o.noticeId)) ||
+        /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(o.noticeId)
+    )) {
         return `https://sam.gov/opp/${o.noticeId}/view`;
     }
-    // For SAM.gov opportunities, construct from id if it's a real SAM ID (32+ hex chars)
-    if (o.id && o.id.length >= 32 && /^[a-f0-9]+$/i.test(o.id)) {
+    // For SAM.gov opportunities, construct from id if it's a real SAM ID
+    if (o.id && (
+        (o.id.length >= 32 && /^[a-f0-9]+$/i.test(o.id)) ||
+        /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(o.id)
+    )) {
         return `https://sam.gov/opp/${o.id}/view`;
+    }
+    // For portal links, use the link directly
+    if (o.isPortal && o.link) {
+        return o.link;
     }
     // Fallback to search URL with proper search terms
     const searchTerm = encodeURIComponent(o.solicitation || o.title || '');
@@ -3629,32 +3736,45 @@ function clearPipeline() {
 
 function exportPipelineCSV() {
     const pipelineEntries = Object.entries(pipeline)
-        .map(([id, status]) => {
-            const opp = opportunities.find(o => o.id === id || o.noticeId === id);
-            return opp ? { ...opp, pipelineStatus: status } : null;
+        .map(([id, pipelineData]) => {
+            const opp = opportunities.find(o => String(o.id) === String(id) || o.noticeId === id);
+            // Use stored pipeline data as fallback when opportunity not in current session
+            return {
+                id: id,
+                title: opp?.title || pipelineData.title || 'Unknown Opportunity',
+                agency: opp?.agency || pipelineData.agency || 'Unknown Agency',
+                value: opp?.value || pipelineData.value || 0,
+                closeDate: opp?.closeDate || pipelineData.closeDate || null,
+                naicsCode: opp?.naicsCode || '',
+                setAside: opp?.setAside || '',
+                source: opp?.source || '',
+                matchScore: opp?.qualification?.score || opp?.matchScore || '',
+                status: opp?.status || 'Review',
+                pipelineDecision: pipelineData.status?.toUpperCase() || ''
+            };
         })
-        .filter(Boolean);
-    
+        .filter(entry => entry.pipelineDecision); // Filter entries without valid status
+
     if (pipelineEntries.length === 0) {
         alert('No pipeline entries to export');
         return;
     }
-    
+
     // CSV headers
     const headers = ['Title', 'Agency', 'Value', 'Status', 'Pipeline Decision', 'NAICS', 'Set-Aside', 'Close Date', 'Source', 'Match Score'];
-    
+
     // CSV rows
     const rows = pipelineEntries.map(o => [
         `"${(o.title || '').replace(/"/g, '""')}"`,
         `"${(o.agency || '').replace(/"/g, '""')}"`,
         o.value || 0,
         o.status || 'Review',
-        o.pipelineStatus || '',
+        o.pipelineDecision || '',
         o.naicsCode || '',
         `"${(o.setAside || '').replace(/"/g, '""')}"`,
         o.closeDate || '',
         o.source || '',
-        o.qualification?.score || o.matchScore || ''
+        o.matchScore || ''
     ]);
     
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -3674,11 +3794,19 @@ function exportPipelineCSV() {
 
 function exportPipelinePDF() {
     const pipelineEntries = Object.entries(pipeline)
-        .map(([id, status]) => {
-            const opp = opportunities.find(o => o.id === id || o.noticeId === id);
-            return opp ? { ...opp, pipelineStatus: status } : null;
+        .map(([id, pipelineData]) => {
+            const opp = opportunities.find(o => String(o.id) === String(id) || o.noticeId === id);
+            // Use stored pipeline data as fallback when opportunity not in current session
+            return {
+                id: id,
+                title: opp?.title || pipelineData.title || 'Unknown Opportunity',
+                agency: opp?.agency || pipelineData.agency || 'Unknown Agency',
+                value: opp?.value || pipelineData.value || 0,
+                closeDate: opp?.closeDate || pipelineData.closeDate || null,
+                pipelineStatus: pipelineData
+            };
         })
-        .filter(Boolean);
+        .filter(entry => entry.pipelineStatus?.status); // Filter entries without valid status
     
     if (pipelineEntries.length === 0) {
         alert('No pipeline entries to export');
@@ -4317,7 +4445,8 @@ function showDetail(id) {
             <!-- Decision buttons -->
             <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
                 <button class="btn btn-go" onclick="setPipelineStatus('${o.id}','go')" ${!o.eligibility.ok?'disabled':''} style="padding: 0.5rem 1.5rem;">✅ GO</button>
-                <button class="btn btn-applied" onclick="setPipelineStatus('${o.id}','applied')" style="padding: 0.5rem 1.5rem; background: var(--blue);">📨 Applied</button>
+                <button class="btn btn-review" onclick="setPipelineStatus('${o.id}','review')" style="padding: 0.5rem 1.5rem; background: var(--orange);">🔍 Review</button>
+                <button class="btn btn-applied" onclick="setPipelineStatus('${o.id}','applied')" style="padding: 0.5rem 1.5rem; background: var(--purple);">📨 Applied</button>
                 <button class="btn btn-nogo" onclick="setPipelineStatus('${o.id}','nogo')" style="padding: 0.5rem 1.5rem;">🚫 No-Go</button>
             </div>
 
@@ -4642,9 +4771,17 @@ let agentContext = null; // Currently selected opportunity for context
 function updateAgentStats() {
     const goCount = Object.values(pipeline).filter(p => p.status === 'go').length;
     const reviewCount = Object.values(pipeline).filter(p => p.status === 'review').length;
-    const totalValue = opportunities
-        .filter(o => pipeline[o.id]?.status === 'go')
-        .reduce((sum, o) => sum + (parseFloat(o.value) || 0), 0);
+    const appliedCount = Object.values(pipeline).filter(p => p.status === 'applied').length;
+
+    // Calculate total value from both current opportunities AND stored pipeline data
+    let totalValue = 0;
+    Object.entries(pipeline).forEach(([id, pData]) => {
+        if (pData.status === 'go' || pData.status === 'applied') {
+            const opp = opportunities.find(o => String(o.id) === String(id));
+            totalValue += parseFloat(opp?.value || pData.value || 0);
+        }
+    });
+
     const now = new Date();
     const urgentCount = opportunities.filter(o => {
         if (!o.closeDate) return false;
@@ -4652,7 +4789,7 @@ function updateAgentStats() {
         const days = Math.ceil((close - now) / (1000 * 60 * 60 * 24));
         return days > 0 && days <= 14;
     }).length;
-    
+
     document.getElementById('agentGoCount').textContent = goCount;
     document.getElementById('agentReviewCount').textContent = reviewCount;
     document.getElementById('agentTotalValue').textContent = '$' + (totalValue / 1000000).toFixed(1) + 'M';
@@ -4661,12 +4798,31 @@ function updateAgentStats() {
 
 function updateAgentContextDropdown() {
     const select = document.getElementById('agentContext');
-    const goOpps = opportunities.filter(o => pipeline[o.id]?.status === 'go' || o.matchScore >= 60);
-    
+    if (!select) return;
+
+    // Get GO opportunities from pipeline (use String for consistent ID comparison)
+    const goFromPipeline = Object.entries(pipeline)
+        .filter(([id, p]) => p.status === 'go' || p.status === 'applied')
+        .map(([id, p]) => {
+            const opp = opportunities.find(o => String(o.id) === String(id));
+            return opp || { id, title: p.title || 'Unknown', matchScore: 80, value: p.value, agency: p.agency };
+        });
+
+    // Get high-match opportunities not yet in pipeline
+    const highMatch = opportunities.filter(o => {
+        const strId = String(o.id);
+        const inPipeline = pipeline[strId]?.status;
+        return !inPipeline && o.matchScore >= 60;
+    });
+
+    // Combine and deduplicate
+    const allGoOpps = [...goFromPipeline, ...highMatch]
+        .filter((o, i, arr) => arr.findIndex(x => String(x.id) === String(o.id)) === i)
+        .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
+        .slice(0, 20);
+
     select.innerHTML = '<option value="">General - All Opportunities</option>' +
-        goOpps.sort((a, b) => b.matchScore - a.matchScore)
-            .slice(0, 20)
-            .map(o => `<option value="${o.id}">${o.title.substring(0, 40)}... (${o.matchScore}%)</option>`)
+        allGoOpps.map(o => `<option value="${o.id}">${(o.title || 'Opportunity').substring(0, 40)}... (${o.matchScore || 80}%)</option>`)
             .join('');
 }
 
@@ -6788,7 +6944,12 @@ Opportunity ID:      ${o.solicitation || o.noticeId || 'Not specified'}
 Title:               ${(o.title || '').substring(0, 80)}
 Agency:              ${o.agency || 'Not specified'}
 Response Due:        ${o.closeDate ? fmtDate(o.closeDate) : 'Not specified'}
-Delivery Location:   ${o.placeOfPerformance || o.location || 'Not specified'}
+
+══════════════════════════════════════════════════════════════
+📍 DELIVERY REQUIREMENTS
+──────────────────────────────────────────────────────────────
+DELIVERY LOCATION:   ${o.placeOfPerformance || o.location || '(SELECT ABOVE)'}
+REQUIRED BY:         ${o.closeDate ? new Date(new Date(o.closeDate).getTime() - 14*86400000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '(SELECT ABOVE)'}
 
 ══════════════════════════════════════════════════════════════
 📦 IDENTIFIED LINE ITEMS

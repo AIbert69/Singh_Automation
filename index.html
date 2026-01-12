@@ -2807,6 +2807,10 @@ async function scanAll() {
             processOpportunities(d.opportunities, 'Live');
             setModeIndicator('live', 'LIVE DATA');
             hideDemoWarning(); // Remove demo warning when live data loads
+
+            // Also fetch scraped portal data (Michigan SIGMA, Cal eProcure, etc.)
+            fetchScrapedPortals();
+
             // Update data freshness timestamp
             const scanTime = new Date();
             const el = document.getElementById('lastScanTime');
@@ -2855,6 +2859,52 @@ async function scanAll() {
     const oppList = document.getElementById('oppList');
     if (oppList) oppList.innerHTML = errorHtml;
     log(`HARD FAILURE: Scanner failed after ${MAX_RETRIES} retries`, 'error');
+}
+
+// Fetch scraped portal data (Michigan SIGMA, Cal eProcure, etc.)
+async function fetchScrapedPortals() {
+    try {
+        log('Fetching scraped portal data...', 'info');
+        const response = await fetch(BACKEND_BASE + '/api/scraped', {
+            signal: AbortSignal.timeout(10000)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!data.success || !Array.isArray(data.opportunities)) {
+            throw new Error('Invalid scraped data format');
+        }
+
+        // Merge with existing opportunities (avoid duplicates)
+        const existingIds = new Set(opportunities.map(o => o.id));
+        let addedCount = 0;
+
+        for (const opp of data.opportunities) {
+            if (!existingIds.has(opp.id)) {
+                // Compute eligibility for scraped opportunities
+                opp.eligibility = computeCanonicalEligibility(opp);
+                opp.matchScore = opp.matchScore || calculateMatchScore(opp);
+
+                opportunities.push(opp);
+                existingIds.add(opp.id);
+                addedCount++;
+            }
+        }
+
+        if (addedCount > 0) {
+            log(`Added ${addedCount} opportunities from portal scrapers (${data.sources?.join(', ') || 'state portals'})`, 'success');
+            renderOpps();
+            updateStats();
+        }
+
+    } catch (e) {
+        // Silent fail - scraped data is supplementary
+        log(`Portal scraper data unavailable: ${e.message}`, 'info');
+        console.warn('Scraped portal fetch failed:', e);
+    }
 }
 
 // Demo data fallback for when API is unavailable

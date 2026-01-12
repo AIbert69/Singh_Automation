@@ -3382,13 +3382,16 @@ function renderOpps() {
     c.innerHTML = f.map(o => {
         const d = daysUntil(o.closeDate);
         const matchClass = o.matchScore >= 70 ? 'high' : o.matchScore >= 50 ? 'medium' : 'low';
-        const pipelineStatus = pipeline[o.id]?.status || null;
 
         // CANONICAL: Pipeline status OVERRIDES eligibility status (user decision wins)
-        const eligStatus = o.eligibility.status; // GO, REVIEW, or NO-GO
+        // Use String() for consistent ID comparison
+        const strId = String(o.id);
+        const pipelineEntry = pipeline[strId];
+        const pipelineStatus = pipelineEntry?.status || null;
+        const eligStatus = o.eligibility?.status; // GO, REVIEW, or NO-GO
 
         // User's pipeline decision takes priority over computed eligibility
-        const effectiveStatus = pipelineStatus || eligStatus?.toLowerCase() || null;
+        const effectiveStatus = pipelineStatus || (eligStatus ? eligStatus.toLowerCase() : null);
 
         // Determine source tag class
         let sourceClass = '';
@@ -3413,10 +3416,13 @@ function renderOpps() {
         // Source name for display
         const sourceName = o.source || (o.type === 'contract' ? 'SAM.gov' : o.type === 'sbir' ? 'SBIR/STTR' : o.type === 'state' ? 'State' : o.type);
 
+        // Show bookmark for GO items (pipeline or eligibility)
+        const isGo = effectiveStatus === 'go';
+
         return `<div class="opp-row" data-id="${o.id}" data-testid="opp-card">
             <div class="opp-info">
                 <div class="opp-title" data-testid="opp-title">
-                    ${eligStatus === 'GO' ? '<span class="bookmark">📌</span>' : ''}
+                    ${isGo ? '<span class="bookmark">📌</span>' : ''}
                     ${(o.title || 'Untitled').substring(0, 50)}${o.title && o.title.length > 50 ? '...' : ''}
                 </div>
                 <div class="opp-agency" data-testid="opp-agency">${(o.agency || 'Agency').substring(0, 45)}</div>
@@ -4563,24 +4569,33 @@ async function runValidation(id) {
 // PRODUCTION: Demo validation removed - runDemoValidation is intentionally absent
 
 function setPipelineStatus(id, status) {
-    const opp = opportunities.find(o => o.id === id);
-    pipeline[id] = pipeline[id] || {};
-    pipeline[id].status = status;
-    pipeline[id].timestamp = new Date().toISOString();
+    // Ensure ID is a string for consistent lookups
+    const strId = String(id);
+    const opp = opportunities.find(o => String(o.id) === strId);
+
+    pipeline[strId] = pipeline[strId] || {};
+    pipeline[strId].status = status;
+    pipeline[strId].timestamp = new Date().toISOString();
     // Store key details for pipeline view even when opportunities not loaded
     if (opp) {
-        pipeline[id].title = opp.title;
-        pipeline[id].agency = opp.agency;
-        pipeline[id].value = opp.value;
+        pipeline[strId].title = opp.title;
+        pipeline[strId].agency = opp.agency;
+        pipeline[strId].value = opp.value;
+        pipeline[strId].closeDate = opp.closeDate;
     }
     safeStorage('pipeline', pipeline);
-    
-    log(`Set ${id} to ${status.toUpperCase()}`, 'success');
+
+    log(`Set ${strId} to ${status.toUpperCase()}`, 'success');
     closeModal();
-    renderOpps();
-    updatePipelineStats();
-    renderQualifiedList();
-    updateOppSelect(); // Update dropdown when status changes
+
+    // Force complete re-render of opportunity list
+    setTimeout(() => {
+        renderOpps();
+        updatePipelineStats();
+        renderQualifiedList();
+        updateOppSelect();
+        updateAgentStats();
+    }, 50);
 }
 
 // ========== AGENT_SAM - AI BD ASSISTANT ==========

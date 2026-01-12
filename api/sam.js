@@ -71,15 +71,20 @@ export default async function handler(req, res) {
             '238210',  // Electrical Contractors and Wiring Installation
             '493110',  // General Warehousing and Storage (DLA Distribution)
             '811310',  // Commercial/Industrial Machinery Repair and Maintenance
-            // SINGH THERMAL SYSTEMS - Insulation & Thermal Management (5 codes)
+            '541511',  // Custom Computer Programming (PLC/HMI/SCADA logic)
+            '332710',  // Machine Shops (fabrication/spare parts)
+            // SINGH THERMAL SYSTEMS - Insulation & Thermal Management (7 codes)
             '333248',  // All Other Industrial Machinery Manufacturing (hot runner systems)
             '326150',  // Urethane and Other Foam Product Manufacturing
             '327993',  // Mineral Wool Manufacturing
             '238310',  // Drywall and Insulation Contractors
             '335999',  // Misc Electrical Equipment Manufacturing (battery components)
-            // SINGH VISION SYSTEMS - Molding & Plastics (2 codes)
+            '332322',  // Sheet Metal Work Mfg (metal jacketing/cladding)
+            '238220',  // HVAC Contractors (bundled mechanical/insulation)
+            // SINGH VISION SYSTEMS - Molding & Plastics (3 codes)
             '333511',  // Industrial Mold Manufacturing
-            '326199'   // All Other Plastics Product Manufacturing
+            '326199',  // All Other Plastics Product Manufacturing
+            '334511'   // Search/Detection/Nav Instruments (sensors/optics)
         ],
         keywords: [
             // Automation & Robotics

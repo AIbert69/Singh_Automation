@@ -32,12 +32,12 @@ export default async function handler(req, res) {
         services: {}
     };
     
-    // Check Claude API key
+    // Check Claude API key (valid if exists and has reasonable length)
     const claudeKey = process.env.ANTHROPIC_API_KEY;
-    health.services.claude = !!(claudeKey && claudeKey.startsWith('sk-ant-'));
-    
+    health.services.claude = !!(claudeKey && claudeKey.length > 20);
+
     // Check SAM.gov API key
-    const samKey = process.env.SAM_API_KEY;
+    const samKey = process.env.SAM_API_KEY || process.env.SAM_GOV_API_KEY;
     health.services.sam = !!(samKey && samKey.length > 20);
     health.services.samPublic = true; // Public API always available as fallback
     

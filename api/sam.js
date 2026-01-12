@@ -125,18 +125,24 @@ export default async function handler(req, res) {
 
     // SAM.GOV SEARCH KEYWORDS - How COs actually write solicitations
     const samKeywords = [
-        // Automation & Robotics (Primary)
+        // SINGH AUTOMATION - Robotics & Controls (Primary)
         'industrial automation', 'factory automation', 'robotic cell', 'robotic welding',
         'robot integrator', 'automation integrator', 'machine vision',
-        // Controls (High-volume government buys)
         'PLC', 'control panel', 'SCADA', 'HMI', 'commissioning',
-        // Equipment Brands (Specific matches)
         'FANUC', 'ABB robot', 'KUKA', 'Yaskawa', 'Universal Robots', 'Allen-Bradley',
-        // Material Handling
         'conveyor system', 'palletizer', 'material handling automation', 'packaging automation',
-        // Contract Language (How buyers write SOWs)
         'design-build automation', 'turnkey automation', 'controls integration',
-        'retrofit automation', 'modernization automation', 'upgrade PLC'
+        'retrofit automation', 'modernization automation', 'upgrade PLC',
+        // SINGH THERMAL SYSTEMS - Insulation & Materials
+        'mineral wool', 'thermal insulation', 'fiberglass insulation', 'pipe insulation',
+        'MIL-DTL-32585', 'industrial insulation', 'foam insulation', 'hot runner',
+        'heat shield', 'thermal barrier', 'cryogenic insulation',
+        // SINGH VISION SYSTEMS - Molds & Tooling
+        'compression mold', 'industrial mold', 'injection mold', 'mold manufacturing',
+        'plastic tooling', 'die casting', 'tool and die',
+        // DLA/DEPOT - Parts & Warehousing
+        'drive brake', 'elevation drive', 'depot maintenance', 'warehousing services',
+        'distribution services', 'build to print', 'machine shop'
     ];
 
     // SBIR/STTR KEYWORDS - R&D focused
@@ -201,21 +207,24 @@ export default async function handler(req, res) {
                 if (seenIds.has(o.noticeId)) continue;
                 seenIds.add(o.noticeId);
 
-                // Extract contact info from SAM.gov response
+                // Extract contact info from SAM.gov response (safe parsing for V2 API)
                 let contact = null;
-                if (o.pointOfContact && o.pointOfContact.length > 0) {
+                if (o.pointOfContact && Array.isArray(o.pointOfContact) && o.pointOfContact.length > 0) {
                     const poc = o.pointOfContact[0];
+                    const firstName = poc.firstName || '';
+                    const lastName = poc.lastName || '';
+                    const fullName = poc.fullName || (firstName && lastName ? `${firstName} ${lastName}`.trim() : null);
                     contact = {
-                        name: poc.fullName || poc.firstName + ' ' + poc.lastName || null,
+                        name: fullName || 'Contact on File',
                         email: poc.email || null,
                         phone: poc.phone || null,
                         type: poc.type || 'Primary'
                     };
                 } else if (o.primaryContact) {
                     contact = {
-                        name: o.primaryContact.fullName || null,
-                        email: o.primaryContact.email || null,
-                        phone: o.primaryContact.phone || null,
+                        name: o.primaryContact?.fullName || 'Contact on File',
+                        email: o.primaryContact?.email || null,
+                        phone: o.primaryContact?.phone || null,
                         type: 'Primary'
                     };
                 }
@@ -247,7 +256,12 @@ export default async function handler(req, res) {
                     fullDescription: o.description || '',
                     link: `https://sam.gov/opp/${o.noticeId}/view`,
                     contact: contact,
-                    officeAddress: o.officeAddress || o.placeOfPerformance?.city?.name || null,
+                    officeAddress: o.officeAddress || o.placeOfPerformance?.city?.name || o.placeOfPerformance?.state?.name || o.placeOfPerformance?.country?.name || null,
+                    placeOfPerformance: o.placeOfPerformance ? {
+                        city: o.placeOfPerformance.city?.name || null,
+                        state: o.placeOfPerformance.state?.code || o.placeOfPerformance.state?.name || null,
+                        country: o.placeOfPerformance.country?.code || 'USA'
+                    } : null,
                     isLive: true,
                     source: 'SAM.gov',
                     type: 'contract',
@@ -652,10 +666,10 @@ export default async function handler(req, res) {
 
     // ========== 7. DIBBS / DoD PARTS ==========
     const dibbsOpps = [
-        { id: 'dibbs-portal', title: 'DLA DIBBS - DoD Parts Portal', agency: 'DLA',
+        { id: 'dibbs-portal', title: 'DLA DIBBS - DoD Parts & Technical Data', agency: 'DLA',
           solicitation: 'DIBBS Portal', value: null, closeDate: null,
-          description: 'Defense Logistics Agency Internet Bid Board System. Search for robot components, PLC modules, industrial parts.',
-          link: 'https://dibbs.bsm.dla.mil/',
+          description: 'Defense Logistics Agency Internet Bid Board System. Access cFolders for Technical Data Packages (TDPs). Search for robot components, PLC modules, industrial parts, braking systems.',
+          link: 'https://www.dibbs.bsm.dla.mil/cfolders/',
           setAside: 'Small Business', isPortal: true },
     ];
     
@@ -777,7 +791,19 @@ function qualifyOpportunity(opp, profile) {
     const title = (opp.title || '').toLowerCase();
     const desc = (opp.description || '').toLowerCase();
     const fullText = `${title} ${desc} ${opp.fullDescription || ''}`.toLowerCase();
-    
+
+    // Portal/Homepage detection - don't score these as real opportunities
+    if (opp.isPortal) {
+        return { status: 'Review', reason: 'Search portal - browse for opportunities', recommendation: 'Review', score: 0, breakdown: { type: 'portal' } };
+    }
+
+    // Detect generic portal pages that slip through (no solicitation number, generic titles)
+    const portalIndicators = ['search opportunities', 'bid board', 'procurement portal', 'vendor registration'];
+    const isGenericPortal = portalIndicators.some(ind => title.includes(ind)) && !opp.solicitation;
+    if (isGenericPortal) {
+        return { status: 'Review', reason: 'Portal homepage - search for specific bids', recommendation: 'Review', score: 0, breakdown: { type: 'portal-homepage' } };
+    }
+
     // Hard NO-GO rules
     if (setAside.includes('sdvosb') || setAside.includes('service-disabled veteran')) {
         return { status: 'NO-GO', reason: 'SDVOSB set-aside - Singh not eligible', recommendation: 'No-Go', breakdown: { restriction: 'SDVOSB-only' } };

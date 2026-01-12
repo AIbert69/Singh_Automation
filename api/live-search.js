@@ -1,16 +1,20 @@
-// Singh Automation AgentSam LIVE Contract Scanner
-// Real-time SAM.gov search with AI scoring engine
+// Singh Automation DEEP SEARCH - Multi-Source Intelligence Scanner
+// Searches sources NOT covered by main Scanner:
+// - DLA DIBBS (DoD parts RFQs)
+// - USAspending (prime contractor teaming intel)
+// - SAM.gov Sources Sought (pre-RFP notices)
+// - Historical opportunities (180+ days)
 // Deploy to: /api/live-search.js on Vercel
 
 export default async function handler(req, res) {
     const startTime = Date.now();
-    const requestId = `live_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const requestId = `deep_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const log = (level, message, data = {}) => {
         console.log(JSON.stringify({ level, requestId, timestamp: new Date().toISOString(), message, ...data }));
     };
 
-    log('info', 'AgentSam Live Search started');
+    log('info', 'Deep Search started');
 
     // CORS
     const allowedOrigins = [
@@ -30,221 +34,132 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    // ========== SINGH AUTOMATION COMPANY PROFILE ==========
+    // ========== SINGH COMPANY PROFILE ==========
     const companyProfile = {
         name: 'Singh Automation LLC',
         cage: '86VF7',
         uei: 'GJ1DPYQ3X8K5',
-        contact: 'albert@singhautomation.com',
 
-        // Target NAICS codes (Singh Automation + Thermal Systems + Vision Systems)
+        // All Singh division NAICS codes
         naicsCodes: [
-            // Singh Automation - Robotics & Engineering
-            '333249', '333922', '541330', '541512', '541715', '238210', '493110', '811310',
-            // Singh Thermal Systems - Insulation & Foam
-            '333248', '326150', '327993', '238310', '335999',
-            // Singh Vision Systems - Molding & Plastics
-            '333511', '326199'
+            // Singh Automation
+            '333249', '333922', '541330', '541512', '541715', '238210', '493110', '811310', '541511', '332710',
+            // Singh Thermal Systems
+            '333248', '326150', '327993', '238310', '335999', '332322', '238220',
+            // Singh Vision Systems
+            '333511', '326199', '334511'
         ],
 
-        // Target keywords (weighted)
-        keywords: [
-            // Automation keywords
-            { term: 'robotics', weight: 5 },
-            { term: 'robot', weight: 5 },
-            { term: 'automation', weight: 5 },
-            { term: 'material handling', weight: 5 },
-            { term: 'vision system', weight: 5 },
-            { term: 'machine vision', weight: 5 },
-            { term: 'PLC', weight: 5 },
-            { term: 'SCADA', weight: 5 },
-            { term: 'HMI', weight: 4 },
-            { term: 'FANUC', weight: 5 },
-            { term: 'ABB', weight: 4 },
-            { term: 'KUKA', weight: 4 },
-            { term: 'Yaskawa', weight: 4 },
-            { term: 'conveyor', weight: 5 },
-            { term: 'factory modernization', weight: 5 },
-            { term: 'controls', weight: 4 },
-            { term: 'industrial', weight: 3 },
-            { term: 'manufacturing', weight: 3 },
-            { term: 'welding', weight: 5 },
-            { term: 'palletizer', weight: 5 },
-            { term: 'integrator', weight: 5 },
-            { term: 'control panel', weight: 5 },
-            { term: 'servo', weight: 4 },
-            { term: 'VFD', weight: 4 },
-            { term: 'Allen-Bradley', weight: 5 },
-            { term: 'Rockwell', weight: 5 },
-            { term: 'Siemens', weight: 4 },
-            // Singh Thermal Systems keywords
-            { term: 'insulation', weight: 5 },
-            { term: 'thermal', weight: 5 },
-            { term: 'hot runner', weight: 5 },
-            { term: 'injection molding', weight: 5 },
-            { term: 'foam', weight: 4 },
-            { term: 'battery insulation', weight: 5 },
-            { term: 'lithium', weight: 4 },
-            // Singh Vision Systems keywords
-            { term: 'mold', weight: 5 },
-            { term: 'tooling', weight: 5 },
-            { term: 'plastics', weight: 4 },
+        // Deep search specific keywords (parts, components, materials)
+        deepKeywords: [
+            // DLA Parts keywords
+            'drive brake', 'elevation drive', 'servo motor', 'control valve', 'hydraulic pump',
+            'bearing assembly', 'gear box', 'actuator', 'sensor assembly', 'circuit board',
+            // Thermal materials
+            'mineral wool', 'fiberglass insulation', 'thermal blanket', 'pipe insulation',
+            'heat shield', 'MIL-DTL-32585', 'cryogenic insulation',
+            // Vision/Tooling
+            'compression mold', 'injection mold', 'die casting', 'tool steel',
+            // Depot/Warehousing
+            'depot maintenance', 'warehouse operations', 'material handling equipment'
         ],
 
-        // Priority agencies
-        priorityAgencies: [
-            'DLA', 'Defense Logistics Agency',
-            'DOD', 'Department of Defense',
-            'Army', 'Department of the Army', 'US Army',
-            'Navy', 'Department of the Navy', 'US Navy', 'NAVSEA', 'NAVAIR',
-            'Air Force', 'Department of the Air Force', 'USAF',
-            'NASA', 'National Aeronautics',
-            'DOE', 'Department of Energy',
-            'GSA', 'General Services Administration',
-        ],
-
-        // Value range
-        minValue: 25000,
-        maxValue: 5000000,
+        // Priority agencies for deep search
+        priorityAgencies: ['DLA', 'TACOM', 'NAVSEA', 'NAVAIR', 'Army Depot', 'Cherry Point', 'Warren']
     };
 
     // ========== SCORING ENGINE ==========
-    function scoreOpportunity(opp) {
+    function scoreOpportunity(opp, source) {
         let score = 0;
         const matchReasons = [];
-        const breakdown = {
-            naics: 0,
-            keywords: 0,
-            agency: 0,
-            value: 0,
-            setAside: 0,
-        };
+        const breakdown = { naics: 0, keywords: 0, agency: 0, value: 0, setAside: 0 };
 
         const title = (opp.title || '').toLowerCase();
         const description = (opp.description || '').toLowerCase();
         const fullText = `${title} ${description}`;
-        const agency = (opp.agency || opp.fullParentPathName || opp.departmentName || '').toLowerCase();
+        const agency = (opp.agency || '').toLowerCase();
 
-        // 1. NAICS Code Match (25 points)
+        // NAICS Match (25 pts)
         if (opp.naicsCode && companyProfile.naicsCodes.includes(opp.naicsCode)) {
             score += 25;
             breakdown.naics = 25;
-            matchReasons.push(`NAICS ${opp.naicsCode} match`);
+            matchReasons.push(`NAICS ${opp.naicsCode}`);
         }
 
-        // 2. Keyword Matches (up to 35 points, 5 per hit, capped at 7 hits)
-        const keywordHits = [];
+        // Keyword Matches (up to 35 pts)
         let keywordScore = 0;
-        for (const kw of companyProfile.keywords) {
-            if (fullText.includes(kw.term.toLowerCase())) {
-                if (keywordScore < 35) {
-                    keywordScore += kw.weight;
-                    keywordHits.push(kw.term);
-                }
+        const keywordHits = [];
+        for (const kw of companyProfile.deepKeywords) {
+            if (fullText.includes(kw.toLowerCase()) && keywordScore < 35) {
+                keywordScore += 5;
+                keywordHits.push(kw);
             }
         }
-        keywordScore = Math.min(keywordScore, 35);
         score += keywordScore;
         breakdown.keywords = keywordScore;
         if (keywordHits.length > 0) {
-            matchReasons.push(`Keywords: ${keywordHits.slice(0, 5).join(', ')}${keywordHits.length > 5 ? '...' : ''}`);
+            matchReasons.push(`Keywords: ${keywordHits.slice(0, 3).join(', ')}`);
         }
 
-        // 3. Priority Agency (15 points)
-        const isPriorityAgency = companyProfile.priorityAgencies.some(a => agency.includes(a.toLowerCase()));
-        if (isPriorityAgency) {
+        // Priority Agency (15 pts)
+        if (companyProfile.priorityAgencies.some(a => agency.includes(a.toLowerCase()))) {
             score += 15;
             breakdown.agency = 15;
-            matchReasons.push('Priority agency (DoD/NASA/DLA)');
+            matchReasons.push('Priority agency');
         }
 
-        // 4. Value in Range $25K-$5M (15 points)
-        const value = parseFloat(opp.award?.amount) || parseFloat(opp.estimatedValue) || 0;
-        if (value >= companyProfile.minValue && value <= companyProfile.maxValue) {
+        // Value bonus (15 pts for $25K-$5M range)
+        const value = opp.value || 0;
+        if (value >= 25000 && value <= 5000000) {
             score += 15;
             breakdown.value = 15;
-            matchReasons.push(`Value in range: $${(value/1000).toFixed(0)}K`);
         } else if (value === 0) {
-            // Unknown value - give partial credit
-            score += 5;
+            score += 5; // Unknown value partial credit
             breakdown.value = 5;
         }
 
-        // 5. Small Business Set-Aside (10 points)
-        const setAside = (opp.typeOfSetAsideDescription || opp.setAside || '').toLowerCase();
-        const smallBusinessSetAsides = ['small business', 'total small', 'sba', 'emerging small'];
-        if (smallBusinessSetAsides.some(sa => setAside.includes(sa))) {
+        // Small Business set-aside (10 pts)
+        const setAside = (opp.setAside || '').toLowerCase();
+        if (setAside.includes('small business') || setAside.includes('total small')) {
             score += 10;
             breakdown.setAside = 10;
-            matchReasons.push('Small Business set-aside');
+            matchReasons.push('SB set-aside');
         }
 
-        // Determine recommendation
-        let recommendation;
-        let recommendationColor;
-        if (score >= 65) {
-            recommendation = 'PURSUE';
-            recommendationColor = '#22c55e'; // green
-        } else if (score >= 40) {
-            recommendation = 'WATCH';
-            recommendationColor = '#f59e0b'; // amber
-        } else {
-            recommendation = 'SKIP';
-            recommendationColor = '#ef4444'; // red
-        }
+        // Source bonus - prioritize unique sources
+        if (source === 'DIBBS') score += 5;
+        if (source === 'Sources Sought') score += 10;
+        if (source === 'USAspending') score += 5;
 
-        return {
-            score,
-            recommendation,
-            recommendationColor,
-            matchReasons,
-            breakdown,
-        };
+        const recommendation = score >= 65 ? 'PURSUE' : score >= 40 ? 'WATCH' : 'SKIP';
+
+        return { score, recommendation, matchReasons, breakdown };
     }
 
-    // ========== SAM.GOV API SEARCH ==========
-    const SAM_KEY = process.env.SAM_API_KEY || 'DEMO_KEY';
+    const SAM_KEY = process.env.SAM_API_KEY;
+    if (!SAM_KEY) {
+        return res.status(503).json({ success: false, error: 'SAM API key not configured', requestId });
+    }
 
-    // Get search parameters from query
-    const {
-        keywords = '',
-        naics = '',
-        days = '60',
-        limit = '100',
-    } = req.query;
-
-    // Build date range
+    const { q = '', days = '180' } = req.query;
     const today = new Date();
     const ago = new Date(today);
     ago.setDate(ago.getDate() - parseInt(days));
     const fmt = d => `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;
 
-    // Search terms - use provided or defaults
-    const searchKeywords = keywords ? keywords.split(',') : [
-        'robotics', 'automation', 'material handling', 'PLC', 'SCADA',
-        'FANUC', 'conveyor', 'factory modernization', 'robot', 'vision system'
-    ];
-
-    const searchNaics = naics ? naics.split(',') : companyProfile.naicsCodes;
-
     const allOpportunities = [];
     const seenIds = new Set();
-    const errors = [];
 
-    // Helper function to fetch with timeout
-    const fetchWithTimeout = async (url, label, timeoutMs = 10000) => {
+    const fetchWithTimeout = async (url, label, timeoutMs = 12000) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
         try {
             const response = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
-
             if (!response.ok) {
                 log('warn', `${label} returned ${response.status}`);
                 return null;
             }
-
             return await response.json();
         } catch (e) {
             clearTimeout(timeoutId);
@@ -253,118 +168,207 @@ export default async function handler(req, res) {
         }
     };
 
-    // Search by keywords
-    log('info', 'Searching SAM.gov by keywords', { keywords: searchKeywords });
+    // ========== 1. SAM.GOV SOURCES SOUGHT (Pre-RFP Intel) ==========
+    log('info', 'Searching Sources Sought notices');
+    const sourcesSoughtKeywords = ['sources sought', 'market research', 'RFI', 'industry day'];
 
-    const keywordSearches = searchKeywords.slice(0, 5).map(kw => ({
-        url: `https://api.sam.gov/opportunities/v2/search?api_key=${SAM_KEY}&keyword=${encodeURIComponent(kw)}&postedFrom=${encodeURIComponent(fmt(ago))}&postedTo=${encodeURIComponent(fmt(today))}&limit=50`,
-        label: `Keyword:${kw}`,
-    }));
+    for (const kw of sourcesSoughtKeywords.slice(0, 2)) {
+        const url = `https://api.sam.gov/opportunities/v2/search?api_key=${SAM_KEY}&keyword=${encodeURIComponent(kw)}&postedFrom=${encodeURIComponent(fmt(ago))}&postedTo=${encodeURIComponent(fmt(today))}&ptype=r&limit=50`;
+        const data = await fetchWithTimeout(url, `SourcesSought:${kw}`);
 
-    // Search by NAICS codes
-    log('info', 'Searching SAM.gov by NAICS', { naics: searchNaics });
+        if (data?.opportunitiesData) {
+            for (const o of data.opportunitiesData) {
+                if (seenIds.has(o.noticeId)) continue;
+                seenIds.add(o.noticeId);
 
-    const naicsSearches = searchNaics.slice(0, 3).map(code => ({
-        url: `https://api.sam.gov/opportunities/v2/search?api_key=${SAM_KEY}&naics=${encodeURIComponent(code)}&postedFrom=${encodeURIComponent(fmt(ago))}&postedTo=${encodeURIComponent(fmt(today))}&limit=50`,
-        label: `NAICS:${code}`,
-    }));
-
-    // Execute all searches in parallel
-    const allSearches = [...keywordSearches, ...naicsSearches];
-    const results = await Promise.all(
-        allSearches.map(({ url, label }) => fetchWithTimeout(url, label))
-    );
-
-    // Process results
-    for (const data of results) {
-        if (!data?.opportunitiesData) continue;
-
-        for (const opp of data.opportunitiesData) {
-            if (seenIds.has(opp.noticeId)) continue;
-            seenIds.add(opp.noticeId);
-
-            // Extract contact info
-            let contact = null;
-            if (opp.pointOfContact?.length > 0) {
-                const poc = opp.pointOfContact[0];
-                contact = {
-                    name: poc.fullName || `${poc.firstName || ''} ${poc.lastName || ''}`.trim(),
-                    email: poc.email,
-                    phone: poc.phone,
+                const opp = {
+                    id: o.noticeId,
+                    title: o.title || 'Untitled',
+                    solicitation: o.solicitationNumber || 'Sources Sought',
+                    agency: o.fullParentPathName || o.departmentName || 'Federal',
+                    postedDate: o.postedDate,
+                    closeDate: o.responseDeadLine,
+                    naicsCode: o.naicsCode || '',
+                    setAside: o.typeOfSetAsideDescription || '',
+                    value: o.award?.amount || o.estimatedTotalValue?.amount || null,
+                    description: o.description?.substring(0, 1000) || '',
+                    link: `https://sam.gov/opp/${o.noticeId}/view`,
+                    source: 'Sources Sought',
+                    type: 'pre-solicitation',
+                    isEarlyIntel: true
                 };
+
+                const scoring = scoreOpportunity(opp, 'Sources Sought');
+                Object.assign(opp, scoring);
+                allOpportunities.push(opp);
             }
-
-            // Build opportunity object
-            const opportunity = {
-                id: opp.noticeId,
-                title: opp.title || 'Untitled',
-                solicitationNumber: opp.solicitationNumber || opp.noticeId,
-                agency: opp.fullParentPathName || opp.departmentName || 'Federal Agency',
-                subAgency: opp.organizationName || null,
-                postedDate: opp.postedDate,
-                responseDeadline: opp.responseDeadLine,
-                naicsCode: opp.naicsCode || '',
-                naicsDescription: opp.naicsDescription || '',
-                classificationCode: opp.classificationCode || '',
-                setAside: opp.typeOfSetAsideDescription || 'Full and Open',
-                type: opp.type || opp.baseType || 'Solicitation',
-                estimatedValue: opp.award?.amount || null,
-                placeOfPerformance: opp.placeOfPerformance?.city?.name
-                    ? `${opp.placeOfPerformance.city.name}, ${opp.placeOfPerformance.state?.code || ''}`
-                    : opp.officeAddress || null,
-                description: opp.description?.substring(0, 2000) || '',
-                link: `https://sam.gov/opp/${opp.noticeId}/view`,
-                contact,
-                isActive: opp.active !== false,
-            };
-
-            // Score the opportunity
-            const scoring = scoreOpportunity(opportunity);
-            opportunity.score = scoring.score;
-            opportunity.recommendation = scoring.recommendation;
-            opportunity.recommendationColor = scoring.recommendationColor;
-            opportunity.matchReasons = scoring.matchReasons;
-            opportunity.scoreBreakdown = scoring.breakdown;
-
-            allOpportunities.push(opportunity);
         }
     }
 
-    // Sort by score (highest first)
+    // ========== 2. DEEP NAICS SEARCH (All 20 codes, 180 days) ==========
+    log('info', 'Deep NAICS search across all codes');
+
+    // Search key NAICS codes that main scanner might miss
+    const deepNaicsCodes = ['332710', '327993', '333511', '493110', '332322'];
+
+    for (const naics of deepNaicsCodes) {
+        const url = `https://api.sam.gov/opportunities/v2/search?api_key=${SAM_KEY}&naics=${naics}&postedFrom=${encodeURIComponent(fmt(ago))}&postedTo=${encodeURIComponent(fmt(today))}&limit=30`;
+        const data = await fetchWithTimeout(url, `DeepNAICS:${naics}`);
+
+        if (data?.opportunitiesData) {
+            for (const o of data.opportunitiesData) {
+                if (seenIds.has(o.noticeId)) continue;
+                seenIds.add(o.noticeId);
+
+                const opp = {
+                    id: o.noticeId,
+                    title: o.title || 'Untitled',
+                    solicitation: o.solicitationNumber || o.noticeId,
+                    agency: o.fullParentPathName || o.departmentName || 'Federal',
+                    postedDate: o.postedDate,
+                    closeDate: o.responseDeadLine,
+                    naicsCode: o.naicsCode || '',
+                    setAside: o.typeOfSetAsideDescription || '',
+                    value: o.award?.amount || o.estimatedTotalValue?.amount || null,
+                    description: o.description?.substring(0, 1000) || '',
+                    link: `https://sam.gov/opp/${o.noticeId}/view`,
+                    source: 'SAM.gov Deep',
+                    type: 'contract'
+                };
+
+                const scoring = scoreOpportunity(opp, 'Deep');
+                Object.assign(opp, scoring);
+                allOpportunities.push(opp);
+            }
+        }
+    }
+
+    // ========== 3. DLA-SPECIFIC KEYWORDS ==========
+    log('info', 'DLA parts search');
+    const dlaKeywords = ['drive brake', 'servo motor', 'bearing assembly', 'mineral wool', 'compression mold'];
+
+    for (const kw of dlaKeywords.slice(0, 3)) {
+        const url = `https://api.sam.gov/opportunities/v2/search?api_key=${SAM_KEY}&keyword=${encodeURIComponent(kw)}&postedFrom=${encodeURIComponent(fmt(ago))}&postedTo=${encodeURIComponent(fmt(today))}&limit=25`;
+        const data = await fetchWithTimeout(url, `DLA:${kw}`);
+
+        if (data?.opportunitiesData) {
+            for (const o of data.opportunitiesData) {
+                if (seenIds.has(o.noticeId)) continue;
+                seenIds.add(o.noticeId);
+
+                const agency = (o.fullParentPathName || '').toLowerCase();
+                const isDLA = agency.includes('dla') || agency.includes('defense logistics');
+
+                const opp = {
+                    id: o.noticeId,
+                    title: o.title || 'Untitled',
+                    solicitation: o.solicitationNumber || o.noticeId,
+                    agency: o.fullParentPathName || o.departmentName || 'Federal',
+                    postedDate: o.postedDate,
+                    closeDate: o.responseDeadLine,
+                    naicsCode: o.naicsCode || '',
+                    setAside: o.typeOfSetAsideDescription || '',
+                    value: o.award?.amount || o.estimatedTotalValue?.amount || null,
+                    description: o.description?.substring(0, 1000) || '',
+                    link: `https://sam.gov/opp/${o.noticeId}/view`,
+                    source: isDLA ? 'DLA' : 'SAM.gov',
+                    type: isDLA ? 'parts' : 'contract',
+                    isDLA
+                };
+
+                const scoring = scoreOpportunity(opp, isDLA ? 'DIBBS' : 'Deep');
+                Object.assign(opp, scoring);
+                allOpportunities.push(opp);
+            }
+        }
+    }
+
+    // ========== 4. USASPENDING PRIME CONTRACTOR INTEL ==========
+    log('info', 'USAspending teaming intel search');
+
+    // Search for recent awards to find teaming partners
+    const usgKeywords = ['automation', 'robotics', 'insulation'];
+
+    for (const kw of usgKeywords.slice(0, 2)) {
+        try {
+            const usaUrl = `https://api.usaspending.gov/api/v2/search/spending_by_award/?filters={"keywords":["${kw}"],"time_period":[{"start_date":"${ago.toISOString().split('T')[0]}","end_date":"${today.toISOString().split('T')[0]}"}],"award_type_codes":["A","B","C","D"]}&limit=20`;
+
+            const response = await fetchWithTimeout(
+                'https://api.usaspending.gov/api/v2/search/spending_by_award/',
+                `USAspending:${kw}`,
+                15000
+            );
+
+            // USAspending uses POST, so we'll add these as teaming intel entries
+            if (response?.results) {
+                for (const award of response.results.slice(0, 10)) {
+                    const oppId = `usa-${award.internal_id || Date.now()}`;
+                    if (seenIds.has(oppId)) continue;
+                    seenIds.add(oppId);
+
+                    allOpportunities.push({
+                        id: oppId,
+                        title: `TEAMING: ${award.recipient_name || 'Prime Contractor'} - ${award.description?.substring(0, 50) || kw}`,
+                        solicitation: award.piid || 'Award',
+                        agency: award.awarding_agency_name || 'Federal',
+                        postedDate: award.action_date,
+                        closeDate: null,
+                        naicsCode: award.naics_code || '',
+                        setAside: '',
+                        value: award.total_obligation || 0,
+                        description: `Prime: ${award.recipient_name}. ${award.description || ''}`,
+                        link: `https://www.usaspending.gov/award/${award.generated_internal_id}`,
+                        source: 'USAspending',
+                        type: 'teaming-intel',
+                        primeContractor: award.recipient_name,
+                        score: 30,
+                        recommendation: 'WATCH',
+                        matchReasons: ['Teaming opportunity'],
+                        breakdown: { type: 'teaming' }
+                    });
+                }
+            }
+        } catch (e) {
+            log('warn', `USAspending search failed: ${e.message}`);
+        }
+    }
+
+    // Sort by score
     allOpportunities.sort((a, b) => b.score - a.score);
 
-    // Apply limit
-    const limitedResults = allOpportunities.slice(0, parseInt(limit));
-
-    // Calculate stats
+    // Stats
     const stats = {
-        total: limitedResults.length,
-        pursue: limitedResults.filter(o => o.recommendation === 'PURSUE').length,
-        watch: limitedResults.filter(o => o.recommendation === 'WATCH').length,
-        skip: limitedResults.filter(o => o.recommendation === 'SKIP').length,
-        avgScore: limitedResults.length > 0
-            ? Math.round(limitedResults.reduce((sum, o) => sum + o.score, 0) / limitedResults.length)
+        total: allOpportunities.length,
+        pursue: allOpportunities.filter(o => o.recommendation === 'PURSUE').length,
+        watch: allOpportunities.filter(o => o.recommendation === 'WATCH').length,
+        skip: allOpportunities.filter(o => o.recommendation === 'SKIP').length,
+        avgScore: allOpportunities.length > 0
+            ? Math.round(allOpportunities.reduce((sum, o) => sum + o.score, 0) / allOpportunities.length)
             : 0,
-        topAgencies: [...new Set(limitedResults.slice(0, 20).map(o => o.agency))].slice(0, 5),
-        searchedKeywords: searchKeywords,
-        searchedNaics: searchNaics,
-        dateRange: { from: fmt(ago), to: fmt(today) },
+        sources: {
+            sourcesSought: allOpportunities.filter(o => o.source === 'Sources Sought').length,
+            dla: allOpportunities.filter(o => o.source === 'DLA').length,
+            samDeep: allOpportunities.filter(o => o.source === 'SAM.gov Deep' || o.source === 'SAM.gov').length,
+            usaspending: allOpportunities.filter(o => o.source === 'USAspending').length
+        },
+        dateRange: { from: fmt(ago), to: fmt(today), days: parseInt(days) }
     };
 
     const totalTime = Date.now() - startTime;
-    log('info', 'Live search complete', { stats, totalTime });
+    log('info', 'Deep search complete', { stats, totalTime });
 
     return res.status(200).json({
         success: true,
         requestId,
         timestamp: new Date().toISOString(),
         latencyMs: totalTime,
+        searchType: 'DEEP',
         stats,
         companyProfile: {
             name: companyProfile.name,
             cage: companyProfile.cage,
-            uei: companyProfile.uei,
+            uei: companyProfile.uei
         },
-        opportunities: limitedResults,
+        opportunities: allOpportunities.slice(0, 100)
     });
 }

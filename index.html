@@ -3658,9 +3658,9 @@ function exportPipelinePDF() {
         return;
     }
     
-    const goItems = pipelineEntries.filter(o => o.pipelineStatus === 'go');
-    const reviewItems = pipelineEntries.filter(o => o.pipelineStatus === 'review');
-    const nogoItems = pipelineEntries.filter(o => o.pipelineStatus === 'nogo');
+    const goItems = pipelineEntries.filter(o => o.pipelineStatus?.status === 'go');
+    const reviewItems = pipelineEntries.filter(o => o.pipelineStatus?.status === 'review');
+    const nogoItems = pipelineEntries.filter(o => o.pipelineStatus?.status === 'nogo');
     
     const goValue = goItems.reduce((sum, o) => sum + (o.value || 0), 0);
     const reviewValue = reviewItems.reduce((sum, o) => sum + (o.value || 0), 0);
@@ -3674,7 +3674,7 @@ function exportPipelinePDF() {
             <td style="padding: 8px; border-bottom: 1px solid #ddd;">${o.agency}</td>
             <td style="padding: 8px; border-bottom: 1px solid #ddd;">${formatValue(o.value || 0)}</td>
             <td style="padding: 8px; border-bottom: 1px solid #ddd;">${o.closeDate || 'TBD'}</td>
-            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${o.pipelineStatus?.toUpperCase()}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${o.pipelineStatus?.status?.toUpperCase() || 'N/A'}</td>
         </tr>
     `;
     
@@ -6619,11 +6619,13 @@ function showQuoteModal(o, data) {
                         </div>
                         <div style="flex: 1; min-width: 150px;">
                             <label style="display: block; font-size: 0.7rem; color: var(--blue); margin-bottom: 0.25rem;">📅 Required By <span style="color: var(--gray);">(for quote validity)</span></label>
-                            <input type="date" id="quoteRequiredDate" 
+                            <input type="date" id="quoteRequiredDate"
                                    min="${new Date().toISOString().split('T')[0]}"
                                    value="${o.closeDate ? new Date(new Date(o.closeDate).getTime() - 14*86400000).toISOString().split('T')[0] : ''}"
-                                   style="width: 100%; padding: 0.4rem; background: #0a0a0a; border: 1px solid var(--border); border-radius: 4px; color: #fff; font-size: 0.75rem;"
-                                   onchange="validateAndUpdateDate(this)">
+                                   style="width: 100%; padding: 0.5rem; background: #1a1a1a; border: 1px solid var(--border); border-radius: 4px; color: #fff; font-size: 0.85rem; color-scheme: dark; cursor: pointer;"
+                                   onchange="validateAndUpdateDate(this)"
+                                   oninput="validateAndUpdateDate(this)"
+                                   onclick="this.showPicker && this.showPicker()">
                             <div id="dateWarning" style="font-size: 0.65rem; color: var(--orange); margin-top: 0.25rem; display: none;"></div>
                         </div>
                     </div>

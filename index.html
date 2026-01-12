@@ -718,6 +718,20 @@
         .eligibility-banner.nogo strong { color: var(--red); }
         .eligibility-banner .text p { font-size: 0.8rem; color: var(--gray); margin: 0.25rem 0 0; }
 
+        /* Hard error banners */
+        .hard-error { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05)); border: 2px solid var(--red); border-radius: 12px; padding: 1.25rem; margin: 1rem 0; }
+        .hard-error-title { color: var(--red); font-weight: 700; font-size: 1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+        .hard-error-details { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 0.75rem; font-family: monospace; font-size: 0.75rem; }
+        .hard-error-field { display: flex; gap: 0.5rem; padding: 0.25rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .hard-error-field:last-child { border-bottom: none; }
+        .hard-error-field label { color: var(--gray); min-width: 80px; }
+        .hard-error-field span { color: #fff; word-break: break-all; }
+
+        /* Global error toast */
+        .error-toast { position: fixed; top: 1rem; right: 1rem; background: var(--red); color: #fff; padding: 1rem 1.5rem; border-radius: 8px; font-size: 0.85rem; z-index: 9999; animation: slideIn 0.3s ease; box-shadow: 0 4px 20px rgba(239,68,68,0.4); max-width: 400px; }
+        .error-toast .close-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: none; color: #fff; cursor: pointer; font-size: 1.2rem; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
         /* Form styles */
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; font-size: 0.75rem; color: var(--gray-light); margin-bottom: 0.4rem; font-weight: 500; }
@@ -1465,11 +1479,11 @@
     <div class="page" id="page-subcontracting">
         <div class="main main-full" style="max-width: 1200px;">
             <!-- Demo Data Warning Banner - shown when using demo data -->
-            <div id="subDemoBanner" class="demo-warning-banner" style="background: linear-gradient(90deg, rgba(245,158,11,0.2), rgba(239,68,68,0.1)); border: 2px solid var(--orange); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+            <div id="subDemoBanner" class="demo-warning-banner" style="background: linear-gradient(90deg, rgba(245,158,11,0.2), rgba(239,68,68,0.1)); border: 2px solid var(--orange); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; display: none; align-items: center; gap: 1rem;">
                 <span style="font-size: 1.5rem;">⚠️</span>
                 <div>
-                    <strong style="color: var(--orange);">DEMONSTRATION DATA</strong>
-                    <p style="font-size: 0.75rem; color: var(--gray); margin: 0.25rem 0 0 0;">The data shown below is for demonstration purposes only. These are not live subcontracting opportunities. Contact primes directly to verify current needs.</p>
+                    <strong style="color: var(--orange);">DEMO MODE</strong>
+                    <p style="font-size: 0.75rem; color: var(--gray); margin: 0.25rem 0 0 0;">Live data unavailable. Showing example opportunities. Click "Refresh" to try loading live data again.</p>
                 </div>
             </div>
             <div class="panel">

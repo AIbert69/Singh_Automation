@@ -667,11 +667,11 @@ export default async function handler(req, res) {
         { id: 'fc-1', title: 'Navy Shipyard Automation Program (Forecast)', agency: 'NAVSEA',
           solicitation: 'NAVSEA-FY25-AUTO', value: 2500000, closeDate: '2026-06-01',
           description: 'Upcoming automation and robotics modernization for naval shipyards. Pre-RFP stage.',
-          link: 'https://sam.gov', setAside: 'Full & Open' },
+          link: 'https://sam.gov/search/?keywords=NAVSEA%20automation%20robotics&index=opp&sort=-modifiedDate', setAside: 'Full & Open' },
         { id: 'fc-2', title: 'Army Depot Welding Cells (Forecast)', agency: 'US Army TACOM',
           solicitation: 'TACOM-FY25-WELD', value: 1800000, closeDate: '2026-04-15',
           description: 'Multiple robotic welding cells for vehicle repair depots. Sources sought expected Q1.',
-          link: 'https://sam.gov', setAside: 'Small Business' },
+          link: 'https://sam.gov/search/?keywords=TACOM%20robotic%20welding&index=opp&sort=-modifiedDate', setAside: 'Small Business' },
     ];
     
     for (const f of forecastOpps) {

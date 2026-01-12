@@ -247,10 +247,12 @@
         }
         .status-pill.go { background: rgba(16, 185, 129, 0.15); color: var(--green); }
         .status-pill.review { background: rgba(59, 130, 246, 0.15); color: var(--blue); }
+        .status-pill.applied { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
         .status-pill.nogo { background: rgba(239, 68, 68, 0.15); color: var(--red); }
         .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
         .status-pill.go .dot { background: var(--green); }
         .status-pill.review .dot { background: var(--blue); }
+        .status-pill.applied .dot { background: var(--purple); }
 
         /* Right Panel */
         .right-panel { display: flex; flex-direction: column; gap: 1rem; }
@@ -286,6 +288,8 @@
         .pipeline-item.go .count { background: rgba(16, 185, 129, 0.15); color: var(--green); }
         .pipeline-item.review .count { background: rgba(59, 130, 246, 0.15); color: var(--blue); }
         .pipeline-item.nogo .count { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+        .pipeline-item.applied .dot { background: var(--purple); }
+        .pipeline-item.applied .count { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
 
         /* Revenue Target */
         .revenue-stats { margin-bottom: 1rem; }
@@ -1377,6 +1381,13 @@
                                 <span class="name">No-Go</span>
                             </div>
                             <span class="count" id="pipelineNoGo">0</span>
+                        </div>
+                        <div class="pipeline-item applied">
+                            <div class="left">
+                                <span class="dot"></span>
+                                <span class="name">Applied</span>
+                            </div>
+                            <span class="count" id="pipelineApplied">0</span>
                         </div>
                     </div>
                 </div>
@@ -3406,7 +3417,9 @@ function renderOpps() {
 
         // Determine status pill - pipeline status takes priority
         let statusPill = '';
-        if (effectiveStatus === 'go') {
+        if (effectiveStatus === 'applied') {
+            statusPill = '<span class="status-pill applied"><span class="dot"></span>Applied</span>';
+        } else if (effectiveStatus === 'go') {
             statusPill = '<span class="status-pill go"><span class="dot"></span>Go</span>';
         } else if (effectiveStatus === 'review') {
             statusPill = '<span class="status-pill review"><span class="dot"></span>Review</span>';
@@ -3506,13 +3519,16 @@ function updateOppSelect() {
 
 function updatePipelineStats() {
     const goCount = Object.values(pipeline).filter(p => p.status === 'go').length;
+    const appliedCount = Object.values(pipeline).filter(p => p.status === 'applied').length;
     const reviewCount = Object.values(pipeline).filter(p => p.status === 'review').length;
     const nogoCount = Object.values(pipeline).filter(p => p.status === 'nogo').length;
 
     const pipelineGoEl = document.getElementById('pipelineGo');
+    const pipelineAppliedEl = document.getElementById('pipelineApplied');
     const pipelineReviewEl = document.getElementById('pipelineReview');
     const pipelineNoGoEl = document.getElementById('pipelineNoGo');
     if (pipelineGoEl) pipelineGoEl.textContent = goCount;
+    if (pipelineAppliedEl) pipelineAppliedEl.textContent = appliedCount;
     if (pipelineReviewEl) pipelineReviewEl.textContent = reviewCount;
     if (pipelineNoGoEl) pipelineNoGoEl.textContent = nogoCount;
 
@@ -3537,6 +3553,7 @@ function renderPipelinePage() {
     const goItems = pipelineEntries.filter(([id, p]) => p.status === 'go');
     const reviewItems = pipelineEntries.filter(([id, p]) => p.status === 'review');
     const nogoItems = pipelineEntries.filter(([id, p]) => p.status === 'nogo');
+    const appliedItems = pipelineEntries.filter(([id, p]) => p.status === 'applied');
     
     const renderGroup = (items, label, color, icon) => {
         if (items.length === 0) return '';
@@ -3593,6 +3610,7 @@ function renderPipelinePage() {
                 <button class="btn btn-sm btn-secondary" onclick="clearPipeline()" title="Remove all opportunities from pipeline (cannot be undone)">🗑️ Clear All</button>
             </div>
         </div>
+        ${renderGroup(appliedItems, 'APPLIED - Submitted', 'var(--purple)', '📨')}
         ${renderGroup(goItems, 'GO - Ready to Pursue', 'var(--green)', '🟢')}
         ${renderGroup(reviewItems, 'REVIEW - Needs Evaluation', 'var(--orange)', '🟡')}
         ${renderGroup(nogoItems, 'NO-GO - Declined', 'var(--red)', '🔴')}
@@ -3667,13 +3685,15 @@ function exportPipelinePDF() {
         return;
     }
     
+    const appliedItems = pipelineEntries.filter(o => o.pipelineStatus?.status === 'applied');
     const goItems = pipelineEntries.filter(o => o.pipelineStatus?.status === 'go');
     const reviewItems = pipelineEntries.filter(o => o.pipelineStatus?.status === 'review');
     const nogoItems = pipelineEntries.filter(o => o.pipelineStatus?.status === 'nogo');
-    
+
+    const appliedValue = appliedItems.reduce((sum, o) => sum + (o.value || 0), 0);
     const goValue = goItems.reduce((sum, o) => sum + (o.value || 0), 0);
     const reviewValue = reviewItems.reduce((sum, o) => sum + (o.value || 0), 0);
-    const totalValue = goValue + reviewValue;
+    const totalValue = appliedValue + goValue + reviewValue;
     
     const formatValue = v => v >= 1000000 ? '$' + (v/1000000).toFixed(1) + 'M' : '$' + (v/1000).toFixed(0) + 'K';
     
@@ -3702,6 +3722,7 @@ function exportPipelinePDF() {
                 .stat-box { background: #f9f9f9; padding: 15px; border-radius: 8px; text-align: center; flex: 1; }
                 .stat-value { font-size: 24pt; font-weight: bold; color: #9ACD32; }
                 .stat-label { font-size: 10pt; color: #666; }
+                .applied { color: #8b5cf6; }
                 .go { color: #22c55e; }
                 .review { color: #f59e0b; }
                 .nogo { color: #ef4444; }
@@ -3718,6 +3739,10 @@ function exportPipelinePDF() {
                     <div class="stat-label">Total Opportunities</div>
                 </div>
                 <div class="stat-box">
+                    <div class="stat-value applied">${appliedItems.length}</div>
+                    <div class="stat-label">Applied</div>
+                </div>
+                <div class="stat-box">
                     <div class="stat-value go">${goItems.length}</div>
                     <div class="stat-label">GO Decisions</div>
                 </div>
@@ -3731,6 +3756,15 @@ function exportPipelinePDF() {
                 </div>
             </div>
             
+            ${appliedItems.length > 0 ? `
+                <h2 class="applied">📨 APPLIED - Submitted (${appliedItems.length})</h2>
+                <p>Total Value: ${formatValue(appliedValue)}</p>
+                <table>
+                    <thead><tr><th>Opportunity</th><th>Agency</th><th>Value</th><th>Close Date</th><th>Status</th></tr></thead>
+                    <tbody>${appliedItems.map(renderOpp).join('')}</tbody>
+                </table>
+            ` : ''}
+
             ${goItems.length > 0 ? `
                 <h2 class="go">🟢 GO - Ready to Pursue (${goItems.length})</h2>
                 <p>Total Value: ${formatValue(goValue)}</p>
@@ -4281,8 +4315,9 @@ function showDetail(id) {
             </button>
 
             <!-- Decision buttons -->
-            <div style="display: flex; gap: 0.5rem; justify-content: center;">
+            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
                 <button class="btn btn-go" onclick="setPipelineStatus('${o.id}','go')" ${!o.eligibility.ok?'disabled':''} style="padding: 0.5rem 1.5rem;">✅ GO</button>
+                <button class="btn btn-applied" onclick="setPipelineStatus('${o.id}','applied')" style="padding: 0.5rem 1.5rem; background: var(--blue);">📨 Applied</button>
                 <button class="btn btn-nogo" onclick="setPipelineStatus('${o.id}','nogo')" style="padding: 0.5rem 1.5rem;">🚫 No-Go</button>
             </div>
 

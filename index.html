@@ -2342,16 +2342,24 @@ async function runAudit() {
         // Update score
         opsScore.textContent = `Score: ${data.score || '--'}/100`;
 
-        // Update checks
+        // Update checks - show key services
         const checks = data.checks || [];
         let checksHtml = '';
-        const keyChecks = ['API Health', 'SAM.gov Live API', 'Agent_SAM Endpoint', 'Email System'];
 
-        checks.forEach(check => {
-            const shortName = check.name.replace('SAM.gov Live API', 'SAM').replace('Agent_SAM Endpoint', 'Claude').replace('Email System (Resend)', 'Email').replace('API Health', 'API');
-            if (keyChecks.some(k => check.name.includes(k.split(' ')[0]))) {
+        // Map check names to short display names
+        const checkMapping = {
+            'API Health': 'API',
+            'SAM.gov Live API': 'SAM',
+            'Agent_SAM Endpoint': 'Claude',
+            'Email System (Resend)': 'Email'
+        };
+
+        // Find and display each key check
+        Object.entries(checkMapping).forEach(([fullName, shortName]) => {
+            const check = checks.find(c => c.name === fullName);
+            if (check) {
                 const icon = check.status === 'pass' ? '✓' : check.status === 'warn' ? '⚠' : '✗';
-                checksHtml += `<span class="ops-check ${check.status}" title="${check.name}: ${check.message}">${icon} ${shortName}</span>`;
+                checksHtml += `<span class="ops-check ${check.status}" title="${check.message}">${icon} ${shortName}</span>`;
             }
         });
         opsChecks.innerHTML = checksHtml || '<span style="color: var(--gray);">No checks</span>';

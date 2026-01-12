@@ -275,7 +275,7 @@ TEAMING OUTREACH EMAIL TEMPLATE
 ───────────────────────────────────────────────────────────────────────────────
 When user asks to draft a teaming email, use this format:
 
-Subject: Subcontracting Support: [Contract Name] - Singh Automation (WOSB/MBE)
+Subject: Subcontracting Support: [Contract Name] - Singh Automation (SB/MBE/WBENC)
 
 Hi [PM Name or "Contracts Team"],
 
@@ -283,7 +283,7 @@ I saw that [Prime Name] was recently awarded the [Contract Name] for [Agency]. C
 
 I am reaching out to see if you have gaps in your industrial automation or fabrication scope for this project.
 
-Singh Automation is a Woman-Owned Small Business (WOSB) and FANUC Authorized Integrator based in Michigan and California. We specialize in automation that many primes prefer to subcontract out:
+Singh Automation is a Small Business and Minority Business Enterprise (MBE/WBENC certified) and FANUC Authorized Integrator based in Michigan and California. We specialize in automation that many primes prefer to subcontract out:
 
 • Robotic Welding Cells: Turnkey integration for heavy-gauge steel
 • Material Handling: Conveyors and palletizing for warehouse modernization
@@ -464,10 +464,12 @@ SINGH AUTOMATION IS NOT CERTIFIED FOR THESE SET-ASIDES (AUTO-REJECT):
 
 SINGH AUTOMATION DOES QUALIFY FOR:
 • Small Business (SB) - YES
-• Woman-Owned Small Business (WOSB) - YES
-• Economically Disadvantaged WOSB (EDWOSB) - Potentially
 • Minority Business Enterprise (MBE) - YES
+• WBENC Certified (private, not federal WOSB) - YES
 • Full & Open Competition - YES
+
+NOTE: Singh is WBENC certified (private certification) but NOT WOSB/EDWOSB certified (SBA federal program).
+WOSB and EDWOSB set-asides are AUTO NO-GO.
 
 CONTRACT VEHICLES SINGH DOES NOT HOLD (Cannot bid directly):
 • GSA Schedule / GSA MAS - NO (cannot bid GSA task orders)
@@ -524,10 +526,11 @@ SCORING FACTORS (Total = 100%):
    • 0 pts: Strong incumbent, no compelling win strategy
 
 5. SET-ASIDE ADVANTAGE (10 points max)
-   • 10 pts: WOSB/EDWOSB sole-source or set-aside
-   • 7 pts: Small Business set-aside
-   • 5 pts: Full & Open but WOSB provides evaluation credit
+   • 10 pts: Small Business sole-source or total set-aside
+   • 7 pts: Partial Small Business set-aside
+   • 5 pts: Full & Open, MBE/diversity provides evaluation credit
    • 0 pts: Full & Open, no small business advantage
+   NOTE: WOSB/EDWOSB set-asides = AUTO NO-GO (Singh not certified)
 
 6. PRICE/BUDGET ALIGNMENT (10 points max)
    • 10 pts: Historical pricing data shows Singh competitive

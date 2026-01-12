@@ -220,6 +220,18 @@ export default async function handler(req, res) {
                     };
                 }
 
+                // Extract value - try multiple SAM.gov fields
+                let value = null;
+                if (o.award?.amount) {
+                    value = o.award.amount;
+                } else if (o.estimatedTotalValue?.amount) {
+                    value = o.estimatedTotalValue.amount;
+                } else if (o.baseAndAllOptionsValue?.amount) {
+                    value = o.baseAndAllOptionsValue.amount;
+                } else if (o.totalEstimatedContractValue) {
+                    value = parseFloat(o.totalEstimatedContractValue) || null;
+                }
+
                 const opp = {
                     id: o.noticeId,
                     noticeId: o.noticeId,
@@ -230,7 +242,7 @@ export default async function handler(req, res) {
                     closeDate: o.responseDeadLine,
                     setAside: o.typeOfSetAsideDescription || '',
                     naicsCode: o.naicsCode || '',
-                    value: o.award?.amount || null,
+                    value: value,
                     description: o.description?.substring(0, 1000) || '',
                     fullDescription: o.description || '',
                     link: `https://sam.gov/opp/${o.noticeId}/view`,

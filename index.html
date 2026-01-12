@@ -895,6 +895,19 @@
         .quote-modal-body {
             padding: 1.5rem;
         }
+        /* Date input styling for dark theme */
+        input[type="date"] {
+            color-scheme: dark;
+            cursor: pointer;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+            opacity: 0.8;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
         .quote-modal-footer {
             display: flex;
             justify-content: space-between;
@@ -1577,19 +1590,12 @@
     <!-- SUBCONTRACTING PAGE -->
     <div class="page" id="page-subcontracting">
         <div class="main main-full" style="max-width: 1200px;">
-            <!-- Demo Data Warning Banner - shown when using demo data -->
-            <div id="subDemoBanner" class="demo-warning-banner" style="background: linear-gradient(90deg, rgba(245,158,11,0.2), rgba(239,68,68,0.1)); border: 2px solid var(--orange); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; display: none; align-items: center; gap: 1rem;">
-                <span style="font-size: 1.5rem;">⚠️</span>
-                <div>
-                    <strong style="color: var(--orange);">DEMO MODE</strong>
-                    <p style="font-size: 0.75rem; color: var(--gray); margin: 0.25rem 0 0 0;">Live data unavailable. Showing example opportunities. Click "Refresh" to try loading live data again.</p>
-                </div>
-            </div>
+            <!-- Subcontracting data source indicator -->
             <div class="panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <div class="panel-title" style="margin-bottom: 0;">🎯 Subcontracting Opportunities</div>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        <span id="subSource" style="font-size: 0.7rem; color: var(--orange);">📊 Demo</span>
+                        <span id="subSource" style="font-size: 0.7rem; color: var(--gray);">🔄 Loading...</span>
                         <button class="btn btn-primary btn-sm" onclick="loadSubcontracting()">🔄 Refresh</button>
                     </div>
                 </div>
@@ -3007,27 +3013,42 @@ function processOpportunities(rawOpps, source) {
 // Generate proper source link from opportunity data
 function getSamLink(o) {
     // If we have a proper uiLink from API, use it
-    if (o.uiLink && o.uiLink.startsWith('http')) {
+    if (o.uiLink && o.uiLink.startsWith('http') && !o.uiLink.includes('undefined')) {
         return o.uiLink;
     }
-    // If link exists and is a valid URL, use it (covers state portals, DIBBS, etc.)
-    if (o.link && o.link.startsWith('http')) {
-        return o.link;
+    // If link exists, is a valid URL, and contains specific opportunity path (not just home page)
+    if (o.link && o.link.startsWith('http') && !o.link.includes('undefined')) {
+        // For SAM.gov, ensure it has a specific opportunity path, not just home page
+        if (o.link.includes('sam.gov')) {
+            if (o.link.includes('/opp/') && o.link.match(/\/opp\/[a-f0-9]{32}/i)) {
+                return o.link; // Valid SAM.gov opportunity link
+            }
+            // If SAM link doesn't have valid opp path, try to construct from noticeId
+        } else {
+            return o.link; // Non-SAM links are OK
+        }
     }
-    // For SAM.gov opportunities, construct from noticeId if it's a real SAM ID (32+ chars)
-    if (o.noticeId && o.noticeId.length >= 32) {
+    // For SAM.gov opportunities, construct from noticeId if it's a real SAM ID (32+ hex chars)
+    if (o.noticeId && o.noticeId.length >= 32 && /^[a-f0-9]+$/i.test(o.noticeId)) {
         return `https://sam.gov/opp/${o.noticeId}/view`;
     }
-    // For SAM.gov opportunities, construct from id if it's a real SAM ID (32+ chars)
-    if (o.id && o.id.length >= 32) {
+    // For SAM.gov opportunities, construct from id if it's a real SAM ID (32+ hex chars)
+    if (o.id && o.id.length >= 32 && /^[a-f0-9]+$/i.test(o.id)) {
         return `https://sam.gov/opp/${o.id}/view`;
     }
-    // Fallback to generic search based on source
+    // Fallback to search URL with proper search terms
     const searchTerm = encodeURIComponent(o.solicitation || o.title || '');
-    if (o.source === 'SBIR.gov') {
-        return `https://www.sbir.gov/topics`;
+    if (o.source === 'SBIR.gov' || (o.type || '').toLowerCase() === 'sbir') {
+        return `https://www.sbir.gov/sbirsearch/topic/current?keyword=${searchTerm}`;
     }
-    return `https://sam.gov/search/?keywords=${searchTerm}&index=opp`;
+    if (o.source === 'Grants.gov' || (o.type || '').toLowerCase() === 'grant') {
+        return `https://www.grants.gov/search-results-detail/${o.oppNumber || ''}`;
+    }
+    // For federal opportunities, search SAM.gov with solicitation number
+    if (o.solicitation && o.solicitation.length > 5) {
+        return `https://sam.gov/search/?keywords=${encodeURIComponent(o.solicitation)}&index=opp&sort=-modifiedDate`;
+    }
+    return `https://sam.gov/search/?keywords=${searchTerm}&index=opp&sort=-modifiedDate`;
 }
 
 /**
@@ -3361,10 +3382,13 @@ function renderOpps() {
     c.innerHTML = f.map(o => {
         const d = daysUntil(o.closeDate);
         const matchClass = o.matchScore >= 70 ? 'high' : o.matchScore >= 50 ? 'medium' : 'low';
-        const status = pipeline[o.id]?.status || null;
+        const pipelineStatus = pipeline[o.id]?.status || null;
 
-        // CANONICAL: Use ONLY o.eligibility (single source of truth)
+        // CANONICAL: Pipeline status OVERRIDES eligibility status (user decision wins)
         const eligStatus = o.eligibility.status; // GO, REVIEW, or NO-GO
+
+        // User's pipeline decision takes priority over computed eligibility
+        const effectiveStatus = pipelineStatus || eligStatus?.toLowerCase() || null;
 
         // Determine source tag class
         let sourceClass = '';
@@ -3374,13 +3398,13 @@ function renderOpps() {
         else if (o.type === 'county') sourceClass = 'county';
         else if (o.type === 'dibbs') sourceClass = 'dibbs';
 
-        // Determine status pill
+        // Determine status pill - pipeline status takes priority
         let statusPill = '';
-        if (status === 'go' || eligStatus === 'GO') {
+        if (effectiveStatus === 'go') {
             statusPill = '<span class="status-pill go"><span class="dot"></span>Go</span>';
-        } else if (status === 'review' || eligStatus === 'REVIEW') {
+        } else if (effectiveStatus === 'review') {
             statusPill = '<span class="status-pill review"><span class="dot"></span>Review</span>';
-        } else if (status === 'nogo' || eligStatus === 'NO-GO') {
+        } else if (effectiveStatus === 'nogo' || effectiveStatus === 'no-go') {
             statusPill = '<span class="status-pill nogo">No-Go</span>';
         } else {
             statusPill = '<span style="color: var(--gray);">—</span>';
@@ -3616,8 +3640,9 @@ function exportPipelineCSV() {
     a.download = `singh_pipeline_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    
+
     log(`Exported ${pipelineEntries.length} opportunities to CSV`, 'success');
+    showSuccessToast(`✅ Exported ${pipelineEntries.length} opportunities to CSV. Check your downloads folder.`);
 }
 
 function exportPipelinePDF() {
@@ -3739,8 +3764,9 @@ function exportPipelinePDF() {
     printWindow.onload = () => {
         printWindow.print();
     };
-    
+
     log(`Opened PDF export with ${pipelineEntries.length} opportunities`, 'success');
+    showSuccessToast(`✅ PDF report opened in new window. Use your browser's print dialog to save as PDF.`);
 }
 
 function clearStoredData() {
@@ -5619,15 +5645,23 @@ async function loadSubcontracting() {
             }
         }
     } catch(e) {
-        console.log('Subcontracting API unavailable, using demo');
+        console.error('Subcontracting API error:', e);
     }
 
-    // Fallback to demo data - show prominent warning
-    subOpportunities = getSubDemoData();
-    document.getElementById('subSource').innerHTML = '📊 Demo';
-    document.getElementById('subSource').style.color = 'var(--orange)';
-    if (demoBanner) demoBanner.style.display = 'flex'; // Show demo warning
-    renderSubOpportunities();
+    // Production: Show error state instead of demo fallback
+    document.getElementById('subSource').innerHTML = '⚠️ Unavailable';
+    document.getElementById('subSource').style.color = 'var(--red)';
+    if (demoBanner) demoBanner.style.display = 'none'; // Never show demo banner in production
+    list.innerHTML = `
+        <div style="text-align: center; padding: 2rem; color: var(--gray);">
+            <p style="color: var(--red); font-weight: 600;">⚠️ Unable to load subcontracting opportunities</p>
+            <p style="font-size: 0.8rem;">The API may be temporarily unavailable.</p>
+            <button class="btn btn-primary btn-sm" onclick="loadSubcontracting()" style="margin-top: 1rem;">🔄 Retry</button>
+            <p style="font-size: 0.75rem; margin-top: 1rem; color: var(--gray);">
+                Or search manually: <a href="https://usaspending.gov/search" target="_blank" style="color: var(--green);">USASpending.gov</a>
+            </p>
+        </div>
+    `;
 }
 
 // Subcontracting demo data - FY2026 opportunities
@@ -6016,7 +6050,18 @@ function openOutreachEmail() {
     const to = document.getElementById('outreachTo').value;
     const subject = encodeURIComponent(document.getElementById('outreachSubject').value);
     const body = encodeURIComponent(document.getElementById('outreachBody').value);
-    window.open(`mailto:${to}?subject=${subject}&body=${body}`, '_blank');
+
+    // Use location.href which is less likely to be blocked than window.open
+    const mailtoUrl = `mailto:${to}?subject=${subject}&body=${body}`;
+
+    try {
+        window.location.href = mailtoUrl;
+        showSuccessToast('✅ Opening email client... If nothing happens, copy the email content instead.');
+    } catch (e) {
+        // Fallback: copy to clipboard
+        copyOutreachEmail();
+        showErrorToast('Could not open email client. Email content copied to clipboard instead.');
+    }
 }
 
 // ========== CATEGORY BADGES ==========
@@ -6633,13 +6678,25 @@ function showQuoteModal(o, data) {
                 </div>
             </div>
             
-            <div class="quote-modal-footer">
-                <p style="color: var(--gray); font-size: 0.65rem; margin: 0; max-width: 55%;">
-                    This request is for pre-award pricing validation only. No purchase authorization is implied. Pricing subject to change and government award.
-                </p>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button class="btn btn-secondary" onclick="closeQuoteModal()">Cancel</button>
-                    <button class="btn btn-primary" onclick="downloadQuoteRFQ()">📥 Download Draft</button>
+            <div class="quote-modal-footer" style="flex-direction: column; gap: 0.75rem;">
+                <div style="background: rgba(59,130,246,0.1); border: 1px solid var(--blue); border-radius: 6px; padding: 0.75rem; width: 100%;">
+                    <p style="color: var(--blue); font-weight: 600; font-size: 0.75rem; margin: 0 0 0.25rem 0;">📧 How to Submit This Quote Request:</p>
+                    <ol style="color: var(--gray); font-size: 0.7rem; margin: 0; padding-left: 1.25rem;">
+                        <li>Fill in delivery location and required-by date above</li>
+                        <li>Review and edit the draft RFQ as needed</li>
+                        <li>Click <strong>Copy</strong> to copy the draft to clipboard</li>
+                        <li>Paste into an email to your preferred distributor (Applied Industrial, Grainger, etc.)</li>
+                    </ol>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <p style="color: var(--gray); font-size: 0.6rem; margin: 0; max-width: 50%;">
+                        Pre-award pricing validation only. No purchase authorization implied.
+                    </p>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary" onclick="closeQuoteModal()">Cancel</button>
+                        <button class="btn btn-secondary" onclick="copyQuoteRFQ()">📋 Copy to Clipboard</button>
+                        <button class="btn btn-primary" onclick="downloadQuoteRFQ()">📥 Download Draft</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -6822,9 +6879,22 @@ function updateRfqRequiredDate(date) {
 function copyQuoteRFQ() {
     const textarea = document.getElementById('quoteRfqText');
     if (textarea) {
-        textarea.select();
-        document.execCommand('copy');
-        alert('RFQ draft copied to clipboard!');
+        // Use modern clipboard API with fallback
+        const text = textarea.value;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccessToast('✅ RFQ draft copied to clipboard! Paste into your email client.');
+            }).catch(() => {
+                // Fallback to execCommand
+                textarea.select();
+                document.execCommand('copy');
+                showSuccessToast('✅ RFQ draft copied to clipboard! Paste into your email client.');
+            });
+        } else {
+            textarea.select();
+            document.execCommand('copy');
+            showSuccessToast('✅ RFQ draft copied to clipboard! Paste into your email client.');
+        }
     }
 }
 
@@ -6843,8 +6913,9 @@ function downloadQuoteRFQ() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     log('RFQ draft downloaded', 'success');
+    showSuccessToast('✅ RFQ draft downloaded. Check your downloads folder.');
 }
 // ========== AGENT TRAINING & MEMORY SYSTEM ==========
 

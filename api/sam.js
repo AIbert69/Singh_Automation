@@ -104,8 +104,8 @@ export default async function handler(req, res) {
             // Safety & Compliance
             'risk assessment', 'ISO 10218', 'NFPA 79', 'safety PLC'
         ],
-        certifications: ['Small Business', 'MBE', 'WBENC', 'WOSB'],
-        notCertified: ['SDVOSB', 'VOSB', '8(a)', 'HUBZone'],
+        certifications: ['Small Business', 'MBE', 'WBENC'],  // WBENC ≠ WOSB
+        notCertified: ['SDVOSB', 'VOSB', '8(a)', 'HUBZone', 'WOSB', 'EDWOSB'],
         noVehicles: ['SeaPort NxG', 'SeaPort-e', 'OASIS', 'OASIS+', 'GSA MAS', 'GSA Schedule',
                      'SEWP', 'CIO-SP3', 'STARS III', 'Alliant 2', 'ITES-3S', 'T4NG']
     };
@@ -770,6 +770,12 @@ function qualifyOpportunity(opp, profile) {
     }
     if (setAside.includes('hubzone')) {
         return { status: 'NO-GO', reason: 'HUBZone set-aside - Singh not HUBZone', recommendation: 'No-Go', breakdown: { restriction: 'HUBZone-only' } };
+    }
+    if (setAside.includes('wosb') || setAside.includes('women-owned') || setAside.includes('woman-owned')) {
+        return { status: 'NO-GO', reason: 'WOSB set-aside - Singh not WOSB certified', recommendation: 'No-Go', breakdown: { restriction: 'WOSB-only' } };
+    }
+    if (setAside.includes('edwosb') || setAside.includes('economically disadvantaged women')) {
+        return { status: 'NO-GO', reason: 'EDWOSB set-aside - Singh not EDWOSB certified', recommendation: 'No-Go', breakdown: { restriction: 'EDWOSB-only' } };
     }
     
     for (const vehicle of profile.noVehicles) {

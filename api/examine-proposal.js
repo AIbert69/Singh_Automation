@@ -42,9 +42,9 @@ YOUR ROLE:
 
 SINGH AUTOMATION PROFILE:
 - Small Business (SB)
-- Woman-Owned Small Business (WOSB) - certified
 - Minority Business Enterprise (MBE)
-- NOT 8(a), HUBZone, SDVOSB, or VOSB
+- WBENC Certified (private certification, NOT federal WOSB)
+- NOT WOSB, EDWOSB, 8(a), HUBZone, SDVOSB, or VOSB
 - Primary NAICS: 333249 (Industrial Machinery Manufacturing)
 - Secondary: 541330 (Engineering), 541512 (Computer Systems), 541715 (R&D)
 - Specialties: Robotics, Automation, Material Handling, PLC/SCADA, Machine Vision

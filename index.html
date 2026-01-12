@@ -718,6 +718,20 @@
         .eligibility-banner.nogo strong { color: var(--red); }
         .eligibility-banner .text p { font-size: 0.8rem; color: var(--gray); margin: 0.25rem 0 0; }
 
+        /* Hard error banners */
+        .hard-error { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05)); border: 2px solid var(--red); border-radius: 12px; padding: 1.25rem; margin: 1rem 0; }
+        .hard-error-title { color: var(--red); font-weight: 700; font-size: 1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+        .hard-error-details { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 0.75rem; font-family: monospace; font-size: 0.75rem; }
+        .hard-error-field { display: flex; gap: 0.5rem; padding: 0.25rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .hard-error-field:last-child { border-bottom: none; }
+        .hard-error-field label { color: var(--gray); min-width: 80px; }
+        .hard-error-field span { color: #fff; word-break: break-all; }
+
+        /* Global error toast */
+        .error-toast { position: fixed; top: 1rem; right: 1rem; background: var(--red); color: #fff; padding: 1rem 1.5rem; border-radius: 8px; font-size: 0.85rem; z-index: 9999; animation: slideIn 0.3s ease; box-shadow: 0 4px 20px rgba(239,68,68,0.4); max-width: 400px; }
+        .error-toast .close-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: none; color: #fff; cursor: pointer; font-size: 1.2rem; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
         /* Form styles */
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; font-size: 0.75rem; color: var(--gray-light); margin-bottom: 0.4rem; font-weight: 500; }
@@ -759,6 +773,85 @@
         /* Status dot animation */
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray); }
         .status-dot.live { background: var(--green); box-shadow: 0 0 8px var(--green); }
+
+        /* Ops Strip - Platform Health Monitor */
+        .ops-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1.5rem;
+            background: linear-gradient(90deg, rgba(16,185,129,0.05), rgba(6,182,212,0.05));
+            border-bottom: 1px solid var(--border);
+            font-size: 0.75rem;
+        }
+        .ops-strip.pass { border-left: 3px solid var(--green); }
+        .ops-strip.warn { border-left: 3px solid var(--orange); background: linear-gradient(90deg, rgba(245,158,11,0.05), rgba(245,158,11,0.02)); }
+        .ops-strip.fail { border-left: 3px solid var(--red); background: linear-gradient(90deg, rgba(239,68,68,0.08), rgba(239,68,68,0.02)); }
+        .ops-strip-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .ops-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.7rem;
+        }
+        .ops-badge.pass { background: rgba(16,185,129,0.15); color: var(--green); }
+        .ops-badge.warn { background: rgba(245,158,11,0.15); color: var(--orange); }
+        .ops-badge.fail { background: rgba(239,68,68,0.15); color: var(--red); }
+        .ops-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .ops-badge.pass .dot { background: var(--green); }
+        .ops-badge.warn .dot { background: var(--orange); }
+        .ops-badge.fail .dot { background: var(--red); }
+        .ops-checks {
+            display: flex;
+            gap: 0.75rem;
+            color: var(--gray);
+        }
+        .ops-check {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .ops-check.pass { color: var(--green); }
+        .ops-check.warn { color: var(--orange); }
+        .ops-check.fail { color: var(--red); }
+        .ops-strip-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .ops-score {
+            font-weight: 600;
+            color: var(--gray-light);
+        }
+        .ops-btn {
+            padding: 0.3rem 0.6rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--gray-light);
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ops-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+        }
+        @media (max-width: 768px) {
+            .ops-strip { flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+            .ops-checks { flex-wrap: wrap; }
+        }
 
         /* Hide old elements for new design */
         .filter-bar { display: none; }
@@ -1001,6 +1094,26 @@
             <span style="color: var(--gray); font-size: 0.75rem;">Checking backend...</span>
         </div>
         <input type="hidden" id="apiUrl" value="https://singh-automation.vercel.app/api/sam">
+    </div>
+
+    <!-- OPS STRIP - Platform Health Monitor -->
+    <div class="ops-strip pass" id="opsStrip">
+        <div class="ops-strip-left">
+            <div class="ops-badge pass" id="opsBadge">
+                <span class="dot"></span>
+                <span id="opsStatus">HEALTHY</span>
+            </div>
+            <div class="ops-checks" id="opsChecks">
+                <span class="ops-check pass" title="SAM.gov API">✓ SAM</span>
+                <span class="ops-check pass" title="Claude AI">✓ Claude</span>
+                <span class="ops-check pass" title="Email Reports">✓ Email</span>
+            </div>
+        </div>
+        <div class="ops-strip-right">
+            <span class="ops-score" id="opsScore">Score: --</span>
+            <span id="opsLastCheck" style="color: var(--gray);">Last check: --</span>
+            <button class="ops-btn" onclick="runAudit()" title="Run platform health audit">Run Audit</button>
+        </div>
     </div>
 
     <!-- SCANNER PAGE -->
@@ -1465,11 +1578,11 @@
     <div class="page" id="page-subcontracting">
         <div class="main main-full" style="max-width: 1200px;">
             <!-- Demo Data Warning Banner - shown when using demo data -->
-            <div id="subDemoBanner" class="demo-warning-banner" style="background: linear-gradient(90deg, rgba(245,158,11,0.2), rgba(239,68,68,0.1)); border: 2px solid var(--orange); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+            <div id="subDemoBanner" class="demo-warning-banner" style="background: linear-gradient(90deg, rgba(245,158,11,0.2), rgba(239,68,68,0.1)); border: 2px solid var(--orange); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; display: none; align-items: center; gap: 1rem;">
                 <span style="font-size: 1.5rem;">⚠️</span>
                 <div>
-                    <strong style="color: var(--orange);">DEMONSTRATION DATA</strong>
-                    <p style="font-size: 0.75rem; color: var(--gray); margin: 0.25rem 0 0 0;">The data shown below is for demonstration purposes only. These are not live subcontracting opportunities. Contact primes directly to verify current needs.</p>
+                    <strong style="color: var(--orange);">DEMO MODE</strong>
+                    <p style="font-size: 0.75rem; color: var(--gray); margin: 0.25rem 0 0 0;">Live data unavailable. Showing example opportunities. Click "Refresh" to try loading live data again.</p>
                 </div>
             </div>
             <div class="panel">
@@ -2062,6 +2175,98 @@ function showHardError(component, endpoint, status, message, requestId = null) {
     return errorHtml;
 }
 
+// ========== GLOBAL ERROR TOAST ==========
+let errorToastTimeout = null;
+
+function showErrorToast(message, duration = 5000) {
+    // Remove existing toast
+    hideErrorToast();
+
+    const toast = document.createElement('div');
+    toast.id = 'globalErrorToast';
+    toast.className = 'error-toast';
+    toast.innerHTML = `
+        <button class="close-btn" onclick="hideErrorToast()">&times;</button>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.2rem;">🚫</span>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(toast);
+
+    // Auto-hide after duration
+    if (duration > 0) {
+        errorToastTimeout = setTimeout(() => {
+            hideErrorToast();
+        }, duration);
+    }
+
+    console.error('[ERROR TOAST]', message);
+}
+
+function hideErrorToast() {
+    const toast = document.getElementById('globalErrorToast');
+    if (toast) {
+        toast.remove();
+    }
+    if (errorToastTimeout) {
+        clearTimeout(errorToastTimeout);
+        errorToastTimeout = null;
+    }
+}
+
+// Show success toast (green)
+function showSuccessToast(message, duration = 3000) {
+    hideErrorToast();
+
+    const toast = document.createElement('div');
+    toast.id = 'globalErrorToast';
+    toast.className = 'error-toast';
+    toast.style.background = 'var(--green)';
+    toast.innerHTML = `
+        <button class="close-btn" onclick="hideErrorToast()">&times;</button>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.2rem;">✓</span>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(toast);
+
+    if (duration > 0) {
+        errorToastTimeout = setTimeout(() => {
+            hideErrorToast();
+        }, duration);
+    }
+
+    console.log('[SUCCESS TOAST]', message);
+}
+
+// Show warning toast (orange)
+function showWarningToast(message, duration = 4000) {
+    hideErrorToast();
+
+    const toast = document.createElement('div');
+    toast.id = 'globalErrorToast';
+    toast.className = 'error-toast';
+    toast.style.background = 'var(--orange)';
+    toast.innerHTML = `
+        <button class="close-btn" onclick="hideErrorToast()">&times;</button>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.2rem;">⚠️</span>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(toast);
+
+    if (duration > 0) {
+        errorToastTimeout = setTimeout(() => {
+            hideErrorToast();
+        }, duration);
+    }
+
+    console.warn('[WARNING TOAST]', message);
+}
+
 function setModeIndicator(mode, text) {
     const indicator = document.getElementById('modeIndicator');
     if (!indicator) return; // Element not found, skip
@@ -2098,6 +2303,89 @@ function hideDemoWarning() {
     const banner = document.getElementById('demoWarningBanner');
     if (banner) banner.remove();
 }
+
+// ========== OPS STRIP - PLATFORM HEALTH MONITOR ==========
+let lastAuditResult = null;
+
+async function runAudit() {
+    const opsStrip = document.getElementById('opsStrip');
+    const opsBadge = document.getElementById('opsBadge');
+    const opsStatus = document.getElementById('opsStatus');
+    const opsChecks = document.getElementById('opsChecks');
+    const opsScore = document.getElementById('opsScore');
+    const opsLastCheck = document.getElementById('opsLastCheck');
+
+    // Show loading state
+    opsStatus.textContent = 'CHECKING...';
+    opsBadge.className = 'ops-badge';
+    opsChecks.innerHTML = '<span style="color: var(--gray);">Running audit...</span>';
+
+    try {
+        const response = await fetch('/api/audit', { timeout: 30000 });
+        const data = await response.json();
+        lastAuditResult = data;
+
+        // Update strip status
+        const status = data.status || 'pass';
+        opsStrip.className = `ops-strip ${status}`;
+        opsBadge.className = `ops-badge ${status}`;
+
+        // Update status text
+        if (status === 'pass') {
+            opsStatus.textContent = 'HEALTHY';
+        } else if (status === 'warn') {
+            opsStatus.textContent = 'WARNING';
+        } else {
+            opsStatus.textContent = 'ISSUES';
+        }
+
+        // Update score
+        opsScore.textContent = `Score: ${data.score || '--'}/100`;
+
+        // Update checks
+        const checks = data.checks || [];
+        let checksHtml = '';
+        const keyChecks = ['API Health', 'SAM.gov Live API', 'Agent_SAM Endpoint', 'Email System'];
+
+        checks.forEach(check => {
+            const shortName = check.name.replace('SAM.gov Live API', 'SAM').replace('Agent_SAM Endpoint', 'Claude').replace('Email System (Resend)', 'Email').replace('API Health', 'API');
+            if (keyChecks.some(k => check.name.includes(k.split(' ')[0]))) {
+                const icon = check.status === 'pass' ? '✓' : check.status === 'warn' ? '⚠' : '✗';
+                checksHtml += `<span class="ops-check ${check.status}" title="${check.name}: ${check.message}">${icon} ${shortName}</span>`;
+            }
+        });
+        opsChecks.innerHTML = checksHtml || '<span style="color: var(--gray);">No checks</span>';
+
+        // Update last check time
+        const now = new Date();
+        opsLastCheck.textContent = `Last: ${now.toLocaleTimeString()}`;
+
+        // If there are bugs, show count
+        if (data.bugs && data.bugs.length > 0) {
+            opsScore.textContent += ` | ${data.bugs.length} bugs`;
+        }
+
+        console.log('[OPS] Audit complete:', data.summary);
+
+    } catch (error) {
+        console.error('[OPS] Audit failed:', error);
+        opsStrip.className = 'ops-strip fail';
+        opsBadge.className = 'ops-badge fail';
+        opsStatus.textContent = 'ERROR';
+        opsChecks.innerHTML = '<span class="ops-check fail">✗ Audit failed</span>';
+        opsScore.textContent = 'Score: --';
+    }
+}
+
+// Run audit on page load (after a short delay to let other things initialize)
+setTimeout(() => {
+    runAudit();
+}, 2000);
+
+// Run audit every 15 minutes
+setInterval(() => {
+    runAudit();
+}, 15 * 60 * 1000);
 
 // ========== LINK & EMAIL VALIDATION ==========
 // Cache for validated links

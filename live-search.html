@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgentSam Live Search - Singh Automation</title>
+    <title>Deep Search - Singh Automation</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -558,8 +558,8 @@
             <div class="logo">
                 <div class="logo-icon">⚡</div>
                 <div>
-                    <div class="logo-text">AgentSam Live Search</div>
-                    <div class="logo-subtitle">Real-time SAM.gov Contract Scanner</div>
+                    <div class="logo-text">Deep Search</div>
+                    <div class="logo-subtitle">Multi-Source Intelligence Scanner</div>
                 </div>
             </div>
             <a href="index.html" class="back-link">← Back to Platform</a>
@@ -637,7 +637,7 @@
                     </div>
 
                     <button class="btn btn-primary" id="searchBtn" onclick="runSearch()">
-                        ⚡ Run Live Search
+                        ⚡ Run Deep Search
                     </button>
                 </div>
 
@@ -675,7 +675,7 @@
             <!-- Results Panel -->
             <div class="panel results-panel">
                 <div class="results-header">
-                    <div class="panel-title">📋 Live Search Results</div>
+                    <div class="panel-title">📋 Deep Search Results</div>
                     <div class="filter-pills">
                         <button class="filter-pill active" data-filter="all">All</button>
                         <button class="filter-pill" data-filter="pursue">Pursue</button>
@@ -690,7 +690,7 @@
                             Ready to Search
                         </div>
                         <div style="max-width: 400px; margin: 0 auto;">
-                            Click "Run Live Search" to query SAM.gov for real contract opportunities matching Singh Automation's capabilities.
+                            Click "Run Deep Search" to search Sources Sought, DLA Parts, USAspending, and SAM.gov for opportunities matching Singh Automation's capabilities.
                         </div>
                     </div>
                 </div>
@@ -728,16 +728,16 @@
             container.innerHTML = `
                 <div class="loading">
                     <div class="spinner"></div>
-                    <div>Querying SAM.gov API...</div>
-                    <div style="font-size: 0.8rem; margin-top: 0.5rem;">This searches REAL contracts only</div>
+                    <div>Running Deep Search...</div>
+                    <div style="font-size: 0.8rem; margin-top: 0.5rem;">Searching Sources Sought, DLA Parts, USAspending & more</div>
                 </div>
             `;
 
             try {
-                // Build URL
-                let url = `/api/sam-live?days=${days}&limit=50`;
+                // Build URL - use live-search endpoint for Deep Search
+                let url = `/api/live-search?days=${days}&limit=100`;
                 if (keywords) {
-                    url += `&keywords=${encodeURIComponent(keywords)}`;
+                    url += `&q=${encodeURIComponent(keywords)}`;
                 }
 
                 const response = await fetch(url);
@@ -770,7 +770,7 @@
                 `;
             } finally {
                 btn.disabled = false;
-                btn.textContent = '⚡ Run Live Search';
+                btn.textContent = '⚡ Run Deep Search';
             }
         }
 

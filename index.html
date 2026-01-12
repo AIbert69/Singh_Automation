@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v2.1 - Live Search with SAM.gov API -->
+<!-- v2.2 - Deep Search with Multi-Source Intel -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1097,8 +1097,8 @@
         <button class="nav-btn" data-page="train" data-testid="nav-train" title="Train the AI agent with your company's past performance and win themes">
             <span class="icon">🧠</span> Train Agent
         </button>
-        <button class="nav-btn" data-page="live" data-testid="nav-live" title="Live SAM.gov search with AI scoring" style="background: linear-gradient(135deg, #10b981, #06b6d4); color: #fff; border-color: transparent;">
-            <span class="icon">⚡</span> Live Search
+        <button class="nav-btn" data-page="live" data-testid="nav-live" title="Deep Search: Sources Sought, DLA Parts, Teaming Intel (180 days)" style="background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: #fff; border-color: transparent;">
+            <span class="icon">🔍</span> Deep Search
         </button>
     </nav>
 
@@ -1991,7 +1991,7 @@
                     </div>
 
                     <button class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 600;" onclick="runLiveSearch()">
-                        ⚡ Run Live Search
+                        🔍 Run Deep Search
                     </button>
                 </div>
 
@@ -2037,8 +2037,8 @@
             <div class="panel" style="min-height: 500px;">
                 <div class="panel-header" style="justify-content: space-between;">
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span class="icon">⚡</span>
-                        <span class="panel-title">Live Search Results</span>
+                        <span class="icon">🔍</span>
+                        <span class="panel-title">Deep Search Results</span>
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
                         <button class="filter-pill active" data-live-filter="all" onclick="filterLiveResults('all')">All</button>
@@ -2049,11 +2049,14 @@
 
                 <div id="liveSearchResults" style="min-height: 400px;">
                     <div style="text-align: center; padding: 4rem 2rem; color: var(--gray);">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
-                        <div style="font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 0.5rem;">AgentSam Live Search</div>
-                        <div style="font-size: 0.85rem; max-width: 400px; margin: 0 auto;">
-                            Real-time SAM.gov contract scanning with AI-powered scoring.
-                            Click "Run Live Search" to find opportunities matching Singh Automation's capabilities.
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 0.5rem;">Deep Search - Multi-Source Intel</div>
+                        <div style="font-size: 0.85rem; max-width: 450px; margin: 0 auto;">
+                            Searches sources the main Scanner doesn't cover:<br>
+                            <span style="color: var(--purple);">Sources Sought</span> •
+                            <span style="color: var(--blue);">DLA Parts</span> •
+                            <span style="color: var(--cyan);">Teaming Intel</span> •
+                            <span style="color: var(--green);">180-Day History</span>
                         </div>
                     </div>
                 </div>

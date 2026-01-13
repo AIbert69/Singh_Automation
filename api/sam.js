@@ -84,7 +84,17 @@ export default async function handler(req, res) {
             // SINGH VISION SYSTEMS - Molding & Plastics (3 codes)
             '333511',  // Industrial Mold Manufacturing
             '326199',  // All Other Plastics Product Manufacturing
-            '334511'   // Search/Detection/Nav Instruments (sensors/optics)
+            '334511',  // Search/Detection/Nav Instruments (sensors/optics)
+            // SINGH MEDICAL AUTOMATION - Pharma & Medical Device Assembly (3 codes)
+            '333993',  // Packaging Machinery (blister packs, bottling, labeling)
+            '333999',  // General Purpose Machinery (robotic cells)
+            '334510'   // Electromedical Apparatus Mfg (medical robot components)
+        ],
+        // Target client NAICS - opportunities serving these industries
+        targetClientNaics: [
+            '325412',  // Pharmaceutical Preparation Mfg
+            '339112',  // Surgical & Medical Instrument Mfg
+            '339113'   // Surgical Appliance & Supplies Mfg
         ],
         keywords: [
             // Automation & Robotics
@@ -106,6 +116,12 @@ export default async function handler(req, res) {
             'insulation', 'thermal', 'hot runner', 'foam', 'injection molding', 'battery',
             // Singh Vision Systems keywords
             'mold', 'tooling', 'plastics',
+            // Singh Medical Automation keywords
+            'cleanroom', 'FDA compliance', 'GMP', 'cGMP', 'sterile packaging', 'blister packaging',
+            'vial filling', 'medical device assembly', 'vision inspection', 'serialization',
+            'validation services', 'IQ/OQ/PQ', 'pharmaceutical', 'pharma automation',
+            'aseptic', 'isolator', 'fill finish', 'lyophilization', 'syringe filling',
+            'biotech', 'life sciences automation', 'cleanroom robot', '21 CFR Part 11',
             // Safety & Compliance
             'risk assessment', 'ISO 10218', 'NFPA 79', 'safety PLC'
         ],
@@ -117,10 +133,18 @@ export default async function handler(req, res) {
 
     // NEGATIVE KEYWORDS - Always exclude these to avoid irrelevant results
     const negativeKeywords = [
-        'janitorial', 'landscaping', 'catering', 'uniforms', 'medical staffing',
-        'nursing', 'dental', 'pharmacy', 'insurance', 'trucking', 'temp labor',
-        'asbestos', 'roofing', 'painting', 'flooring', 'hvac', 'plumbing',
-        'security guard', 'custodial', 'food service', 'laundry'
+        // Services Singh doesn't provide
+        'janitorial', 'landscaping', 'catering', 'uniforms', 'trucking', 'temp labor',
+        'asbestos', 'roofing', 'painting', 'flooring', 'plumbing',
+        'security guard', 'custodial', 'food service', 'laundry', 'cleaning services',
+        // Medical staffing/services (NOT equipment - Singh does equipment)
+        'medical staffing', 'nursing services', 'physician services', 'clinical trial management',
+        'patient care', 'healthcare staffing', 'medical billing', 'telehealth services',
+        'nursing', 'dental services', 'pharmacy services', 'insurance services',
+        // IT-only contracts (no hardware integration)
+        'software development only', 'web development', 'mobile app development',
+        // Waste/hazmat Singh doesn't handle
+        'waste disposal', 'hazmat disposal', 'biohazard disposal'
     ];
 
     // SAM.GOV SEARCH KEYWORDS - How COs actually write solicitations
@@ -142,14 +166,23 @@ export default async function handler(req, res) {
         'plastic tooling', 'die casting', 'tool and die',
         // DLA/DEPOT - Parts & Warehousing
         'drive brake', 'elevation drive', 'depot maintenance', 'warehousing services',
-        'distribution services', 'build to print', 'machine shop'
+        'distribution services', 'build to print', 'machine shop',
+        // SINGH MEDICAL AUTOMATION - Pharma & Medical Device
+        'cleanroom automation', 'pharmaceutical packaging', 'pharma automation',
+        'medical device assembly', 'GMP automation', 'sterile packaging',
+        'vial filling machine', 'blister packaging equipment', 'serialization system',
+        'FDA compliant automation', 'life sciences automation', 'biotech automation',
+        'aseptic fill', 'isolator system', 'lyophilizer'
     ];
 
     // SBIR/STTR KEYWORDS - R&D focused
     const sbirKeywords = [
         'robot', 'robotic', 'automation', 'manufacturing automation', 'machine vision',
         'industrial robot', 'collaborative robot', 'welding automation', 'inspection system',
-        'controls', 'PLC', 'smart manufacturing', 'Industry 4.0'
+        'controls', 'PLC', 'smart manufacturing', 'Industry 4.0',
+        // Medical automation R&D
+        'pharmaceutical manufacturing', 'medical device automation', 'cleanroom robotics',
+        'aseptic processing', 'bioprocessing automation', 'life sciences'
     ];
 
     // GRANTS.GOV KEYWORDS - Manufacturing/R&D grants
@@ -804,6 +837,19 @@ function qualifyOpportunity(opp, profile) {
         return { status: 'Review', reason: 'Portal homepage - search for specific bids', recommendation: 'Review', score: 0, breakdown: { type: 'portal-homepage' } };
     }
 
+    // Negative keyword check - filter out services Singh doesn't provide
+    const negativeKeywords = [
+        'medical staffing', 'nursing services', 'physician services', 'clinical trial management',
+        'patient care', 'healthcare staffing', 'janitorial', 'custodial', 'food service',
+        'landscaping', 'security guard', 'cleaning services', 'waste disposal', 'laundry',
+        'web development only', 'mobile app development'
+    ];
+    for (const neg of negativeKeywords) {
+        if (fullText.includes(neg.toLowerCase())) {
+            return { status: 'NO-GO', reason: `Outside scope: ${neg}`, recommendation: 'No-Go', score: 0, breakdown: { negativeKeyword: neg } };
+        }
+    }
+
     // Hard NO-GO rules
     if (setAside.includes('sdvosb') || setAside.includes('service-disabled veteran')) {
         return { status: 'NO-GO', reason: 'SDVOSB set-aside - Singh not eligible', recommendation: 'No-Go', breakdown: { restriction: 'SDVOSB-only' } };
@@ -830,16 +876,24 @@ function qualifyOpportunity(opp, profile) {
     // Scoring
     let score = 0;
     let matchedKeywords = [];
-    
+
+    // NAICS code match (Singh capabilities)
     if (opp.naicsCode && profile.naicsCodes.includes(opp.naicsCode)) score += 30;
-    
+
+    // Target client NAICS bonus (pharma/medical device manufacturers need automation)
+    const targetClientNaics = ['325412', '339112', '339113'];
+    if (opp.naicsCode && targetClientNaics.includes(opp.naicsCode)) {
+        score += 15; // Bonus for opportunities in pharma/medical device space
+        matchedKeywords.push('Medical Industry Target');
+    }
+
     for (const kw of profile.keywords) {
         if (fullText.includes(kw.toLowerCase())) {
             score += 5;
             if (!matchedKeywords.includes(kw)) matchedKeywords.push(kw);
         }
     }
-    
+
     const compatibleSetAsides = ['small business', 'total small business', 'unrestricted', 'full and open', 'competitive'];
     for (const sa of compatibleSetAsides) {
         if (setAside.includes(sa)) { score += 20; break; }

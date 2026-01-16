@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Sam Agent",
+    "slug": "sam-agent",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f0f1a"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.singhautomation.samagent"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f0f1a"
+      },
+      "package": "com.singhautomation.samagent"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-notifications"],
+    "extra": {
+      "eas": {
+        "projectId": "sam-agent-2"
+      }
+    }
+  }
+}

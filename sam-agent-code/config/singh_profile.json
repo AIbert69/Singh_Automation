@@ -1,0 +1,163 @@
+{
+  "company": {
+    "name": "Singh Automation LLC",
+    "cage": "86VF7",
+    "uei": "GJ1DPYQ3X8K5",
+    "sam_status": "active",
+    "small_business": true,
+    "locations": {
+      "headquarters": {
+        "city": "Kalamazoo",
+        "state": "MI",
+        "type": "HQ"
+      },
+      "sales": {
+        "city": "Irvine",
+        "state": "CA",
+        "type": "Sales"
+      }
+    },
+    "contact": {
+      "email": "albert@singhautomation.com",
+      "phone": "786.344.8955"
+    }
+  },
+  "naics": ["333249", "541330", "238210"],
+  "naics_details": {
+    "333249": "Other Industrial Machinery Manufacturing",
+    "541330": "Engineering Services",
+    "238210": "Electrical Contractors"
+  },
+  "keywords": [
+    "robotics",
+    "automation",
+    "FANUC",
+    "Universal Robots",
+    "UR",
+    "cobot",
+    "collaborative robot",
+    "industrial robot",
+    "robot integrator",
+    "vision systems",
+    "machine vision",
+    "AI vision",
+    "computer vision",
+    "PLC",
+    "SCADA",
+    "controls",
+    "automation controls",
+    "HMI",
+    "conveyor",
+    "material handling",
+    "manufacturing automation",
+    "assembly automation",
+    "welding automation",
+    "robotic welding",
+    "arc welding",
+    "spot welding",
+    "palletizing",
+    "pick and place",
+    "packaging automation",
+    "machine tending",
+    "CNC automation",
+    "systems integration",
+    "turnkey automation",
+    "custom automation",
+    "industrial automation",
+    "factory automation",
+    "process automation"
+  ],
+  "exclude_keywords": [
+    "construction",
+    "building construction",
+    "janitorial",
+    "food service",
+    "catering",
+    "landscaping",
+    "security guard",
+    "custodial",
+    "cleaning services",
+    "office supplies",
+    "furniture"
+  ],
+  "geographic_preference": {
+    "primary": ["MI", "IN", "OH"],
+    "secondary": ["CA", "IL", "WI", "KY", "TN"],
+    "will_travel": true
+  },
+  "contract_size": {
+    "min": 50000,
+    "max": 5000000,
+    "sweet_spot": [250000, 2000000]
+  },
+  "certifications": {
+    "fanuc_asi": {
+      "name": "FANUC Authorized System Integrator",
+      "status": "active",
+      "expiration": "2026-03-31"
+    },
+    "ur_csp": {
+      "name": "Universal Robots Certified System Partner",
+      "status": "expired",
+      "expiration": "2025-12-31"
+    },
+    "small_business": {
+      "name": "Small Business",
+      "status": "active"
+    }
+  },
+  "ineligible_setasides": [
+    "SDVOSB",
+    "8(a)",
+    "HUBZone",
+    "WOSB",
+    "EDWOSB"
+  ],
+  "past_performance": [
+    {
+      "client": "Lippert Components",
+      "project": "Window Automation System",
+      "value": 1600000,
+      "period": "January 2024 - September 2024",
+      "description": "5-robot ensemble system for automated window assembly",
+      "poc": {
+        "name": "Tim Widner",
+        "title": "VP Glass"
+      },
+      "robots": 5,
+      "success": true
+    }
+  ],
+  "capabilities": {
+    "primary": [
+      "Industrial robotics integration",
+      "FANUC robot programming and deployment",
+      "Universal Robots collaborative automation",
+      "AI-powered vision systems",
+      "Custom automation solutions"
+    ],
+    "secondary": [
+      "PLC/SCADA programming",
+      "Conveyor and material handling systems",
+      "HPC infrastructure",
+      "Controls engineering",
+      "Safety system integration"
+    ]
+  },
+  "scoring": {
+    "naics_exact": 30,
+    "naics_partial": 15,
+    "keyword_match": 5,
+    "keyword_max": 25,
+    "setaside_small_business": 20,
+    "geography_primary": 10,
+    "geography_secondary": 5,
+    "size_sweet_spot": 25,
+    "size_acceptable": 15
+  },
+  "thresholds": {
+    "pursue": 50,
+    "review": 25,
+    "pass": 0
+  }
+}

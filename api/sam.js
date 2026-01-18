@@ -4,6 +4,9 @@
 // State/county = portal links for manual search (no auto-scraping)
 // Deploy to: /api/sam.js on Vercel
 
+import { qualifyOpportunity } from '../lib/qualification.js';
+import config from '../lib/config.js';
+
 export default async function handler(req, res) {
     const startTime = Date.now();
     const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -56,10 +59,10 @@ export default async function handler(req, res) {
     const fmt = d => `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;
     
     // ========== SINGH AUTOMATION CAPABILITY ENVELOPE ==========
-    // Authoritative, defensible NAICS + keywords - no paper capability risk
+    // Now using centralized config from /lib/config.js with kill filters
     // Covers: design, build, integration, installation, commissioning, sustainment
 
-    const singhProfile = {
+    const singhProfile = config.companyProfile || {
         // NAICS CODES - All Singh Companies (Automation, Thermal Systems, Vision Systems)
         naicsCodes: [
             // SINGH AUTOMATION - Robotics & Engineering (8 codes)
@@ -301,7 +304,7 @@ export default async function handler(req, res) {
                     category: 'Federal'
                 };
                 
-                const qualification = qualifyOpportunity(opp, singhProfile);
+                const qualification = qualifyWithPortalCheck(opp, singhProfile);
                 opp.qualification = qualification;
                 opp.status = qualification.status;
                 opp.statusReason = qualification.reason;
@@ -753,7 +756,7 @@ export default async function handler(req, res) {
             category: 'Forecast'
         };
         
-        const qualification = qualifyOpportunity(opp, singhProfile);
+        const qualification = qualifyWithPortalCheck(opp, singhProfile);
         opp.qualification = qualification;
         opp.status = qualification.status;
         opp.statusReason = qualification.reason;
@@ -819,93 +822,25 @@ export default async function handler(req, res) {
 }
 
 // ========== QUALIFICATION LOGIC ==========
-function qualifyOpportunity(opp, profile) {
-    const setAside = (opp.setAside || '').toLowerCase();
-    const title = (opp.title || '').toLowerCase();
-    const desc = (opp.description || '').toLowerCase();
-    const fullText = `${title} ${desc} ${opp.fullDescription || ''}`.toLowerCase();
-
+// Now using imported qualifyOpportunity from /lib/qualification.js
+// Includes domain kill filters, contract value limits, and security clearance checks
+// Portal detection wrapper
+function qualifyWithPortalCheck(opp, profile) {
     // Portal/Homepage detection - don't score these as real opportunities
     if (opp.isPortal) {
         return { status: 'Review', reason: 'Search portal - browse for opportunities', recommendation: 'Review', score: 0, breakdown: { type: 'portal' } };
     }
 
     // Detect generic portal pages that slip through (no solicitation number, generic titles)
+    const title = (opp.title || '').toLowerCase();
     const portalIndicators = ['search opportunities', 'bid board', 'procurement portal', 'vendor registration'];
     const isGenericPortal = portalIndicators.some(ind => title.includes(ind)) && !opp.solicitation;
     if (isGenericPortal) {
         return { status: 'Review', reason: 'Portal homepage - search for specific bids', recommendation: 'Review', score: 0, breakdown: { type: 'portal-homepage' } };
     }
 
-    // Negative keyword check - filter out services Singh doesn't provide
-    const negativeKeywords = [
-        'medical staffing', 'nursing services', 'physician services', 'clinical trial management',
-        'patient care', 'healthcare staffing', 'janitorial', 'custodial', 'food service',
-        'landscaping', 'security guard', 'cleaning services', 'waste disposal', 'laundry',
-        'web development only', 'mobile app development'
-    ];
-    for (const neg of negativeKeywords) {
-        if (fullText.includes(neg.toLowerCase())) {
-            return { status: 'NO-GO', reason: `Outside scope: ${neg}`, recommendation: 'No-Go', score: 0, breakdown: { negativeKeyword: neg } };
-        }
-    }
-
-    // Hard NO-GO rules
-    if (setAside.includes('sdvosb') || setAside.includes('service-disabled veteran')) {
-        return { status: 'NO-GO', reason: 'SDVOSB set-aside - Singh not eligible', recommendation: 'No-Go', breakdown: { restriction: 'SDVOSB-only' } };
-    }
-    if (setAside.includes('8(a)') || setAside.includes('8a')) {
-        return { status: 'NO-GO', reason: '8(a) set-aside - Singh not 8(a) certified', recommendation: 'No-Go', breakdown: { restriction: '8(a)-only' } };
-    }
-    if (setAside.includes('hubzone')) {
-        return { status: 'NO-GO', reason: 'HUBZone set-aside - Singh not HUBZone', recommendation: 'No-Go', breakdown: { restriction: 'HUBZone-only' } };
-    }
-    if (setAside.includes('wosb') || setAside.includes('women-owned') || setAside.includes('woman-owned')) {
-        return { status: 'NO-GO', reason: 'WOSB set-aside - Singh not WOSB certified', recommendation: 'No-Go', breakdown: { restriction: 'WOSB-only' } };
-    }
-    if (setAside.includes('edwosb') || setAside.includes('economically disadvantaged women')) {
-        return { status: 'NO-GO', reason: 'EDWOSB set-aside - Singh not EDWOSB certified', recommendation: 'No-Go', breakdown: { restriction: 'EDWOSB-only' } };
-    }
-    
-    for (const vehicle of profile.noVehicles) {
-        if (fullText.includes(vehicle.toLowerCase()) && (fullText.includes('holders only') || fullText.includes('contract holders'))) {
-            return { status: 'NO-GO', reason: `Restricted to ${vehicle} holders`, recommendation: 'No-Go', breakdown: { restriction: `${vehicle} holders only` } };
-        }
-    }
-    
-    // Scoring
-    let score = 0;
-    let matchedKeywords = [];
-
-    // NAICS code match (Singh capabilities)
-    if (opp.naicsCode && profile.naicsCodes.includes(opp.naicsCode)) score += 30;
-
-    // Target client NAICS bonus (pharma/medical device manufacturers need automation)
-    const targetClientNaics = ['325412', '339112', '339113'];
-    if (opp.naicsCode && targetClientNaics.includes(opp.naicsCode)) {
-        score += 15; // Bonus for opportunities in pharma/medical device space
-        matchedKeywords.push('Medical Industry Target');
-    }
-
-    for (const kw of profile.keywords) {
-        if (fullText.includes(kw.toLowerCase())) {
-            score += 5;
-            if (!matchedKeywords.includes(kw)) matchedKeywords.push(kw);
-        }
-    }
-
-    const compatibleSetAsides = ['small business', 'total small business', 'unrestricted', 'full and open', 'competitive'];
-    for (const sa of compatibleSetAsides) {
-        if (setAside.includes(sa)) { score += 20; break; }
-    }
-    
-    if (score >= 50) {
-        return { status: 'GO', reason: `Strong match: ${matchedKeywords.slice(0,2).join('/')}`, recommendation: 'GO', score, breakdown: { keywords: matchedKeywords.slice(0,5).join(', ') } };
-    } else if (score >= 25) {
-        return { status: 'Review', reason: 'Potential match - review scope', recommendation: 'Review', score, breakdown: { keywords: matchedKeywords.slice(0,5).join(', ') } };
-    }
-    
-    return { status: 'Review', reason: 'Limited match - review for fit', recommendation: 'Review', score, breakdown: {} };
+    // Use centralized qualification logic with kill filters
+    return qualifyOpportunity(opp, profile);
 }
 
 function handleEmailSubscription(req, res, requestId, log) {

@@ -36,7 +36,86 @@ describe('qualifyOpportunity', () => {
         noVehicles: ['SeaPort NxG', 'OASIS', 'GSA MAS'],
     };
 
-    describe('Automatic Disqualifications (NO-GO)', () => {
+    describe('Domain Kill Filters (NO-GO)', () => {
+        test('should KILL academic/university opportunities', () => {
+            const opp = {
+                id: 'test-academic',
+                title: 'University Research Lab Automation',
+                description: 'Robotics system for college campus',
+            };
+
+            const result = qualifyOpportunity(opp, mockProfile);
+
+            expect(result.status).toBe('NO-GO');
+            expect(result.recommendation).toBe('KILLED');
+            expect(result.reason).toContain('Academic');
+        });
+
+        test('should KILL traffic/highway infrastructure', () => {
+            const opp = {
+                id: 'test-traffic',
+                title: 'Traffic Signal Control System',
+                description: 'Highway intersection automation upgrade',
+            };
+
+            const result = qualifyOpportunity(opp, mockProfile);
+
+            expect(result.status).toBe('NO-GO');
+            expect(result.recommendation).toBe('KILLED');
+            expect(result.reason).toContain('Traffic');
+        });
+
+        test('should KILL janitorial/labor services', () => {
+            const opp = {
+                id: 'test-janitorial',
+                title: 'Custodial Services Contract',
+                description: 'Janitorial and cleaning services',
+            };
+
+            const result = qualifyOpportunity(opp, mockProfile);
+
+            expect(result.status).toBe('NO-GO');
+            expect(result.recommendation).toBe('KILLED');
+            expect(result.reason).toContain('labor');
+        });
+
+        test('should KILL building insulation (but NOT industrial thermal)', () => {
+            const oppBuilding = {
+                id: 'test-building-insulation',
+                title: 'Building Insulation Project',
+                description: 'Attic insulation and weatherization',
+            };
+
+            const oppIndustrial = {
+                id: 'test-industrial-thermal',
+                title: 'Thermal Management System',
+                description: 'Hot runner barrel insulation for injection molding',
+            };
+
+            const resultBuilding = qualifyOpportunity(oppBuilding, mockProfile);
+            const resultIndustrial = qualifyOpportunity(oppIndustrial, mockProfile);
+
+            expect(resultBuilding.status).toBe('NO-GO');
+            expect(resultBuilding.recommendation).toBe('KILLED');
+            expect(resultIndustrial.status).not.toBe('NO-GO'); // Should pass through
+        });
+
+        test('should KILL security guard services (but NOT security systems)', () => {
+            const opp = {
+                id: 'test-security-guard',
+                title: 'Security Officer Staffing',
+                description: 'Security personnel for access control officer duties',
+            };
+
+            const result = qualifyOpportunity(opp, mockProfile);
+
+            expect(result.status).toBe('NO-GO');
+            expect(result.recommendation).toBe('KILLED');
+            expect(result.reason).toContain('Security guard');
+        });
+    });
+
+    describe('Certification Disqualifications (NO-GO)', () => {
         test('should return NO-GO for SDVOSB set-aside', () => {
             const opp = {
                 id: 'test-1',

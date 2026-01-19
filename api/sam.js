@@ -4,7 +4,7 @@
 // State/county = portal links for manual search (no auto-scraping)
 // Deploy to: /api/sam.js on Vercel
 
-import { qualifyOpportunity } from '../lib/qualification.js';
+import { qualifyOpportunity, filterVerifiedOpportunities } from '../lib/qualification.js';
 import config from '../lib/config.js';
 
 export default async function handler(req, res) {
@@ -730,40 +730,10 @@ export default async function handler(req, res) {
     }
 
     // ========== 8. FORECAST OPPORTUNITIES ==========
-    const forecastOpps = [
-        { id: 'fc-1', title: 'Navy Shipyard Automation Program (Forecast)', agency: 'NAVSEA',
-          solicitation: 'NAVSEA-FY25-AUTO', value: 2500000, closeDate: '2026-06-01',
-          description: 'Upcoming automation and robotics modernization for naval shipyards. Pre-RFP stage.',
-          link: 'https://sam.gov/search/?keywords=NAVSEA%20automation%20robotics&index=opp&sort=-modifiedDate', setAside: 'Full & Open' },
-        { id: 'fc-2', title: 'Army Depot Welding Cells (Forecast)', agency: 'US Army TACOM',
-          solicitation: 'TACOM-FY25-WELD', value: 1800000, closeDate: '2026-04-15',
-          description: 'Multiple robotic welding cells for vehicle repair depots. Sources sought expected Q1.',
-          link: 'https://sam.gov/search/?keywords=TACOM%20robotic%20welding&index=opp&sort=-modifiedDate', setAside: 'Small Business' },
-    ];
-    
-    for (const f of forecastOpps) {
-        if (seenIds.has(f.id)) continue;
-        seenIds.add(f.id);
-        
-        const opp = {
-            ...f,
-            noticeId: f.id,
-            postedDate: '2024-12-01',
-            naicsCode: '333249',
-            isLive: false,
-            source: 'Forecast',
-            type: 'forecast',
-            category: 'Forecast'
-        };
-        
-        const qualification = qualifyWithPortalCheck(opp, singhProfile);
-        opp.qualification = qualification;
-        opp.status = qualification.status;
-        opp.statusReason = qualification.reason;
-        opp.recommendation = qualification.recommendation;
-        
-        allOpps.push(opp);
-    }
+    // REMOVED: Hardcoded fake forecast opportunities were removed to prevent
+    // showing fabricated data. Only real opportunities from SAM.gov API are shown.
+    // If forecast tracking is needed, it should come from official government
+    // forecast APIs or be clearly marked as user-added pipeline items.
 
     // ========== FILTER NEGATIVE KEYWORDS ==========
     // Remove opportunities that contain irrelevant terms (janitorial, medical, etc.)
@@ -781,6 +751,21 @@ export default async function handler(req, res) {
     // Replace allOpps with filtered list
     allOpps = filteredOpps;
 
+    // ========== SOURCE VERIFICATION ==========
+    // Ensure all opportunities have valid source data (solicitation, URL, deadline)
+    // This prevents fake/demo data from being displayed
+    const verificationResult = filterVerifiedOpportunities(allOpps, {
+        strict: false,  // Normal mode: require valid source URL
+        allowPortals: true  // Allow portal links (they're for manual search)
+    });
+
+    if (verificationResult.rejected.length > 0) {
+        log('info', `Source verification rejected ${verificationResult.rejected.length} unverified opportunities`);
+    }
+
+    // Use only verified opportunities
+    allOpps = verificationResult.verified;
+
     // ========== RESPONSE ==========
     allOpps.sort((a, b) => {
         // Put live federal/SBIR first, then state/county portals
@@ -797,14 +782,16 @@ export default async function handler(req, res) {
         state: allOpps.filter(o => o.type === 'state').length,
         county: allOpps.filter(o => o.type === 'county').length,
         dibbs: allOpps.filter(o => o.type === 'dibbs').length,
-        forecast: allOpps.filter(o => o.type === 'forecast').length,
         qualified: allOpps.filter(o => o.status === 'GO' || o.status === 'Review').length,
         go: allOpps.filter(o => o.status === 'GO').length,
         review: allOpps.filter(o => o.status === 'Review').length,
         nogo: allOpps.filter(o => o.status === 'NO-GO').length,
         totalValue: allOpps.filter(o => o.value).reduce((sum, o) => sum + (o.value || 0), 0),
         portals: allOpps.filter(o => o.isPortal).length,
-        sources: ['SAM.gov', 'SBIR.gov', 'Grants.gov']
+        verified: allOpps.filter(o => o.sourceVerified).length,
+        rejected: verificationResult.rejected.length,
+        sources: ['SAM.gov', 'SBIR.gov', 'Grants.gov'],
+        allOpportunitiesVerified: true  // Flag indicating all returned opps are source-verified
     };
     
     const totalTime = Date.now() - startTime;

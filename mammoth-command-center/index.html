@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mammoth Command Center</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦣</text></svg>">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <div class="sidebar-logo-icon">M</div>
+          <div>
+            <div class="sidebar-logo-text">Mammoth</div>
+            <div class="sidebar-logo-subtitle">Command Center</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Company Switcher -->
+      <div class="company-switcher">
+        <div class="company-switcher-label">Company</div>
+        <select class="company-switcher-select" id="companySwitcher">
+          <option value="all">All Companies</option>
+          <option value="MDX">MammothDX</option>
+          <option value="SHD">Shield</option>
+          <option value="DBL">Durablue</option>
+        </select>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Overview</div>
+          <a href="#dashboard" class="nav-item active" data-view="dashboard">
+            <span class="nav-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+              </svg>
+            </span>
+            <span>Dashboard</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Sales</div>
+          <a href="#pipeline" class="nav-item" data-view="pipeline">
+            <span class="nav-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+            </span>
+            <span>Pipeline</span>
+            <span class="nav-item-badge" id="pipelineCount">0</span>
+          </a>
+          <a href="#contacts" class="nav-item" data-view="contacts">
+            <span class="nav-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span>Contacts</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Communication</div>
+          <a href="#emails" class="nav-item" data-view="emails">
+            <span class="nav-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </span>
+            <span>Email</span>
+            <span class="nav-item-badge" id="unreadCount">0</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Productivity</div>
+          <a href="#tasks" class="nav-item" data-view="tasks">
+            <span class="nav-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 11 12 14 22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </span>
+            <span>Tasks</span>
+            <span class="nav-item-badge" id="taskCount">0</span>
+          </a>
+          <a href="#campaigns" class="nav-item" data-view="campaigns">
+            <span class="nav-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </span>
+            <span>Campaigns</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Settings</div>
+          <a href="#workflows" class="nav-item" data-view="workflows">
+            <span class="nav-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </span>
+            <span>Workflows</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- User Profile -->
+      <div class="sidebar-footer" style="padding: var(--space-4) var(--space-6); border-top: 1px solid var(--color-border);">
+        <div class="flex items-center gap-2">
+          <div class="avatar">U</div>
+          <div style="flex: 1; min-width: 0;">
+            <div class="text-truncate font-medium" style="font-size: var(--font-size-sm);">User</div>
+            <div class="text-muted" style="font-size: var(--font-size-xs);">Admin</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="flex items-center gap-4">
+          <button class="btn btn-ghost btn-icon" id="sidebarToggle" style="display: none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <h1 class="header-title" id="pageTitle">Dashboard</h1>
+        </div>
+
+        <div class="header-actions">
+          <div class="header-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-text-muted); margin-right: var(--space-2);">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" class="header-search-input" placeholder="Search contacts, deals, tasks..." id="globalSearch">
+          </div>
+
+          <button class="btn btn-primary" id="quickAddBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Quick Add
+          </button>
+
+          <button class="btn btn-ghost btn-icon" id="notificationsBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Views -->
+      <div class="content" id="contentArea">
+        <!-- Dashboard View (Default) -->
+        <div id="dashboardView" class="view active">
+          <!-- Company Stats -->
+          <div class="kpi-grid" id="companyStats">
+            <!-- Populated by JavaScript -->
+          </div>
+
+          <!-- Main Dashboard Grid -->
+          <div class="grid-2">
+            <!-- Pipeline Overview -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Pipeline Overview</h3>
+                <a href="#pipeline" class="btn btn-ghost btn-sm">View All</a>
+              </div>
+              <div class="card-body">
+                <div id="pipelineOverview">
+                  <div class="pipeline-mini" id="pipelineMini">
+                    <!-- Populated by JavaScript -->
+                  </div>
+                  <div class="flex justify-between mt-4" style="font-size: var(--font-size-sm);">
+                    <div>
+                      <div class="text-muted">Total Pipeline</div>
+                      <div class="font-semibold" id="totalPipeline">$0</div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-muted">Weighted</div>
+                      <div class="font-semibold" id="weightedPipeline">$0</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Recent Activity</h3>
+                <button class="btn btn-ghost btn-sm">Refresh</button>
+              </div>
+              <div class="card-body">
+                <div class="activity-feed" id="activityFeed">
+                  <!-- Populated by JavaScript -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Second Row -->
+          <div class="grid-3 mt-6">
+            <!-- Tasks Due Today -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Tasks Due Today</h3>
+                <a href="#tasks" class="btn btn-ghost btn-sm">View All</a>
+              </div>
+              <div class="card-body">
+                <div id="tasksDueToday" class="list">
+                  <!-- Populated by JavaScript -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Upcoming Deals -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Deals Closing Soon</h3>
+                <a href="#pipeline" class="btn btn-ghost btn-sm">View All</a>
+              </div>
+              <div class="card-body">
+                <div id="upcomingDeals" class="list">
+                  <!-- Populated by JavaScript -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Alerts</h3>
+                <span class="text-muted" style="font-size: var(--font-size-xs);" id="alertCount">0 items</span>
+              </div>
+              <div class="card-body">
+                <div id="alertsPanel">
+                  <!-- Populated by JavaScript -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Campaigns Row -->
+          <div class="card mt-6">
+            <div class="card-header">
+              <h3 class="card-title">Active Campaigns</h3>
+              <a href="#campaigns" class="btn btn-ghost btn-sm">View All</a>
+            </div>
+            <div class="card-body">
+              <div class="table-container">
+                <table class="table" id="campaignsTable">
+                  <thead>
+                    <tr>
+                      <th>Campaign</th>
+                      <th>Company</th>
+                      <th>Type</th>
+                      <th>Status</th>
+                      <th>Progress</th>
+                      <th>Budget</th>
+                    </tr>
+                  </thead>
+                  <tbody id="campaignsTableBody">
+                    <!-- Populated by JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pipeline View -->
+        <div id="pipelineView" class="view hidden">
+          <div class="content-header">
+            <h2 class="content-title">Sales Pipeline</h2>
+            <div class="flex gap-2">
+              <button class="btn btn-secondary" id="pipelineFilterBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                </svg>
+                Filter
+              </button>
+              <button class="btn btn-primary" id="addDealBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Add Deal
+              </button>
+            </div>
+          </div>
+
+          <!-- Kanban Board -->
+          <div class="kanban-board" id="kanbanBoard" style="display: flex; gap: var(--space-4); overflow-x: auto; padding-bottom: var(--space-4);">
+            <!-- Populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Contacts View -->
+        <div id="contactsView" class="view hidden">
+          <div class="content-header">
+            <h2 class="content-title">Contacts</h2>
+            <div class="flex gap-2">
+              <button class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Import
+              </button>
+              <button class="btn btn-primary" id="addContactBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Add Contact
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <div class="table-container">
+                <table class="table" id="contactsTable">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Organization</th>
+                      <th>Company</th>
+                      <th>Status</th>
+                      <th>Score</th>
+                      <th>Last Contact</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="contactsTableBody">
+                    <!-- Populated by JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email View -->
+        <div id="emailsView" class="view hidden">
+          <div class="content-header">
+            <h2 class="content-title">Email Command Center</h2>
+            <div class="flex gap-2">
+              <button class="btn btn-secondary" id="syncEmailsBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"/>
+                  <polyline points="1 20 1 14 7 14"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                Sync
+              </button>
+              <button class="btn btn-primary" id="composeBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                Compose
+              </button>
+            </div>
+          </div>
+
+          <div class="grid-2" style="grid-template-columns: 280px 1fr;">
+            <!-- Email Folders -->
+            <div class="card">
+              <div class="card-body" style="padding: var(--space-3);">
+                <div class="list" id="emailFolders">
+                  <div class="list-item active" data-folder="inbox">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
+                      <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+                    </svg>
+                    <span style="flex: 1;">Inbox</span>
+                    <span class="nav-item-badge" id="inboxCount">0</span>
+                  </div>
+                  <div class="list-item" data-folder="needs_response">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span style="flex: 1;">Needs Response</span>
+                    <span class="nav-item-badge" style="background: var(--color-warning);">0</span>
+                  </div>
+                  <div class="list-item" data-folder="sent">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="22" y1="2" x2="11" y2="13"/>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                    <span>Sent</span>
+                  </div>
+                  <div class="list-item" data-folder="starred">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    <span>Starred</span>
+                  </div>
+                  <div class="list-item" data-folder="archived">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="21 8 21 21 3 21 3 8"/>
+                      <rect x="1" y="3" width="22" height="5"/>
+                      <line x1="10" y1="12" x2="14" y2="12"/>
+                    </svg>
+                    <span>Archived</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Email List -->
+            <div class="card">
+              <div class="card-body">
+                <div id="emailList" class="list">
+                  <!-- Populated by JavaScript -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tasks View -->
+        <div id="tasksView" class="view hidden">
+          <div class="content-header">
+            <h2 class="content-title">Tasks</h2>
+            <div class="flex gap-2">
+              <button class="btn btn-secondary" id="taskViewToggle">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="3" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                Board View
+              </button>
+              <button class="btn btn-primary" id="addTaskBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Add Task
+              </button>
+            </div>
+          </div>
+
+          <!-- Task Filters -->
+          <div class="tabs" id="taskTabs">
+            <button class="tab active" data-filter="all">All Tasks</button>
+            <button class="tab" data-filter="my">My Tasks</button>
+            <button class="tab" data-filter="today">Due Today</button>
+            <button class="tab" data-filter="overdue">Overdue</button>
+            <button class="tab" data-filter="completed">Completed</button>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <div id="tasksList" class="list">
+                <!-- Populated by JavaScript -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Campaigns View -->
+        <div id="campaignsView" class="view hidden">
+          <div class="content-header">
+            <h2 class="content-title">Campaigns</h2>
+            <div class="flex gap-2">
+              <button class="btn btn-secondary" id="campaignCalendarBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Calendar View
+              </button>
+              <button class="btn btn-primary" id="addCampaignBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                New Campaign
+              </button>
+            </div>
+          </div>
+
+          <!-- Campaign Stats -->
+          <div class="stats-grid mb-6" id="campaignStats">
+            <!-- Populated by JavaScript -->
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <div class="table-container">
+                <table class="table" id="allCampaignsTable">
+                  <thead>
+                    <tr>
+                      <th>Campaign</th>
+                      <th>Company</th>
+                      <th>Type</th>
+                      <th>Status</th>
+                      <th>Dates</th>
+                      <th>Budget</th>
+                      <th>Performance</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="allCampaignsTableBody">
+                    <!-- Populated by JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflows View -->
+        <div id="workflowsView" class="view hidden">
+          <div class="content-header">
+            <h2 class="content-title">Automation Workflows</h2>
+            <button class="btn btn-primary" id="addWorkflowBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Create Workflow
+            </button>
+          </div>
+
+          <div id="workflowsList" class="grid-2">
+            <!-- Populated by JavaScript -->
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Modal</h3>
+        <button class="modal-close" id="modalClose">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Dynamic content -->
+      </div>
+      <div class="modal-footer" id="modalFooter">
+        <button class="btn btn-secondary" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary" id="modalConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Quick Add Dropdown -->
+  <div class="dropdown" id="quickAddDropdown" style="position: fixed; display: none;">
+    <div class="dropdown-menu" style="opacity: 1; visibility: visible; transform: translateY(0);">
+      <div class="dropdown-item" data-action="add-contact">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="8.5" cy="7" r="4"/>
+          <line x1="20" y1="8" x2="20" y2="14"/>
+          <line x1="23" y1="11" x2="17" y2="11"/>
+        </svg>
+        Add Contact
+      </div>
+      <div class="dropdown-item" data-action="add-deal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="1" x2="12" y2="23"/>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+        Add Deal
+      </div>
+      <div class="dropdown-item" data-action="add-task">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        Add Task
+      </div>
+      <div class="dropdown-divider"></div>
+      <div class="dropdown-item" data-action="compose-email">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+        Compose Email
+      </div>
+      <div class="dropdown-item" data-action="schedule-meeting">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        Schedule Meeting
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="assets/js/app.js" type="module"></script>
+</body>
+</html>

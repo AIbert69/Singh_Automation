@@ -1,177 +1,156 @@
 import React from 'react';
 
-function formatNumber(n) {
-  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-  return n.toString();
+function fmt(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return String(n);
 }
 
 function LogLine({ line }) {
-  let cls = '';
-  if (line.includes('[INFO]')) cls = 'log-info';
-  else if (line.includes('[WARN]')) cls = 'log-warn';
-  else if (line.includes('[ERROR]')) cls = 'log-error';
-
-  const timeMatch = line.match(/^\[([^\]]+)\]/);
-  if (timeMatch) {
-    const rest = line.slice(timeMatch[0].length);
-    return (
-      <div>
-        <span className="log-time">[{timeMatch[1]}]</span>
-        <span className={cls}>{rest}</span>
-      </div>
-    );
-  }
-  return <div className={cls}>{line}</div>;
+  const cls = line.includes('ERR') ? 'l-e' : line.includes('WARN') ? 'l-w' : 'l-i';
+  const m = line.match(/^\[([^\]]+)\]/);
+  if (!m) return <div className={cls}>{line}</div>;
+  return <div><span className="l-t">[{m[1]}]</span> <span className={cls}>{line.slice(m[0].length + 1)}</span></div>;
 }
 
-export default function Dashboard({ gateway }) {
-  const { dashboard, logs, isLive } = gateway;
-  const d = dashboard;
+export default function Dashboard({ gw }) {
+  const d = gw.dashboard;
+  const live = gw.isLive;
+  const logs = gw.logs;
 
-  const spendData = [0.52, 0.38, 0.61, 0.44, 0.55, 0.39, 0.47];
-  const maxSpend = Math.max(...spendData);
+  const spend = [0.52, 0.38, 0.61, 0.44, 0.55, 0.39, 0.47];
+  const mx = Math.max(...spend);
 
   return (
-    <div>
-      {/* Status banner */}
+    <>
+      {/* ── Gateway status banner ───────────────────────────────────────── */}
       <div
-        className="card card-glow mb-24"
+        className="g-card glow mb24"
         style={{
-          background: isLive
-            ? 'linear-gradient(135deg, rgba(52, 211, 153, 0.08), rgba(16, 16, 22, 1))'
-            : 'linear-gradient(135deg, rgba(248, 113, 113, 0.08), rgba(16, 16, 22, 1))',
-          borderColor: isLive ? 'rgba(52, 211, 153, 0.2)' : 'rgba(248, 113, 113, 0.2)',
+          background: live
+            ? 'linear-gradient(135deg, rgba(52,211,153,0.06) 0%, var(--card) 100%)'
+            : 'linear-gradient(135deg, rgba(248,113,113,0.06) 0%, var(--card) 100%)',
+          borderColor: live ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)',
         }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-12">
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 12,
-                background: isLive
-                  ? 'linear-gradient(135deg, var(--green), #059669)'
-                  : 'linear-gradient(135deg, var(--red), #dc2626)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 22,
-              }}
-            >
-              {isLive ? '⚡' : '⏸'}
+        <div className="fx aic jcb">
+          <div className="fx aic gap12">
+            <div style={{
+              width: 50, height: 50, borderRadius: 14,
+              background: live
+                ? 'linear-gradient(135deg, var(--green), #059669)'
+                : 'linear-gradient(135deg, var(--red), #b91c1c)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 24, boxShadow: live
+                ? '0 0 30px rgba(52,211,153,0.3)'
+                : '0 0 30px rgba(248,113,113,0.3)',
+            }}>
+              {live ? '⚡' : '⏸'}
             </div>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-bright)' }}>
-                {d.agent?.name || 'Claw'} — {isLive ? 'Online' : 'Offline Mode'}
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--bright)' }}>
+                {d.agent?.name || 'Claw'} — {live ? 'Online' : 'Offline'}
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
-                {d.agent?.model} • {d.agent?.provider} • {d.agent?.channels?.join(', ')}
+              <div className="mono fs11 dim" style={{ marginTop: 2 }}>
+                {d.agent?.model || 'claude-sonnet-4-5'} via {d.agent?.provider || 'anthropic'}
+              </div>
+              <div className="mono fs10 dim" style={{ marginTop: 2 }}>
+                Channels: {(d.agent?.channels || []).join(' · ')}
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-12">
+          <div className="fx gap16">
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Uptime</div>
-              <div style={{ fontSize: 14, fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-bright)' }}>
-                {d.uptime || '—'}
+              <div className="fs10 dim">UPTIME</div>
+              <div className="mono fw7 bright" style={{ fontSize: 14 }}>{d.uptime || '—'}</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div className="fs10 dim">GATEWAY</div>
+              <div className="mono fw7" style={{ fontSize: 14, color: live ? 'var(--green)' : 'var(--red)' }}>
+                {d.gateway?.status || 'offline'}
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Version</div>
-              <div style={{ fontSize: 14, fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-bright)' }}>
-                {d.version || '—'}
+              <div className="fs10 dim">WS</div>
+              <div className="mono fw7" style={{ fontSize: 14, color: d.gateway?.wsConnected ? 'var(--green)' : 'var(--dim)' }}>
+                {d.gateway?.wsConnected ? 'connected' : 'disconnected'}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Stats row */}
-      <div className="grid-4 mb-24">
-        <div className="card">
-          <div className="card-subtitle">Active Sessions</div>
-          <div className="stat-value" style={{ color: 'var(--accent)' }}>{d.sessions?.active || 0}</div>
-          <div className="stat-label">{d.sessions?.total || 0} total</div>
+      {/* ── Stats ───────────────────────────────────────────────────────── */}
+      <div className="g4 mb24">
+        <div className="g-card">
+          <div className="stat-lbl">Active Sessions</div>
+          <div className="stat-val" style={{ color: 'var(--accent)' }}>{d.sessions?.active ?? 0}</div>
+          <div className="stat-sub dim">{d.sessions?.total ?? 0} total</div>
         </div>
-        <div className="card">
-          <div className="card-subtitle">Tokens Today</div>
-          <div className="stat-value" style={{ color: 'var(--cyan)' }}>{formatNumber(d.tokens?.today || 0)}</div>
-          <div className="stat-label">{formatNumber(d.tokens?.total || 0)} lifetime</div>
+        <div className="g-card">
+          <div className="stat-lbl">Tokens Today</div>
+          <div className="stat-val" style={{ color: 'var(--cyan)' }}>{fmt(d.tokens?.today ?? 0)}</div>
+          <div className="stat-sub dim">{fmt(d.tokens?.total ?? 0)} lifetime</div>
         </div>
-        <div className="card">
-          <div className="card-subtitle">Daily Spend</div>
-          <div className="stat-value" style={{ color: 'var(--green)' }}>$0.47</div>
-          <div className="stat-change up">↑ 9.4% of $5.00 cap</div>
+        <div className="g-card">
+          <div className="stat-lbl">Daily Spend</div>
+          <div className="stat-val" style={{ color: 'var(--green)' }}>$0.47</div>
+          <div className="stat-sub" style={{ color: 'var(--green)' }}>9.4% of $5.00 cap</div>
         </div>
-        <div className="card">
-          <div className="card-subtitle">Agents Online</div>
-          <div className="stat-value" style={{ color: 'var(--purple)' }}>4</div>
-          <div className="stat-label">claw, architect, scout, sentinel</div>
+        <div className="g-card">
+          <div className="stat-lbl">Agents Online</div>
+          <div className="stat-val" style={{ color: 'var(--purple)' }}>4</div>
+          <div className="stat-sub dim">claw · architect · scout · sentinel</div>
         </div>
       </div>
 
-      {/* Charts + Logs row */}
-      <div className="grid-2 mb-24">
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Weekly Spend</span>
-            <span className="tag tag-green">$3.36 total</span>
+      {/* ── Chart + Log ─────────────────────────────────────────────────── */}
+      <div className="g2 mb24">
+        <div className="g-card">
+          <div className="g-card-head">
+            <span className="g-card-title">Weekly Spend</span>
+            <span className="tag tag-g">${spend.reduce((a, b) => a + b, 0).toFixed(2)}</span>
           </div>
-          <div className="chart-bars">
-            {spendData.map((val, i) => (
-              <div
-                key={i}
-                className="chart-bar"
-                style={{ height: `${(val / maxSpend) * 100}%` }}
-                title={`$${val.toFixed(2)}`}
-              />
-            ))}
+          <div className="bars">
+            {spend.map((v, i) => <div key={i} className="bar" style={{ height: `${(v / mx) * 100}%` }} title={`$${v.toFixed(2)}`} />)}
           </div>
-          <div className="chart-labels">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => (
-              <span key={i} className="chart-label">{d}</span>
-            ))}
+          <div className="bar-labels">
+            {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d, i) => <span key={i}>{d}</span>)}
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Gateway Log</span>
-            <span className="tag tag-accent">{logs.length} entries</span>
+        <div className="g-card">
+          <div className="g-card-head">
+            <span className="g-card-title">Gateway Log</span>
+            <span className="tag tag-b">{logs.length}</span>
           </div>
-          <div className="log-viewer">
-            {logs.slice(-15).map((line, i) => (
-              <LogLine key={i} line={line} />
-            ))}
+          <div className="log-box">
+            {logs.slice(-16).map((l, i) => <LogLine key={i} line={l} />)}
           </div>
         </div>
       </div>
 
-      {/* Gateway info */}
-      <div className="card">
-        <div className="card-header">
-          <span className="card-title">Gateway Details</span>
-          <span className={`tag ${d.gateway?.status === 'online' ? 'tag-green' : 'tag-red'}`}>
-            {d.gateway?.status || 'offline'}
-          </span>
+      {/* ── Gateway details ─────────────────────────────────────────────── */}
+      <div className="g-card">
+        <div className="g-card-head">
+          <span className="g-card-title">Gateway Connection</span>
+          <span className={`tag ${live ? 'tag-g' : 'tag-r'}`}>{d.gateway?.status || 'offline'}</span>
         </div>
-        <div className="grid-3">
+        <div className="g3">
           <div>
-            <div className="text-xs text-muted">Host</div>
-            <div className="text-mono text-sm">{d.gateway?.host || '127.0.0.1'}:{d.gateway?.port || 18789}</div>
+            <div className="fs10 dim">Endpoint</div>
+            <div className="mono fs12">{d.gateway?.url || 'ws://127.0.0.1:18789/ws'}</div>
           </div>
           <div>
-            <div className="text-xs text-muted">WebSocket</div>
-            <div className="text-mono text-sm">{d.gateway?.connected ? 'Connected' : 'Disconnected'}</div>
+            <div className="fs10 dim">WebSocket RPC</div>
+            <div className="mono fs12">{d.gateway?.wsConnected ? 'Connected' : 'Disconnected'}</div>
           </div>
           <div>
-            <div className="text-xs text-muted">Channels</div>
-            <div className="text-mono text-sm">{d.agent?.channels?.join(', ') || '—'}</div>
+            <div className="fs10 dim">WS Messages</div>
+            <div className="mono fs12">{d.wsMessages ?? 0} received</div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

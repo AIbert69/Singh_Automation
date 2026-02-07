@@ -1,149 +1,120 @@
 import React from 'react';
-import { MOCK_FINANCE } from '../data/mockData.js';
+import { MOCK_FINANCE } from '../data/mock.js';
+
+const CAT_FILL = ['b', 'p', 'g', 'c', 'a'];
 
 export default function Finance() {
   const f = MOCK_FINANCE;
-  const dailyPct = (f.daily.spent / f.daily.cap) * 100;
-  const monthlyPct = (f.monthly.spent / f.monthly.cap) * 100;
-  const maxWeekly = Math.max(...f.weekly);
+  const dpct = (f.daily.spent / f.daily.cap) * 100;
+  const mpct = (f.monthly.spent / f.monthly.cap) * 100;
+  const mx = Math.max(...f.weekly);
 
   return (
-    <div>
-      {/* Daily budget banner */}
-      <div className="card card-glow mb-24">
-        <div className="flex items-center justify-between mb-16">
+    <>
+      {/* ── Daily budget ────────────────────────────────────────────────── */}
+      <div className="g-card glow mb24">
+        <div className="fx aic jcb mb16">
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Today's Spend</div>
-            <div className="flex items-center gap-8">
-              <span style={{ fontSize: 32, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--green)' }}>
+            <div className="fs10 dim">TODAY'S API SPEND</div>
+            <div className="fx aic gap8">
+              <span className="mono fw7" style={{ fontSize: 34, color: 'var(--green)' }}>
                 ${f.daily.spent.toFixed(2)}
               </span>
-              <span style={{ fontSize: 16, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                / ${f.daily.cap.toFixed(2)}
-              </span>
+              <span className="mono fs12 dim">/ ${f.daily.cap.toFixed(2)}</span>
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Per-Task Limit</div>
-            <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>
+            <div className="fs10 dim">PER-TASK LIMIT</div>
+            <div className="mono fw7" style={{ fontSize: 22, color: 'var(--accent)' }}>
               ${f.perTask.toFixed(2)}
             </div>
           </div>
         </div>
         <div className="budget-bar">
-          <div className="budget-fill" style={{ width: `${dailyPct}%` }}>
-            {dailyPct.toFixed(1)}%
+          <div className="budget-fill" style={{ width: `${dpct}%` }}>{dpct.toFixed(1)}%</div>
+        </div>
+      </div>
+
+      <div className="g2 mb24">
+        {/* ── Weekly chart ──────────────────────────────────────────────── */}
+        <div className="g-card">
+          <div className="g-card-head">
+            <span className="g-card-title">Weekly Spend</span>
+            <span className="tag tag-g">${f.weekly.reduce((a, b) => a + b, 0).toFixed(2)}</span>
+          </div>
+          <div className="bars" style={{ height: 130 }}>
+            {f.weekly.map((v, i) => (
+              <div key={i} className="bar" style={{ height: `${(v / mx) * 100}%` }} title={`${f.weekLabels[i]}: $${v.toFixed(2)}`} />
+            ))}
+          </div>
+          <div className="bar-labels">
+            {f.weekLabels.map((l, i) => <span key={i}>{l}</span>)}
+          </div>
+        </div>
+
+        {/* ── Monthly overview ─────────────────────────────────────────── */}
+        <div className="g-card">
+          <div className="g-card-head">
+            <span className="g-card-title">Monthly Budget</span>
+            <span className="tag tag-b">{mpct.toFixed(1)}% used</span>
+          </div>
+          <div className="g2 mb16">
+            <div>
+              <div className="fs10 dim">Spent</div>
+              <div className="mono fw7" style={{ fontSize: 22, color: 'var(--accent)' }}>${f.monthly.spent.toFixed(2)}</div>
+            </div>
+            <div>
+              <div className="fs10 dim">Projected</div>
+              <div className="mono fw7" style={{ fontSize: 22, color: 'var(--amber)' }}>${f.monthly.projected.toFixed(2)}</div>
+            </div>
+          </div>
+          <div className="fs10 dim mb8">Cap: ${f.monthly.cap.toFixed(2)}/month</div>
+          <div className="prog" style={{ height: 8 }}>
+            <div className="prog-fill b" style={{ width: `${mpct}%` }} />
           </div>
         </div>
       </div>
 
-      <div className="grid-2 mb-24">
-        {/* Weekly chart */}
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Weekly Spend</span>
-            <span className="tag tag-green">${f.weekly.reduce((a, b) => a + b, 0).toFixed(2)} total</span>
+      <div className="g2">
+        {/* ── Categories ────────────────────────────────────────────────── */}
+        <div className="g-card">
+          <div className="g-card-head">
+            <span className="g-card-title">Spend by Category</span>
           </div>
-          <div className="chart-bars" style={{ height: 140 }}>
-            {f.weekly.map((val, i) => (
-              <div
-                key={i}
-                className="chart-bar"
-                style={{ height: `${(val / maxWeekly) * 100}%` }}
-                title={`${f.weekLabels[i]}: $${val.toFixed(2)}`}
-              />
-            ))}
-          </div>
-          <div className="chart-labels">
-            {f.weekLabels.map((label, i) => (
-              <span key={i} className="chart-label">{label}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Monthly projection */}
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Monthly Overview</span>
-            <span className="tag tag-accent">{monthlyPct.toFixed(1)}% used</span>
-          </div>
-          <div className="grid-2 mb-16">
-            <div>
-              <div className="text-xs text-muted">Spent</div>
-              <div className="stat-value" style={{ fontSize: 22, color: 'var(--accent)' }}>
-                ${f.monthly.spent.toFixed(2)}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-muted">Projected</div>
-              <div className="stat-value" style={{ fontSize: 22, color: 'var(--amber)' }}>
-                ${f.monthly.projected.toFixed(2)}
-              </div>
-            </div>
-          </div>
-          <div style={{ marginBottom: 8, fontSize: 11, color: 'var(--text-muted)' }}>
-            Monthly Budget: ${f.monthly.cap.toFixed(2)}
-          </div>
-          <div className="progress-bar" style={{ height: 10 }}>
-            <div className="progress-fill accent" style={{ width: `${monthlyPct}%` }} />
-          </div>
-        </div>
-      </div>
-
-      <div className="grid-2">
-        {/* Category breakdown */}
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Category Breakdown</span>
-          </div>
-          <div className="flex flex-col gap-12">
-            {f.categories.map((cat, i) => (
+          <div className="fxc gap12">
+            {f.categories.map((c, i) => (
               <div key={i}>
-                <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text)' }}>{cat.name}</span>
-                  <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-                    ${cat.amount.toFixed(2)} ({cat.pct}%)
-                  </span>
+                <div className="fx aic jcb mb4">
+                  <span className="fs11">{c.name}</span>
+                  <span className="mono fs10 dim">${c.amount.toFixed(2)} ({c.pct}%)</span>
                 </div>
-                <div className="progress-bar">
-                  <div className={`progress-fill ${cat.color}`} style={{ width: `${cat.pct}%` }} />
+                <div className="prog">
+                  <div className={`prog-fill ${CAT_FILL[i] || 'b'}`} style={{ width: `${c.pct}%` }} />
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Budget rules */}
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Budget Rules</span>
+        {/* ── Rules ─────────────────────────────────────────────────────── */}
+        <div className="g-card">
+          <div className="g-card-head">
+            <span className="g-card-title">Budget Rules</span>
           </div>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Rule</th>
-                  <th>Value</th>
-                  <th>Status</th>
+          <table className="tbl">
+            <thead><tr><th>Rule</th><th>Value</th><th>Status</th></tr></thead>
+            <tbody>
+              {f.rules.map((r, i) => (
+                <tr key={i}>
+                  <td className="fs11">{r.name}</td>
+                  <td className="mono fs11">{r.value}</td>
+                  <td><span className={`tag ${r.active ? 'tag-g' : 'tag-a'}`}>{r.active ? 'active' : 'standby'}</span></td>
                 </tr>
-              </thead>
-              <tbody>
-                {f.rules.map((rule, i) => (
-                  <tr key={i}>
-                    <td>{rule.rule}</td>
-                    <td style={{ fontFamily: 'var(--font-mono)' }}>{rule.value}</td>
-                    <td>
-                      <span className={`tag ${rule.status === 'active' ? 'tag-green' : 'tag-amber'}`}>
-                        {rule.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
-    </div>
+    </>
   );
 }

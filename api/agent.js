@@ -3,6 +3,8 @@
 // ENHANCED VERSION: Deep Research + Real Contacts + Strategic Analysis
 // Full Platform Access: Scanner, Subcontracting, Purchasing, Pipeline + LEARNING MEMORY
 
+import { sanitizeMessageContent } from '../lib/validation.js';
+
 export default async function handler(req, res) {
   // CORS - Allow production, preview deployments, and local development
   const allowedOrigins = ['https://singh-automation.vercel.app', 'https://singhautomation.com', 'http://localhost:3000', 'http://localhost:5173'];
@@ -605,7 +607,7 @@ COMMUNICATION STYLE:
             model: model.id,
             max_tokens: model.maxTokens,
             system: systemPrompt,
-            messages: [{ role: 'user', content: message }]
+            messages: [{ role: 'user', content: sanitizeMessageContent(message) }]
           })
         });
 

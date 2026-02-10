@@ -4,6 +4,7 @@
  */
 
 import { AI_CONFIG } from './config.js';
+import { sanitizeMessages } from '../../lib/validation.js';
 
 // =============================================================================
 // AI SERVICE CLASS
@@ -36,7 +37,7 @@ export class AIService {
         model: options.model || this.model,
         max_tokens: options.maxTokens || this.maxTokens,
         temperature: options.temperature || AI_CONFIG.temperature,
-        messages
+        messages: sanitizeMessages(messages)
       })
     });
 

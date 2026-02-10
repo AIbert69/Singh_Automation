@@ -13,7 +13,10 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "validate": "npm run lint && npm run typecheck && npm test"
+    "validate": "npm run lint && npm run typecheck && npm test",
+    "openclaw": "bash setup-openclaw.sh",
+    "openclaw:proxy": "cd mc-proxy && node server.js",
+    "openclaw:ui": "cd mission-control && npx vite --host 0.0.0.0 --port 5174"
   },
   "keywords": [
     "government",

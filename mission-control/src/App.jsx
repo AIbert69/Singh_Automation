@@ -7,88 +7,89 @@ import CronJobs from './views/CronJobs.jsx';
 import SkillScout from './views/SkillScout.jsx';
 import DocuDigest from './views/DocuDigest.jsx';
 import AgentHub from './views/AgentHub.jsx';
+import './App.css';
 
-const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: '◈', badge: null },
-  { id: 'workshop', label: 'Workshop', icon: '⚒', badge: '5' },
-  { id: 'finance', label: 'Finance', icon: '◎', badge: null },
-  { id: 'crons', label: 'Cron Jobs', icon: '⏱', badge: '5' },
-  { id: 'skills', label: 'Skill Scout', icon: '◆', badge: '4' },
-  { id: 'docs', label: 'Docu Digest', icon: '▤', badge: null },
-  { id: 'agents', label: 'Agent Hub', icon: '◉', badge: '4' },
+const NAV = [
+  { id: 'dash',   label: 'Dashboard',  icon: '◈' },
+  { id: 'work',   label: 'Workshop',   icon: '⚒' },
+  { id: 'fin',    label: 'Finance',    icon: '◎' },
+  { id: 'crons',  label: 'Cron Jobs',  icon: '⏱' },
+  { id: 'skills', label: 'Skill Scout',icon: '◆' },
+  { id: 'docs',   label: 'Docu Digest',icon: '▤' },
+  { id: 'agents', label: 'Agent Hub',  icon: '◉' },
 ];
 
-const VIEWS = {
-  dashboard: Dashboard,
-  workshop: Workshop,
-  finance: Finance,
-  crons: CronJobs,
-  skills: SkillScout,
-  docs: DocuDigest,
-  agents: AgentHub,
+const VIEW_MAP = {
+  dash: Dashboard, work: Workshop, fin: Finance,
+  crons: CronJobs, skills: SkillScout, docs: DocuDigest, agents: AgentHub,
 };
 
 export default function App() {
-  const [activeView, setActiveView] = useState('dashboard');
-  const gateway = useGateway();
-
-  const ViewComponent = VIEWS[activeView];
+  const [view, setView] = useState('dash');
+  const gw = useGateway();
+  const View = VIEW_MAP[view];
+  const navItem = NAV.find(n => n.id === view);
 
   return (
-    <div className="app-layout">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <div className="sidebar-logo">
-            <div className="sidebar-logo-icon">MC</div>
-            <div>
-              <div className="sidebar-logo-text">Mission Control</div>
-              <div className="sidebar-subtitle">Singh Automation</div>
-            </div>
+    <div className="oc-root">
+      {/* ── Sidebar ─────────────────────────────────────────── */}
+      <aside className="oc-sidebar">
+        <div className="oc-sidebar-brand">
+          <div className="oc-logo">
+            <span className="oc-logo-claw">🦀</span>
+          </div>
+          <div>
+            <div className="oc-brand-name">OpenClaw</div>
+            <div className="oc-brand-sub">Mission Control</div>
           </div>
         </div>
-        <nav className="sidebar-nav">
-          <div className="nav-section-label">Operations</div>
-          {NAV_ITEMS.map((item) => (
-            <div
-              key={item.id}
-              className={`nav-item ${activeView === item.id ? 'active' : ''}`}
-              onClick={() => setActiveView(item.id)}
+
+        <nav className="oc-nav">
+          {NAV.map(n => (
+            <button
+              key={n.id}
+              className={`oc-nav-btn${view === n.id ? ' active' : ''}`}
+              onClick={() => setView(n.id)}
             >
-              <span className="nav-item-icon">{item.icon}</span>
-              <span className="nav-item-label">{item.label}</span>
-              {item.badge && <span className="nav-item-badge">{item.badge}</span>}
-            </div>
+              <span className="oc-nav-icon">{n.icon}</span>
+              <span className="oc-nav-label">{n.label}</span>
+            </button>
           ))}
         </nav>
-        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-            v0.9.2 • {gateway.isLive ? 'CONNECTED' : 'MOCK DATA'}
+
+        <div className="oc-sidebar-footer">
+          <div className={`oc-gw-indicator ${gw.isLive ? 'live' : 'off'}`}>
+            <span className="oc-gw-dot" />
+            <span>{gw.isLive ? 'Gateway Connected' : 'Gateway Offline'}</span>
+          </div>
+          <div className="oc-sidebar-meta">
+            ws://127.0.0.1:18789
           </div>
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="main-content">
-        <header className="topbar">
-          <span className="topbar-title">
-            {NAV_ITEMS.find(n => n.id === activeView)?.icon}{' '}
-            {NAV_ITEMS.find(n => n.id === activeView)?.label}
-          </span>
-          <div className="flex items-center gap-12">
-            {gateway.lastUpdate && (
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                Updated {gateway.lastUpdate.toLocaleTimeString()}
+      {/* ── Main ────────────────────────────────────────────── */}
+      <main className="oc-main">
+        <header className="oc-topbar">
+          <div className="oc-topbar-left">
+            <span className="oc-topbar-icon">{navItem?.icon}</span>
+            <span className="oc-topbar-title">{navItem?.label}</span>
+          </div>
+          <div className="oc-topbar-right">
+            {gw.lastPoll && (
+              <span className="oc-topbar-time">
+                {gw.lastPoll.toLocaleTimeString()}
               </span>
             )}
-            <div className={`status-badge ${gateway.isLive ? 'live' : 'offline'}`}>
-              <span className={`status-dot ${gateway.isLive ? 'live' : 'offline'}`} />
-              {gateway.isLive ? 'LIVE' : 'OFFLINE'}
+            <div className={`oc-status-pill ${gw.isLive ? 'live' : 'off'}`}>
+              <span className="oc-status-dot" />
+              {gw.isLive ? 'LIVE' : 'OFFLINE'}
             </div>
           </div>
         </header>
-        <div className="view-container">
-          <ViewComponent gateway={gateway} />
+
+        <div className="oc-view">
+          <View gw={gw} />
         </div>
       </main>
     </div>

@@ -1,7 +1,7 @@
 {
-  "name": "mc-proxy",
+  "name": "openclaw-mc-proxy",
   "version": "1.0.0",
-  "description": "Mission Control API Proxy for OpenClaw Gateway",
+  "description": "OpenClaw Mission Control API Proxy — connects to live OpenClaw Gateway",
   "type": "module",
   "main": "server.js",
   "scripts": {

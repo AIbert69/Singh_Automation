@@ -1,73 +1,58 @@
 import React from 'react';
 
-function formatTime(iso) {
+const FREQ = {
+  '0 */6 * * *':   'Every 6 hours',
+  '0 */4 * * *':   'Every 4 hours',
+  '*/15 * * * *':  'Every 15 min',
+  '0 7 * * *':     'Daily 7:00 AM',
+  '0 8 * * 1':     'Mon 8:00 AM',
+};
+
+function fmtTime(iso) {
   if (!iso) return '—';
   try {
-    return new Date(iso).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return iso;
-  }
+    return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch { return iso; }
 }
 
-function cronToHuman(schedule) {
-  const map = {
-    '0 */6 * * *': 'Every 6 hours',
-    '0 */4 * * *': 'Every 4 hours',
-    '*/15 * * * *': 'Every 15 minutes',
-    '0 7 * * *': 'Daily at 7:00 AM',
-    '0 8 * * 1': 'Weekly on Monday 8:00 AM',
-  };
-  return map[schedule] || schedule;
-}
-
-export default function CronJobs({ gateway }) {
-  const { crons, isLive } = gateway;
-
-  const totalHits = crons.reduce((sum, c) => sum + (c.hits || 0), 0);
+export default function CronJobs({ gw }) {
+  const { crons, isLive } = gw;
+  const hits = crons.reduce((s, c) => s + (c.hits || 0), 0);
 
   return (
-    <div>
-      {/* Stats */}
-      <div className="grid-3 mb-24">
-        <div className="card">
-          <div className="card-subtitle">Total Jobs</div>
-          <div className="stat-value" style={{ color: 'var(--accent)' }}>{crons.length}</div>
-          <div className="stat-label">
-            {isLive ? 'from live config' : 'mock data'}
-          </div>
+    <>
+      {/* ── Stats ───────────────────────────────────────────────────────── */}
+      <div className="g3 mb24">
+        <div className="g-card">
+          <div className="stat-lbl">Scheduled Jobs</div>
+          <div className="stat-val" style={{ color: 'var(--accent)' }}>{crons.length}</div>
+          <div className="stat-sub dim">{isLive ? 'from live config' : 'mock data'}</div>
         </div>
-        <div className="card">
-          <div className="card-subtitle">All Success</div>
-          <div className="stat-value" style={{ color: 'var(--green)' }}>
+        <div className="g-card">
+          <div className="stat-lbl">All Healthy</div>
+          <div className="stat-val" style={{ color: 'var(--green)' }}>
             {crons.filter(c => c.status === 'success').length}/{crons.length}
           </div>
-          <div className="stat-label">healthy jobs</div>
+          <div className="stat-sub dim">passing</div>
         </div>
-        <div className="card">
-          <div className="card-subtitle">Total Hits</div>
-          <div className="stat-value" style={{ color: 'var(--cyan)' }}>{totalHits}</div>
-          <div className="stat-label">results found</div>
+        <div className="g-card">
+          <div className="stat-lbl">Total Hits</div>
+          <div className="stat-val" style={{ color: 'var(--cyan)' }}>{hits}</div>
+          <div className="stat-sub dim">results found</div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="card">
-        <div className="card-header">
-          <span className="card-title">Scheduled Jobs</span>
-          <span className={`tag ${isLive ? 'tag-green' : 'tag-amber'}`}>
-            {isLive ? 'LIVE' : 'MOCK'}
-          </span>
+      {/* ── Table ───────────────────────────────────────────────────────── */}
+      <div className="g-card mb24">
+        <div className="g-card-head">
+          <span className="g-card-title">Cron Schedule</span>
+          <span className={`tag ${isLive ? 'tag-g' : 'tag-a'}`}>{isLive ? 'LIVE' : 'MOCK'}</span>
         </div>
-        <div className="table-wrap">
-          <table>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="tbl">
             <thead>
               <tr>
-                <th>Status</th>
+                <th style={{ width: 32 }}></th>
                 <th>Name</th>
                 <th>Schedule</th>
                 <th>Frequency</th>
@@ -77,25 +62,17 @@ export default function CronJobs({ gateway }) {
               </tr>
             </thead>
             <tbody>
-              {crons.map((cron, i) => (
+              {crons.map((c, i) => (
                 <tr key={i}>
+                  <td><span className={`cron-dot ${c.status === 'success' ? 'ok' : c.status === 'running' ? 'run' : 'err'}`} /></td>
+                  <td className="fw6 bright">{c.name}</td>
+                  <td className="mono fs10 dim">{c.schedule}</td>
+                  <td className="fs11">{FREQ[c.schedule] || c.schedule}</td>
+                  <td className="mono fs10">{fmtTime(c.lastRun)}</td>
+                  <td className="mono fs10">{fmtTime(c.nextRun)}</td>
                   <td>
-                    <span className={`cron-dot ${cron.status || 'success'}`} />
-                  </td>
-                  <td style={{ fontWeight: 500, color: 'var(--text-bright)' }}>{cron.name}</td>
-                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)' }}>
-                    {cron.schedule}
-                  </td>
-                  <td style={{ fontSize: 12 }}>{cronToHuman(cron.schedule)}</td>
-                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{formatTime(cron.lastRun)}</td>
-                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{formatTime(cron.nextRun)}</td>
-                  <td>
-                    <span style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontWeight: 600,
-                      color: (cron.hits || 0) > 10 ? 'var(--green)' : 'var(--text)',
-                    }}>
-                      {cron.hits || 0}
+                    <span className="mono fw6" style={{ color: (c.hits || 0) > 10 ? 'var(--green)' : 'var(--text)' }}>
+                      {c.hits || 0}
                     </span>
                   </td>
                 </tr>
@@ -105,26 +82,22 @@ export default function CronJobs({ gateway }) {
         </div>
       </div>
 
-      {/* Job descriptions */}
-      <div className="grid-2 mt-16" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-        {crons.map((cron, i) => (
-          <div className="card" key={i}>
-            <div className="flex items-center gap-8 mb-16">
-              <span className={`cron-dot ${cron.status || 'success'}`} />
-              <span className="card-title">{cron.name}</span>
+      {/* ── Cards ───────────────────────────────────────────────────────── */}
+      <div className="g2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+        {crons.map((c, i) => (
+          <div className="g-card" key={i}>
+            <div className="fx aic gap8 mb12">
+              <span className={`cron-dot ${c.status === 'success' ? 'ok' : 'err'}`} />
+              <span className="fw6 bright fs12">{c.name}</span>
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>
-              {cron.description}
-            </div>
-            <div className="flex items-center justify-between mt-12">
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                {cronToHuman(cron.schedule)}
-              </span>
-              <span className="tag tag-cyan">{cron.hits || 0} hits</span>
+            <div className="fs11" style={{ lineHeight: 1.5 }}>{c.description}</div>
+            <div className="fx aic jcb mt12">
+              <span className="mono fs10 dim">{FREQ[c.schedule] || c.schedule}</span>
+              <span className="tag tag-c">{c.hits || 0} hits</span>
             </div>
           </div>
         ))}
       </div>
-    </div>
+    </>
   );
 }

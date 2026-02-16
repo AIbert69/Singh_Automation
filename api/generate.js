@@ -2,6 +2,8 @@
 // PRODUCTION BUILD - Server-side keys only, hard errors, no fallbacks
 // Deploy to: /api/generate.js on Vercel
 
+import { generateWithClaude } from '../lib/claude-api.js';
+
 export default async function handler(req, res) {
     const startTime = Date.now();
     const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -67,7 +69,11 @@ export default async function handler(req, res) {
         const context = await buildContext(opportunity, log);
 
         // STEP 3: GENERATE WITH CLAUDE
-        const proposal = await generateWithClaude(claudeKey, opportunity, context, log);
+        const systemPrompt = buildSystemPrompt(opportunity, context);
+        const userPrompt = buildUserPrompt(opportunity, context);
+        const claudeResponse = await generateWithClaude(claudeKey, systemPrompt, userPrompt, { log });
+        const checklist = extractComplianceChecklist(claudeResponse.content);
+        const proposal = { ...claudeResponse, checklist };
 
         const totalTime = Date.now() - startTime;
         log('info', 'Proposal generation complete', { latencyMs: totalTime, tokensUsed: proposal.tokens });
@@ -491,53 +497,8 @@ function extractThemes(matches) {
 // ============================================
 // CLAUDE API INTEGRATION
 // ============================================
-async function generateWithClaude(apiKey, opportunity, context, log) {
-    const systemPrompt = buildSystemPrompt(opportunity, context);
-    const userPrompt = buildUserPrompt(opportunity, context);
-
-    log('info', 'Calling Claude API');
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 4000,
-            system: systemPrompt,
-            messages: [{ role: 'user', content: userPrompt }]
-        }),
-        signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Claude API error ${response.status}: ${errorText}`);
-    }
-
-    const data = await response.json();
-    const content = data.content[0].text;
-    const inputTokens = data.usage?.input_tokens || 0;
-    const outputTokens = data.usage?.output_tokens || 0;
-    const cost = (inputTokens * 0.003 + outputTokens * 0.015) / 1000;
-    const checklist = extractComplianceChecklist(content);
-
-    log('info', 'Claude response received', { inputTokens, outputTokens });
-
-    return { 
-        content, 
-        checklist, 
-        tokens: { input: inputTokens, output: outputTokens }, 
-        cost: `$${cost.toFixed(4)}` 
-    };
-}
+// Now using imported generateWithClaude from lib/claude-api.js
+// with enhanced error handling and retry logic
 
 function buildSystemPrompt(opportunity, context) {
     let prompt = `You are an expert government proposal writer for Singh Automation, a certified small business specializing in industrial robotics, automation systems, machine vision, and controls integration.

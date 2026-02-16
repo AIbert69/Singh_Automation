@@ -2,6 +2,8 @@
 // Singh Automation - Section Generator with REAL Company Data
 // v3 - Uses verified information only, marks gaps clearly
 
+import { callClaudeAPI } from '../lib/claude-api.js';
+
 export default async function handler(req, res) {
   // CORS - Allow production, preview deployments, and local development
   const allowedOrigins = ['https://singh-automation.vercel.app', 'https://singhautomation.com', 'http://localhost:3000', 'http://localhost:5173'];
@@ -76,28 +78,20 @@ Write professional proposal content using numbered sections (1.0, 1.1, etc).`;
 
     const sectionPrompts = getSectionPrompt(section, { title, agency, desc, value, solicitation, isState });
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 3000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: sectionPrompts }]
-      })
+    const log = (level, message, data = {}) => {
+      console.log(JSON.stringify({ level, timestamp: new Date().toISOString(), message, ...data }));
+    };
+
+    const data = await callClaudeAPI(ANTHROPIC_API_KEY, {
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 3000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: sectionPrompts }]
+    }, {
+      timeout: 60000,
+      maxRetries: 3,
+      log
     });
-
-    if (!response.ok) {
-      const err = await response.text();
-      console.error('Anthropic error:', err);
-      return res.status(500).json({ success: false, error: 'AI request failed' });
-    }
-
-    const data = await response.json();
     
     return res.status(200).json({
       success: true,
